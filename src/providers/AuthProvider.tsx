@@ -48,12 +48,46 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     let mounted = true;
+    let verificationVersion = 0;
 
-    supabase.auth.getSession().then(({ data }) => {
+    // A Supabase session alone does NOT grant access to Pulse. Check the
+    // current user with the Auth server and fail closed until confirmed.
+    async function validateSession(candidate: Session | null) {
+      const version = ++verificationVersion;
       if (!mounted) return;
-      setSession(data.session);
-      setLoading(false);
-    });
+
+      if (!candidate) {
+        setSession(null);
+        setLoading(false);
+        return;
+      }
+
+      setSession(null);
+      setLoading(true);
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        if (!mounted || version !== verificationVersion) return;
+        const user = data.user;
+        if (!error && user?.id === candidate.user.id && Boolean(user.email_confirmed_at)) {
+          setSession({ ...candidate, user });
+        } else {
+          setSession(null);
+          // Remove unverified sessions (including ones minted while Supabase
+          // confirmation was disabled), preventing persistent app sessions.
+          if (!error && user?.id === candidate.user.id && !user.email_confirmed_at) {
+            void supabase.auth.signOut();
+          }
+        }
+      } catch {
+        if (!mounted || version !== verificationVersion) return;
+        setSession(null);
+      } finally {
+        if (mounted && version === verificationVersion) setLoading(false);
+      }
+    }
+
+    void supabase.auth.getSession().then(({ data }) => validateSession(data.session))
+      .catch(() => { if (mounted) { setSession(null); setLoading(false); } });
 
     void Linking.getInitialURL().then((url) => {
       if (url?.startsWith('pulse://auth/')) void consumeAuthUrl(url).catch(() => undefined);
@@ -64,12 +98,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      setLoading(false);
+      // Supabase auth calls must not execute inside onAuthStateChange.
+      setTimeout(() => { if (mounted) void validateSession(nextSession); }, 0);
     });
 
     return () => {
       mounted = false;
+      verificationVersion++;
       linkListener.remove();
       listener.subscription.unsubscribe();
     };
