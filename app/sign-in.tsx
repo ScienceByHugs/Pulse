@@ -19,9 +19,20 @@ export default function SignInScreen() {
   async function signIn() {
     if (!email || !password) return Alert.alert('Missing information', 'Enter your email and password.');
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    setBusy(false);
-    if (error) Alert.alert('Could not sign in', error.message);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (error) {
+        if (error.code === 'email_not_confirmed' || /email not confirmed/i.test(error.message)) {
+          Alert.alert('Verify your email first', 'Your account is not yet verified. Open your confirmation email, or use Resend confirmation below.');
+        } else {
+          Alert.alert('Could not sign in', error.message);
+        }
+      }
+    } catch {
+      Alert.alert('Could not sign in', 'Check your connection and try again.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function resetPassword() {
@@ -41,19 +52,55 @@ export default function SignInScreen() {
     }
   }
 
+  async function resendConfirmation() {
+    const address = email.trim();
+    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(address)) {
+      return Alert.alert('Enter your email', 'Enter the address you used to register.');
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: address,
+        options: { emailRedirectTo: AUTH_REDIRECT_URL }
+      });
+      if (error) throw error;
+      Alert.alert('Check your inbox', 'If your address still needs verification, another confirmation email will arrive shortly. Check spam too.');
+    } catch (error) {
+      Alert.alert('Could not resend email', error instanceof Error ? error.message : 'Please try again later.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function signUp() {
-    if (!email || password.length < 8) {
+    const address = email.trim();
+    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(address) || password.length < 8) {
       return Alert.alert('Check your details', 'Use a valid email and a password with at least 8 characters.');
     }
     setBusy(true);
-    const { error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: { emailRedirectTo: AUTH_REDIRECT_URL }
-    });
-    setBusy(false);
-    if (error) return Alert.alert('Could not create account', error.message);
-    Alert.alert('Check your email', 'Confirm your email to finish creating your Pulse account.');
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: address,
+        password,
+        options: { emailRedirectTo: AUTH_REDIRECT_URL }
+      });
+      if (error) throw error;
+
+      if (data.session) {
+        // A session at signup means Supabase is automatically confirming email.
+        // Do not silently let the registration flow enter the app.
+        await supabase.auth.signOut();
+        Alert.alert('Verification configuration required', 'Pulse requires email verification. The server returned a session before confirmation. Please contact support.');
+        return;
+      }
+
+      Alert.alert('Confirm your email', 'We sent a confirmation link. Verify your email before signing in to Pulse.');
+    } catch (error) {
+      Alert.alert('Could not create account', error instanceof Error ? error.message : 'Try again later.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -88,6 +135,7 @@ export default function SignInScreen() {
             <Text style={styles.primaryText}>{busy ? 'WORKING…' : 'SIGN IN'}</Text>
           </Pressable>
           <Pressable style={styles.secondary} disabled={busy} onPress={() => void resetPassword()}><Text style={styles.secondaryText}>Forgot password?</Text></Pressable>
+          <Pressable style={styles.secondary} disabled={busy} onPress={() => void resendConfirmation()}><Text style={styles.secondaryText}>Resend confirmation email</Text></Pressable>
           <Pressable style={styles.secondary} disabled={busy} onPress={signUp}>
             <Text style={styles.secondaryText}>Create a Pulse account</Text>
           </Pressable>
