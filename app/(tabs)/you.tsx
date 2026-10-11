@@ -1,3 +1,4 @@
+import { isValidEmail } from '@/domain/validation';
 import { PulseBrand } from '@/components/PulseBrand';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -85,7 +86,7 @@ export default function YouScreen() {
 
   async function requestEmailChange() {
     const address = newEmail.trim().toLowerCase();
-    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(address) || address === session?.user.email?.toLowerCase()) {
+    if (!isValidEmail(address) || address === session?.user.email?.toLowerCase()) {
       return Alert.alert('Check new email', 'Enter a different, valid email address.');
     }
     if (accountBusy) return;
@@ -225,7 +226,7 @@ export default function YouScreen() {
   function confirmDeleteAccount() {
     Alert.alert(
       'Delete Pulse account?',
-      'This permanently deletes your Pulse 2.0 account and all synced protocol, inventory, and log data. This cannot be undone.',
+      'This permanently deletes your Pulse account and synced protocol, inventory, and log data. This cannot be undone. Shared exports and phone calendar copies remain outside Pulse. Disconnect your calendar first to remove its Pulse entries.',
       [
         { text: 'Cancel', style: 'cancel' },
         {

@@ -1,5 +1,9 @@
 import * as Linking from 'expo-linking';
 import type { Session } from '@supabase/supabase-js';
+import { AppState, Platform } from 'react-native';
+import { disableReminders } from '@/lib/reminders';
+import * as Notifications from 'expo-notifications';
+import { updatePulseTodayWidget } from '@/lib/widgets';
 import { createContext, type PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
@@ -49,6 +53,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     let mounted = true;
     let verificationVersion = 0;
+    let previousUserId: string | null = null;
+
+    async function clearDevicePreviews() {
+      await disableReminders();
+      if (Platform.OS !== 'web') await Notifications.dismissAllNotificationsAsync();
+      await updatePulseTodayWidget(0, 'Open Pulse');
+    }
 
     // A Supabase session alone does NOT grant access to Pulse. Check the
     // current user with the Auth server and fail closed until confirmed.
@@ -57,18 +68,23 @@ export function AuthProvider({ children }: PropsWithChildren) {
       if (!mounted) return;
 
       if (!candidate) {
+        previousUserId = null;
         setSession(null);
         setLoading(false);
+        void clearDevicePreviews().catch(() => undefined);
         return;
       }
 
-      setSession(null);
-      setLoading(true);
+      if (previousUserId !== candidate.user.id) {
+        setSession(null);
+        setLoading(true);
+      }
       try {
         const { data, error } = await supabase.auth.getUser();
         if (!mounted || version !== verificationVersion) return;
         const user = data.user;
         if (!error && user?.id === candidate.user.id && Boolean(user.email_confirmed_at)) {
+          previousUserId = user.id;
           setSession({ ...candidate, user });
         } else {
           setSession(null);
@@ -102,10 +118,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setTimeout(() => { if (mounted) void validateSession(nextSession); }, 0);
     });
 
+    if (Platform.OS !== 'web' && AppState.currentState === 'active') supabase.auth.startAutoRefresh();
+    const appStateListener = AppState.addEventListener('change', state => {
+      if (Platform.OS === 'web') return;
+      if (state === 'active') supabase.auth.startAutoRefresh();
+      else supabase.auth.stopAutoRefresh();
+    });
+
     return () => {
       mounted = false;
       verificationVersion++;
       linkListener.remove();
+      appStateListener.remove();
+      if (Platform.OS !== 'web') supabase.auth.stopAutoRefresh();
       listener.subscription.unsubscribe();
     };
   }, []);
