@@ -18,6 +18,7 @@ jobs:
       # Reanimated 4.7 tests RN 0.88 RC but its npm peer range excludes prerelease semver.
       - run: npm ci --legacy-peer-deps --ignore-scripts
       - run: npm run typecheck
+      - run: npm test
       - name: Validate iOS home-screen icon PNG
         run: |
           python3 -m pip install --quiet --break-system-packages Pillow

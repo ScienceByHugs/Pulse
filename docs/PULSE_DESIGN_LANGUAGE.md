@@ -44,5 +44,5 @@ Motion should be subtle and functional:
 - Use accent borders sparingly for active/meaningful surfaces.
 - Prefer tracks, nodes, rails, signal strips, and mapped relationships over stacks of generic cards.
 - Preserve generous breathing room.
-- Avoid gradients, glassmorphism, and excessive glow unless they communicate state.
+- Use layered navy gradients and restrained cyan glow to match the approved visual direction. Keep text contrast and state hierarchy clear; avoid effects that obscure information.
 - Numeric UI should use tabular numerals where supported.

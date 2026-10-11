@@ -15,16 +15,16 @@ const sections = [
     ]
   },
   {
-    title: 'LABORATORY',
+    title: 'CONNECTIONS',
     links: [
-      { label: 'Calculators & Tools', caption: 'Unit-aware arithmetic', route: '/tools', path: '/tools' },
       { label: 'Calendar', caption: 'Private opt-in schedule sync', route: '/calendar', path: '/calendar' }
     ]
   },
   {
     title: 'ACCOUNT',
     links: [
-      { label: 'Account & Privacy', caption: 'Profile, security and your data', route: '/(tabs)/you', path: '/you' }
+      { label: 'Account & Privacy', caption: 'Profile, security and your data', route: '/(tabs)/you', path: '/you' },
+      { label: 'About & Safety', caption: 'Tracking boundaries and privacy controls', route: '/about', path: '/about' }
     ]
   }
 ] as const;

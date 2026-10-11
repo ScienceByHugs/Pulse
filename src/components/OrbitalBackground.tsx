@@ -11,7 +11,7 @@ const stars = [
 
 export function OrbitalBackground() {
   return (
-    <View pointerEvents="none" accessible={false} style={StyleSheet.absoluteFill}>
+    <View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]}>
       <View style={styles.halo} />
       <View style={styles.arc} />
       {stars.map(([x, y, size], index) => (

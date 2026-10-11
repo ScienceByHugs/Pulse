@@ -9,7 +9,8 @@ const LOW_STOCK_KEY = 'pulse.low_stock_alerts_enabled';
 async function getBoolean(key: string, fallback = false) {
   if (Platform.OS === 'web') return fallback;
   try {
-    return (await SecureStore.getItemAsync(key)) === 'true';
+    const stored = await SecureStore.getItemAsync(key);
+    return stored === null ? fallback : stored === 'true';
   } catch {
     return fallback;
   }

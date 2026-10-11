@@ -5,9 +5,9 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { AccessibilityInfo, ActivityIndicator, Alert, Animated, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, layout, radius, spacing, type } from '@/theme';
 import { PulseMenu } from '@/components/PulseMenu';
-import { flushQuickLogOutbox, listDoseLogs, listRecentSites, listTodayItems, listProtocolItems, listProtocols, quickLog, type TimelineEntry, type TodayItem } from '@/services/pulse';
+import { flushQuickLogOutbox, listDoseLogs, listTodayItems, listProtocolItems, listProtocols, quickLog, type TimelineEntry, type TodayItem } from '@/services/pulse';
 import { isDueOnDate, localDateKey, localDayRange, nextScheduledTimeToday, scheduleTime } from '@/domain/schedule';
-import { sitesForRoute, suggestSite } from '@/domain/sites';
+import { sitesForRoute } from '@/domain/sites';
 import { rescheduleReminders } from '@/lib/reminders';
 import { notifyLowStock } from '@/lib/lowStock';
 import { updatePulseTodayWidget } from '@/lib/widgets';
@@ -30,7 +30,6 @@ export default function TodayScreen() {
   const [allItems, setAllItems] = useState<TodayItem[]>([]);
   const [excludedItems, setExcludedItems] = useState<Array<{ id: string; name: string; reason: string }>>([]);
   const [todayLogs, setTodayLogs] = useState<TimelineEntry[]>([]);
-  const [recentSites, setRecentSites] = useState<Record<string, string[]>>({});
   const [selectedSites, setSelectedSites] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [loggingId, setLoggingId] = useState<string | null>(null);
@@ -41,7 +40,7 @@ export default function TodayScreen() {
   const load = useCallback(async () => {
     try {
       await flushQuickLogOutbox();
-      const [items, sites, logs, tracked, protocols] = await Promise.all([listTodayItems(), listRecentSites(), listDoseLogs(150), listProtocolItems(), listProtocols()]);
+      const [items, logs, tracked, protocols] = await Promise.all([listTodayItems(), listDoseLogs(150), listProtocolItems(), listProtocols()]);
       const protocolById = new Map(protocols.map((protocol) => [protocol.id, protocol]));
       const todayKey = localDateKey();
       const eligibleIds = new Set(items.map((item) => item.id));
@@ -72,17 +71,7 @@ export default function TodayScreen() {
       if (widgetResult.status === 'rejected') console.warn('Pulse widget update failed:', widgetResult.reason);
       // Notification failures must never block dashboard data or quick logging.
       try { await notifyLowStock(items); } catch { /* retry on next refresh */ }
-      setRecentSites(sites);
-      setSelectedSites((current) => {
-        const next = { ...current };
-        for (const item of items) {
-          if (!next[item.id] && item.site_rotation_enabled) {
-            const site = suggestSite(item.route, sites[item.id] ?? []);
-            if (site) next[item.id] = site;
-          }
-        }
-        return next;
-      });
+
     } catch (error) {
       Alert.alert('Could not load Today', error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -168,6 +157,7 @@ export default function TodayScreen() {
         });
       }, 5000);
       if (!result.queued) await load();
+      setSelectedSites(current => { const next = { ...current }; delete next[item.id]; return next; });
       const message = result.queued ? 'Saved offline · will sync when connected' : 'Saved to your history';
       setLogFeedback({ id: item.id, message });
       AccessibilityInfo.announceForAccessibility(message);
@@ -248,13 +238,13 @@ export default function TodayScreen() {
                   <View style={styles.duePill}><Text style={styles.dueText}>{timeLabel(scheduleTime(item.schedule))}</Text></View>
                 </View>
 
-                {site ? (
-                  <Pressable style={styles.siteRow} onPress={() => cycleSite(item)}>
+                {item.site_rotation_enabled ? (
+                  <Pressable accessibilityRole="button" accessibilityLabel="Select a site to record" style={styles.siteRow} onPress={() => cycleSite(item)}>
                     <View>
-                      <Text style={styles.smallLabel}>SITE</Text>
-                      <Text style={styles.siteText}>{site}</Text>
+                      <Text style={styles.smallLabel}>RECORDED SITE</Text>
+                      <Text style={styles.siteText}>{site ?? 'Choose the site you used'}</Text>
                     </View>
-                    <Text style={styles.changeText}>CHANGE</Text>
+                    <Text style={styles.changeText}>{site ? 'CHANGE' : 'SELECT'}</Text>
                   </Pressable>
                 ) : null}
 

@@ -9,7 +9,7 @@ export const colors = {
   accentSoft: '#0D2A3D',
   text: '#F7FAFC',
   muted: '#8497A8',
-  subtle: '#536779',
+  subtle: '#91A4B7',
   success: '#63D6A3',
   warning: '#F4BE73'
 } as const;

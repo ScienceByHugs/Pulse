@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authStorage as AsyncStorage } from '@/lib/privateStorage';
 import { Platform } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { isDueOnDate, localDateKey, scheduleTime } from '@/domain/schedule';

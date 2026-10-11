@@ -9,6 +9,7 @@
     "android": "expo start --android",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.cjs",
     "doctor": "npx expo-doctor"
   },
   "dependencies": {

@@ -14,10 +14,10 @@ Logging something in Pulse should take less effort than remembering it.
 6. Native notifications
 7. Supply forecasting
 8. Timeline and calendar
-9. Calculator suite
+9. Clear tracking and safety boundaries (calculators deferred from beta)
 10. Privacy and Face ID
-11. Apple Health
-12. Offline-first behavior
+11. Apple Health (deferred; not included in beta)
+12. Offline log queue with account isolation (cold-start offline access remains limited)
 
 ## Safety boundary
 Pulse tracks and calculates from user-entered information. It does not prescribe, diagnose, or recommend treatment or dosage.

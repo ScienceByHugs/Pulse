@@ -17,6 +17,8 @@ export type TodayItem = {
   created_at?: string;
   active?: boolean;
   archived_at?: string | null;
+  starts_on?: string | null;
+  ends_on?: string | null;
   name: string;
   category: string | null;
   route: string;
@@ -188,7 +190,10 @@ export async function listTodayItems() {
     return (!protocol.starts_on || today >= protocol.starts_on) &&
       (!protocol.ends_on || today <= protocol.ends_on);
   });
-  return current as unknown as TodayItem[];
+  return current.map(row => {
+    const protocol = row.protocols as unknown as { starts_on: string | null; ends_on: string | null };
+    return { ...row, starts_on: protocol.starts_on, ends_on: protocol.ends_on };
+  }) as unknown as TodayItem[];
 }
 
 type CreateItemInput = {
@@ -282,6 +287,9 @@ export function selectInventoryContainer(item: TodayItem): InventorySummary | nu
 }
 
 export async function quickLog(item: TodayItem, site?: string) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Sign in before logging.');
+  const userId = session.user.id;
   const activeInventory = selectInventoryContainer(item);
   if ((item.inventory_containers?.length ?? 0) > 0 && !activeInventory) {
     throw new Error('No active container has enough matching-unit stock. Update your Supply Reservoir before logging.');
@@ -303,16 +311,21 @@ export async function quickLog(item: TodayItem, site?: string) {
     return { data, queued: false };
   } catch (error) {
     if (!isNetworkError(error)) throw error;
-    await enqueueQuickLog(payload);
+    await enqueueQuickLog(userId, payload);
     return { data: null, queued: true };
   }
 }
 
 export async function flushQuickLogOutbox() {
-  const queued = await readOutbox();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return 0;
+  const userId = session.user.id;
+  const queued = await readOutbox(userId);
   let flushed = 0;
 
   for (const payload of queued) {
+    const { data: { session: current } } = await supabase.auth.getSession();
+    if (current?.user.id !== userId) break;
     try {
       const { error } = await sendQuickLog(payload);
       if (error) {
@@ -320,7 +333,7 @@ export async function flushQuickLogOutbox() {
         // later entries so one malformed/stale record cannot block the queue.
         continue;
       }
-      await removeQuickLog(payload.clientEventId);
+      await removeQuickLog(userId, payload.clientEventId);
       flushed += 1;
     } catch (error) {
       // A thrown network failure means the connection is unavailable; stop

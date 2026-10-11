@@ -7,3 +7,4 @@ web-build/
 .DS_Store
 *.log
 coverage/
+supabase/.temp/

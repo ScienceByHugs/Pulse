@@ -16,7 +16,7 @@ function VerifiedRoutes() {
       <Stack.Protected guard={Boolean(session)}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="calendar" />
-        <Stack.Screen name="tools" />
+        <Stack.Screen name="about" />
       </Stack.Protected>
     </Stack>
   );
