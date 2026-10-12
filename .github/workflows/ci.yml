@@ -1,33 +1,55 @@
-name: CI
+name: Pulse checks
 
 on:
   push:
-    branches: [main, "feat/**"]
+    branches: [main, "feat/**", "codex/**"]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pulse-checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  typecheck:
+  checks:
+    name: TypeScript, tests and app assets
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.13.0
+          node-version: 24
           cache: npm
-      # Temporary while Expo SDK 58 targets the RN 0.88 release candidate:
-      # Reanimated 4.7 tests RN 0.88 RC but its npm peer range excludes prerelease semver.
+      # Reanimated's peer range excludes the RN 0.88 prerelease used by SDK 58.
       - run: npm ci --legacy-peer-deps --ignore-scripts
       - run: npm run typecheck
       - run: npm test
-      - name: Validate iOS home-screen icon PNG
+      - run: node scripts/check-app-assets.cjs
+
+  bundles:
+    name: iOS, Android and web bundle compilation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+      # Compile-only values: this job cannot connect to the live backend.
+      EXPO_PUBLIC_SUPABASE_URL: https://pulse-ci.invalid
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_compile_only_not_a_real_key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --legacy-peer-deps --ignore-scripts
+      - name: Compile bundles without EAS Build or submission
+        run: npx --no-install expo export --platform all --output-dir ci-export
+      - name: Record verification scope
         run: |
-          python3 -m pip install --quiet --break-system-packages Pillow
-          python3 - <<'PY'
-          from PIL import Image
-          with Image.open('assets/icon.png') as icon:
-              icon.load()
-              assert icon.size == (1024, 1024), f'Unexpected size: {icon.size}'
-              assert icon.mode == 'RGB', f'Expected RGB, got {icon.mode}'
-              assert icon.format == 'PNG', f'Expected PNG, got {icon.format}'
-              print('Pulse native icon decoded successfully: 1024x1024 RGB PNG')
-          PY
+          echo '### Pulse bundle compilation' >> "$GITHUB_STEP_SUMMARY"
+          echo 'iOS/Android JavaScript and web bundles compiled with dummy backend values. This is not a signed native build, a TestFlight submission, or a deployable app.' >> "$GITHUB_STEP_SUMMARY"
