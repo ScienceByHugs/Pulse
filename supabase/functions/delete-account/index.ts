@@ -31,6 +31,11 @@ Deno.serve(async (req: Request) => {
     auth: { persistSession: false, autoRefreshToken: false }
   });
 
+  // Storage objects must be deleted through the API before deleting their owner.
+  const { error: photoError } = await admin.storage.from('profile-photos').remove([`${user.id}/avatar.jpg`]);
+  if (photoError) {
+    return Response.json({ error: "Could not remove profile photo. Please try again." }, { status: 500 });
+  }
   const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
   if (deleteError) {
     return Response.json({ error: "Could not delete account" }, { status: 500 });

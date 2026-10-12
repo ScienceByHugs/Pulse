@@ -1,6 +1,7 @@
 import { Share } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { clearOutbox } from '@/lib/outbox';
+import { exportProfilePhoto } from '@/services/profilePhoto';
 
 async function allRows(table: string, userId: string, order: string) {
   const rows: Record<string, unknown>[] = [];
@@ -23,7 +24,8 @@ export async function exportPulseData() {
     inventory,
     logs,
     adjustments,
-    logRevisions
+    logRevisions,
+    profilePhoto
   ] = await Promise.all([
     allRows('profiles', user.id, 'user_id'),
     allRows('protocols', user.id, 'id'),
@@ -31,12 +33,14 @@ export async function exportPulseData() {
     allRows('inventory_containers', user.id, 'id'),
     allRows('dose_logs', user.id, 'id'),
     allRows('inventory_adjustments', user.id, 'id'),
-    allRows('dose_log_revisions', user.id, 'id')
+    allRows('dose_log_revisions', user.id, 'id'),
+    exportProfilePhoto(user.id)
   ]);
 
   const payload = {
     exported_at: new Date().toISOString(),
     format: 'pulse-2-export-v1',
+    account_profile: { full_name: user.user_metadata?.full_name ?? '', contact_phone: user.user_metadata?.contact_phone ?? '', photo: profilePhoto },
     profile,
     protocols,
     protocol_items: items,

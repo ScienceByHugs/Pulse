@@ -64,6 +64,14 @@
             }
           ]
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose a photo for your private Pulse profile.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
       ]
     ],
     "extra": {
