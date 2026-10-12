@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/PageHeader';
 import { isValidEmail } from '@/domain/validation';
 import { PulseBrand } from '@/components/PulseBrand';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
@@ -259,9 +260,7 @@ export default function YouScreen() {
       <OrbitalBackground />
       <ScrollView contentContainerStyle={styles.page} showsVerticalScrollIndicator={false}>
         <PulseMenu />
-        <Text style={styles.eyebrow}>PRIVATE BY DESIGN</Text>
-        <Text style={styles.title}>You</Text>
-        <Text style={styles.body}>Personalize your account, manage privacy and control your data.</Text>
+        <PageHeader title="Account" description="Your profile, privacy, and data." />
 
         <View style={styles.profileCard}>
           <View style={styles.avatar}><Text style={styles.avatarText}>{(savedName || session?.user.email || 'P').slice(0, 1).toUpperCase()}</Text></View>
@@ -275,7 +274,7 @@ export default function YouScreen() {
           <Text style={styles.detail}>Set the name and optional contact number shown in your private profile. This phone number is not verified for sign-in or text messages.</Text>
           <TextInput accessibilityLabel="Display name" autoCapitalize="words" autoCorrect={false} maxLength={80} style={styles.profileInput} placeholder="Your name" placeholderTextColor={colors.muted} value={displayName} onChangeText={setDisplayName} />
           <TextInput accessibilityLabel="Contact phone number, optional" keyboardType="phone-pad" autoComplete="tel" maxLength={30} style={styles.profileInput} placeholder="Contact phone (optional)" placeholderTextColor={colors.muted} value={contactPhone} onChangeText={setContactPhone} />
-          <Pressable accessibilityRole="button" style={[styles.dataButton, (savingProfile || (displayName.trim() === savedName && contactPhone.trim() === savedPhone)) && styles.profileSaveDisabled]} disabled={savingProfile || (displayName.trim() === savedName && contactPhone.trim() === savedPhone)} onPress={() => void saveProfile()}><Text style={styles.dataButtonText}>{savingProfile ? 'SAVING…' : 'SAVE PROFILE'}</Text></Pressable>
+          <Pressable accessibilityRole="button" style={[styles.dataButton, (savingProfile || (displayName.trim() === savedName && contactPhone.trim() === savedPhone)) && styles.profileSaveDisabled]} disabled={savingProfile || (displayName.trim() === savedName && contactPhone.trim() === savedPhone)} onPress={() => void saveProfile()}><Text style={styles.dataButtonText}>{savingProfile ? 'Saving…' : 'SAVE PROFILE'}</Text></Pressable>
         </View>
 
         <Text style={styles.sectionLabel}>ACCOUNT SECURITY</Text>
@@ -361,7 +360,7 @@ export default function YouScreen() {
           <Text style={styles.cardTitle}>Data controls</Text>
           <Text style={styles.detail}>Your Pulse data belongs to you. Export a portable JSON copy or permanently delete your account and synced data.</Text>
           <Pressable style={styles.dataButton} disabled={busy} onPress={() => void exportData()}>
-            <Text style={styles.dataButtonText}>EXPORT MY DATA</Text>
+            <Text style={styles.dataButtonText}>Export my data</Text>
           </Pressable>
           <Pressable style={styles.deleteButton} disabled={busy} onPress={confirmDeleteAccount}>
             <Text style={styles.deleteButtonText}>DELETE ACCOUNT & DATA</Text>
@@ -374,7 +373,7 @@ export default function YouScreen() {
           <Text style={styles.aboutText}>Science By Hugs</Text>
         </View>
 
-        <Pressable style={styles.signOut} onPress={() => void signOut()}><Text style={styles.signOutText}>SIGN OUT</Text></Pressable>
+        <Pressable style={styles.signOut} onPress={() => void signOut()}><Text style={styles.signOutText}>Sign out</Text></Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -402,33 +401,25 @@ const styles = StyleSheet.create({
   brandFooter: { marginTop: spacing.lg, marginBottom: spacing.sm },
   safe: { flex: 1, backgroundColor: colors.bg },
   page: { padding: layout.pageInset, paddingBottom: layout.pageBottom },
-  eyebrow: { color: colors.accent, fontSize: type.eyebrow, fontWeight: '900', letterSpacing: 1.8, marginTop: spacing.md },
-  title: { color: colors.text, fontSize: type.title, fontWeight: '700', letterSpacing: -1.4, marginTop: spacing.sm },
-  body: { color: colors.muted, fontSize: type.body, lineHeight: 21, marginTop: spacing.sm, marginBottom: spacing.md },
   shieldCard: { backgroundColor: 'transparent', borderRadius: 0, padding: layout.cardInset, borderWidth: 0, borderColor: 'transparent', marginBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border, },
   shieldTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.md },
-  shieldEyebrow: { color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
-  shieldTitle: { color: colors.text, fontSize: 20, fontWeight: '900', marginTop: 4 },
-  shieldPercent: { color: colors.accent, fontSize: 28, lineHeight: 32, fontWeight: '900', fontVariant: ['tabular-nums'] },
-  shieldTrack: { height: 5, backgroundColor: colors.border, borderRadius: radius.pill, overflow: 'hidden', marginTop: spacing.md },
-  shieldFill: { height: '100%', backgroundColor: colors.accent, borderRadius: radius.pill },
+  shieldEyebrow: { color: colors.accent, fontSize: 9, fontWeight: '700', letterSpacing: 1.5 },
+  shieldTitle: { color: colors.text, fontSize: 20, fontWeight: '700', marginTop: 4 },
   shieldGrid: { flexDirection: 'row', gap: 7, marginTop: spacing.md },
   shieldSignal: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.panel, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingVertical: 10, paddingHorizontal: 5 },
   shieldDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.subtle, marginBottom: 6 },
   shieldDotActive: { backgroundColor: colors.success },
-  shieldSignalText: { color: colors.subtle, fontSize: 7, fontWeight: '900', letterSpacing: .7, textAlign: 'center' },
+  shieldSignalText: { color: colors.subtle, fontSize: 7, fontWeight: '700', letterSpacing: .7, textAlign: 'center' },
   shieldSignalTextActive: { color: colors.text },
   profileEditor: { backgroundColor: 'transparent', borderRadius: 0, padding: spacing.md, borderWidth: 0, borderColor: 'transparent', marginBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border, },
   profileInput: { marginTop: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 12, color: colors.text, backgroundColor: colors.bgElevated, fontSize: 16 },
   profileSaveDisabled: { opacity: .45 },
   profileCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: 'transparent', borderRadius: 0, padding: layout.cardInset, borderWidth: 0, borderColor: 'transparent', marginBottom: spacing.xl, borderBottomWidth: 1, borderBottomColor: colors.border, },
   avatar: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.accentSoft, borderWidth: 1, borderColor: colors.accentBorder, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { color: colors.accent, fontSize: 18, fontWeight: '900' },
-  securePill: { borderRadius: radius.pill, paddingHorizontal: 9, paddingVertical: 6, backgroundColor: colors.accentSoft },
-  secureText: { color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: .8 },
-  sectionLabel: { color: colors.subtle, fontSize: 10, fontWeight: '900', letterSpacing: 1.4, marginTop: spacing.sm, marginBottom: spacing.sm },
+  avatarText: { color: colors.accent, fontSize: 18, fontWeight: '700' },
+  sectionLabel: { color: colors.subtle, fontSize: 10, fontWeight: '700', letterSpacing: .4, marginTop: spacing.sm, marginBottom: spacing.sm },
   card: { backgroundColor: 'transparent', borderRadius: 0, padding: layout.cardInset, borderWidth: 0, borderColor: 'transparent', marginBottom: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.border, },
-  label: { color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.4 },
+  label: { color: colors.muted, fontSize: 10, fontWeight: '700', letterSpacing: .4 },
   value: { color: colors.text, fontSize: 15, fontWeight: '800', marginTop: 6, flexShrink: 1 },
   settingRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   settingCopy: { flex: 1 },
@@ -436,11 +427,11 @@ const styles = StyleSheet.create({
   detail: { color: colors.muted, marginTop: 5, lineHeight: 19, fontSize: 13 },
   divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.md },
   dataButton: { borderWidth: 1, borderColor: colors.accentBorder, borderRadius: radius.md, paddingVertical: 13, alignItems: 'center', marginTop: spacing.md, backgroundColor: colors.accentSoft },
-  dataButtonText: { color: colors.accent, fontWeight: '900', letterSpacing: .8 },
+  dataButtonText: { color: colors.accent, fontWeight: '700', letterSpacing: .8 },
   deleteButton: { borderWidth: 1, borderColor: '#6f3030', borderRadius: radius.md, paddingVertical: 13, alignItems: 'center', marginTop: spacing.sm },
-  deleteButtonText: { color: '#ff9b9b', fontWeight: '900', letterSpacing: .8 },
+  deleteButtonText: { color: '#ff9b9b', fontWeight: '700', letterSpacing: .8 },
   aboutRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm, paddingHorizontal: 2 },
   aboutText: { color: colors.subtle, fontSize: 11 },
   signOut: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingVertical: 15, alignItems: 'center', marginTop: spacing.xl },
-  signOutText: { color: colors.text, fontWeight: '900', letterSpacing: 1 }
+  signOutText: { color: colors.text, fontWeight: '700', letterSpacing: 1 }
 });

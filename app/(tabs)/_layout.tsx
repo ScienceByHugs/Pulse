@@ -43,7 +43,7 @@ function TabIcon({ routeName, color, focused }: { routeName: string; color: Colo
 }
 
 function TabLabel({ label, focused, color }: { label: string; focused: boolean; color: ColorValue }) {
-  return <Text style={[styles.tabLabel, { color }, focused && styles.tabLabelActive]}>{label.toUpperCase()}</Text>;
+  return <Text style={[styles.tabLabel, { color }, focused && styles.tabLabelActive]}>{label}</Text>;
 }
 
 export default function TabsLayout() {
@@ -95,6 +95,6 @@ const styles = StyleSheet.create({
   activeSignalLine: { position: 'absolute', top: 0, width: 22, height: 2, backgroundColor: colors.accent },
   iconCore: { width: 28, height: 27, alignItems: 'center', justifyContent: 'center', opacity: .68 },
   iconCoreActive: { opacity: 1 },
-  tabLabel: { fontSize: 9, fontWeight: '800', letterSpacing: .75, marginTop: 1 },
-  tabLabelActive: { fontWeight: '900' }
+  tabLabel: { fontSize: 11, fontWeight: '600', letterSpacing: 0, marginTop: 1 },
+  tabLabelActive: { fontWeight: '700' }
 });

@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/PageHeader';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useState } from 'react';
@@ -61,9 +62,7 @@ export default function InsightsScreen() {
       <OrbitalBackground />
       <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <PulseMenu />
-        <Text style={styles.eyebrow}>WHAT CHANGED</Text>
-        <Text style={styles.title}>Insights</Text>
-        <Text style={styles.body}>Useful observations from your own records. Pulse does not prescribe or recommend treatment.</Text>
+        <PageHeader title="Insights" description="Your logged activity and estimated supply." />
 
         <View style={styles.heroMetric}>
           <View style={styles.heroMetricTop}>
@@ -80,7 +79,7 @@ export default function InsightsScreen() {
         <View style={styles.metrics}>
           <View style={styles.metricCard}>
             <Text style={styles.metricValue}>{items.length}</Text>
-            <Text style={styles.metricLabel}>ACTIVE ITEMS</Text>
+            <Text style={styles.metricLabel}>Active substances</Text>
             <Text style={styles.metricDetail}>Currently participating in your active routine.</Text>
           </View>
           <View style={styles.metricCard}>
@@ -119,7 +118,7 @@ export default function InsightsScreen() {
         <View style={styles.card}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionHeaderCopy}>
-              <Text style={styles.signalEyebrow}>SUPPLY RESERVOIR</Text>
+              <Text style={styles.signalEyebrow}>Inventory</Text>
               <Text style={styles.cardTitle}>What remains</Text>
               <Text style={styles.detail}>Projected from your recorded supply and schedule. NO DATE means the low threshold was not reached within 365 days.</Text>
             </View>
@@ -158,26 +157,23 @@ export default function InsightsScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   page: { padding: layout.pageInset, paddingBottom: layout.pageBottom },
-  eyebrow: { color: colors.accent, fontSize: type.eyebrow, fontWeight: '900', letterSpacing: 1.8, marginTop: spacing.md },
-  title: { color: colors.text, fontSize: type.title, fontWeight: '700', letterSpacing: -1.4, marginTop: spacing.sm },
-  body: { color: colors.muted, fontSize: type.body, lineHeight: 21, marginTop: spacing.sm, marginBottom: spacing.md },
   heroMetric: { backgroundColor: 'transparent', borderRadius: 0, padding: layout.cardInset, borderWidth: 0, borderColor: 'transparent', marginBottom: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border, },
   heroMetricTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
-  heroMetricValue: { color: colors.text, fontSize: 42, fontWeight: '900', letterSpacing: -2, marginTop: 4, fontVariant: ['tabular-nums'], lineHeight: 48 },
+  heroMetricValue: { color: colors.text, fontSize: 42, fontWeight: '700', letterSpacing: -2, marginTop: 4, fontVariant: ['tabular-nums'], lineHeight: 48 },
   metricBadge: { backgroundColor: colors.accentSoft, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 7 },
-  metricBadgeText: { color: colors.accent, fontSize: 11, fontWeight: '900', fontVariant: ['tabular-nums'] },
+  metricBadgeText: { color: colors.accent, fontSize: 11, fontWeight: '700', fontVariant: ['tabular-nums'] },
   progressTrack: { height: 6, backgroundColor: colors.border, borderRadius: radius.pill, overflow: 'hidden', marginTop: spacing.md },
   progressFill: { height: 6, backgroundColor: colors.accent, borderRadius: radius.pill },
   metrics: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
   metricCard: { flex: 1, backgroundColor: 'transparent', borderRadius: 0, padding: spacing.md, borderWidth: 0, borderColor: 'transparent', borderBottomWidth: 1, borderBottomColor: colors.border, },
-  metricValue: { color: colors.text, fontSize: 28, fontWeight: '900', fontVariant: ['tabular-nums'], lineHeight: 32 },
+  metricValue: { color: colors.text, fontSize: 28, fontWeight: '700', fontVariant: ['tabular-nums'], lineHeight: 32 },
   metricLabel: { color: colors.accent, fontSize: 12, fontWeight: '800', marginTop: 2 },
   metricDetail: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 6 },
   fingerprintCard: { backgroundColor: 'transparent', borderRadius: 0, padding: layout.cardInset, borderWidth: 0, borderColor: 'transparent', marginBottom: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border, },
-  signalEyebrow: { color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1.5, marginBottom: 5 },
+  signalEyebrow: { color: colors.accent, fontSize: 9, fontWeight: '700', letterSpacing: 1.5, marginBottom: 5 },
   fingerprintHeaderRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.md, marginBottom: 5 },
   fingerprintNameSpacer: { flex: 2.5 },
-  fingerprintDayLabel: { flex: 1, color: colors.subtle, textAlign: 'center', fontSize: 8, fontWeight: '900' },
+  fingerprintDayLabel: { flex: 1, color: colors.subtle, textAlign: 'center', fontSize: 8, fontWeight: '700' },
   fingerprintRow: { flexDirection: 'row', alignItems: 'center', minHeight: 52 },
   fingerprintDivider: { borderTopWidth: 1, borderTopColor: colors.border },
   fingerprintName: { flex: 2.5, color: colors.text, fontSize: 11, fontWeight: '800', paddingRight: 8 },
@@ -187,31 +183,23 @@ const styles = StyleSheet.create({
   card: { backgroundColor: 'transparent', borderRadius: 0, padding: layout.cardInset, borderWidth: 0, borderColor: 'transparent', marginTop: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border, },
   sectionHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.md },
   sectionHeaderCopy: { flex: 1, minWidth: 0 },
-  sectionCount: { color: colors.accent, backgroundColor: colors.accentSoft, minWidth: 30, textAlign: 'center', paddingHorizontal: 9, paddingVertical: 5, borderRadius: radius.pill, fontWeight: '900', fontVariant: ['tabular-nums'], alignSelf: 'flex-start' },
+  sectionCount: { color: colors.accent, backgroundColor: colors.accentSoft, minWidth: 30, textAlign: 'center', paddingHorizontal: 9, paddingVertical: 5, borderRadius: radius.pill, fontWeight: '700', fontVariant: ['tabular-nums'], alignSelf: 'flex-start' },
   supplyRow: { paddingVertical: spacing.md, gap: spacing.sm },
   supplyIdentity: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.md },
-  supplyName: { flex: 1, color: colors.text, fontSize: 16, fontWeight: '900' },
+  supplyName: { flex: 1, color: colors.text, fontSize: 16, fontWeight: '700' },
   supplyAmount: { color: colors.muted, textAlign: 'right', flexShrink: 1, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] },
   reservoir: { gap: 7 },
   reservoirLabels: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  reservoirLabel: { fontSize: 9, fontWeight: '900', letterSpacing: 1.1, color: colors.subtle },
-  reservoirPercentage: { fontSize: 12, fontWeight: '900', color: colors.accent, fontVariant: ['tabular-nums'] },
+  reservoirLabel: { fontSize: 9, fontWeight: '700', letterSpacing: 1.1, color: colors.subtle },
+  reservoirPercentage: { fontSize: 12, fontWeight: '700', color: colors.accent, fontVariant: ['tabular-nums'] },
   reservoirRail: { height: 8, backgroundColor: colors.bgElevated, borderRadius: radius.pill, overflow: 'hidden', borderWidth: 1, borderColor: colors.border },
   reservoirFill: { height: '100%', backgroundColor: colors.accent, borderRadius: radius.pill },
   reservoirFillLow: { backgroundColor: colors.warning },
   supplyMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  supplyDose: { color: colors.subtle, fontSize: 9, fontWeight: '900', letterSpacing: 1, fontVariant: ['tabular-nums'] },
+  supplyDose: { color: colors.subtle, fontSize: 9, fontWeight: '700', letterSpacing: 1, fontVariant: ['tabular-nums'] },
   supplyDivider: { borderTopWidth: 1, borderTopColor: colors.border },
   warningText: { color: colors.warning },
   cardTitle: { color: colors.text, fontSize: 18, fontWeight: '800' },
-  value: { color: colors.text, fontSize: 22, fontWeight: '900', marginTop: spacing.md },
   detail: { color: colors.muted, marginTop: 7, lineHeight: 20 },
   forecast: { color: colors.accent, minWidth: 62, textAlign: 'right', marginTop: spacing.sm, lineHeight: 20, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  twoCol: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-  flex: { flex: 1 },
-  inputLabel: { color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 1.1, marginBottom: 5 },
-  input: { backgroundColor: colors.panel2, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: 13, paddingVertical: 12, color: colors.text, fontSize: 15 },
-  result: { marginTop: spacing.md, backgroundColor: colors.accentSoft, borderWidth: 1, borderColor: colors.accentBorder, borderRadius: radius.md, padding: spacing.md },
-  resultValue: { color: colors.accent, fontSize: 24, fontWeight: '900' },
-  disclaimer: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: spacing.md }
 });

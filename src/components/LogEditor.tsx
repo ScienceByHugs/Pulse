@@ -1,3 +1,4 @@
+import { SheetHeader } from './SheetHeader';
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -38,17 +39,17 @@ export function LogEditor({ entry, onClose, onSaved }: { entry: TimelineEntry; o
       <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}>
           <View style={styles.card}>
-            <View style={styles.header}><Text style={styles.label}>EDIT HISTORY</Text><Pressable accessibilityRole="button" accessibilityLabel="Close log editor" disabled={busy} style={styles.close} onPress={onClose}><Text style={styles.label}>CLOSE</Text></Pressable></View>
+            <SheetHeader label="Edit entry" disabled={busy} onClose={onClose} />
             <Text style={styles.title}>{entry.protocol_items?.name ?? 'Recorded entry'}</Text>
             <Text style={styles.body}>{entry.status === 'skipped' ? 'Skipped entry · no inventory consumed.' : 'Amount changes adjust the original container’s inventory automatically.'}</Text>
-            <Text style={styles.label}>{entry.status === 'skipped' ? 'SCHEDULED AMOUNT' : 'RECORDED AMOUNT'} · {entry.unit}</Text>
+            <Text style={styles.label}>{entry.status === 'skipped' ? 'Scheduled amount' : 'Recorded amount'} · {entry.unit}</Text>
             <TextInput accessibilityLabel={`Recorded amount in ${entry.unit}`} style={styles.input} keyboardType="decimal-pad" value={amount} onChangeText={setAmount} />
             <ProtocolDatePicker label="Recorded date" value={date} onChange={setDate} />
             <ProtocolTimePicker label="Recorded time" value={time} onChange={setTime} />
             <Text style={styles.body}>Times use this device’s local timezone.</Text>
             <TextInput accessibilityLabel="Recorded site" style={styles.input} value={site} onChangeText={setSite} maxLength={100} placeholder="Site · optional" placeholderTextColor={colors.muted} />
-            <Pressable accessibilityRole="button" disabled={busy} style={styles.primary} onPress={() => void save()}><Text style={styles.primaryText}>{busy ? 'SAVING…' : 'SAVE CHANGES'}</Text></Pressable>
-            <Pressable accessibilityRole="button" disabled={busy} style={styles.close} onPress={() => Alert.alert('Undo this entry?', 'Remove it from your active history and restore any inventory it used. The correction record is retained.', [{text:'Cancel',style:'cancel'},{text:'Undo entry',onPress:()=>void save(true)}])}><Text style={styles.label}>UNDO ENTRY</Text></Pressable>
+            <Pressable accessibilityRole="button" disabled={busy} style={styles.primary} onPress={() => void save()}><Text style={styles.primaryText}>{busy ? 'Saving…' : 'Save changes'}</Text></Pressable>
+            <Pressable accessibilityRole="button" disabled={busy} style={styles.close} onPress={() => Alert.alert('Undo this entry?', 'Remove it from your active history and restore any inventory it used. The correction record is retained.', [{text:'Cancel',style:'cancel'},{text:'Undo entry',onPress:()=>void save(true)}])}><Text style={styles.label}>Undo entry</Text></Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -57,7 +58,7 @@ export function LogEditor({ entry, onClose, onSaved }: { entry: TimelineEntry; o
 }
 const styles=StyleSheet.create({
  safe:{flex:1,backgroundColor:colors.bg},page:{padding:spacing.md,paddingBottom:32},
- card:{padding:spacing.md,backgroundColor:colors.panel,borderRadius:radius.xl,borderWidth:1,borderColor:colors.accentBorder,gap:14},
+ card:{padding:spacing.md,backgroundColor:colors.panel,borderRadius:radius.xl,borderWidth:1,borderColor:colors.border,gap:14},
  header:{flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between',alignItems:'center',gap:8},
  close:{minHeight:44,minWidth:72,paddingHorizontal:12,alignItems:'center',justifyContent:'center',borderRadius:radius.md,borderWidth:1,borderColor:colors.border},
  label:{color:colors.accent,fontSize:11,fontWeight:'800',letterSpacing:1},title:{color:colors.text,fontSize:24,fontWeight:'800'},body:{color:colors.muted,lineHeight:21},

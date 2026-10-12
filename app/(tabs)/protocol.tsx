@@ -1,3 +1,5 @@
+import { SheetHeader } from '@/components/SheetHeader';
+import { PageHeader } from '@/components/PageHeader';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useState } from 'react';
@@ -338,26 +340,21 @@ export default function ProtocolScreen() {
       <OrbitalBackground />
       <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <PulseMenu />
-        <Text style={styles.eyebrow}>YOUR ROUTINE</Text>
-        <Text style={styles.title}>Protocol Library</Text>
-        <Text style={styles.body}>Your substances and routines, organized your way. Track more than one protocol.</Text>
+        <PageHeader title="Protocols" description="Manage your substances, schedules, and inventory." />
 
         <View style={styles.launchRow}>
-          <Pressable style={styles.launchButton} onPress={() => setShowNewProtocol(true)}><Text style={styles.launchText}>＋ NEW PROTOCOL</Text></Pressable>
-          {activeProtocol ? <Pressable style={styles.launchButton} onPress={() => { setBuilderStep(1); setShowBuilder(true); }}><Text style={styles.launchText}>＋ ADD SUBSTANCE</Text></Pressable> : null}
+          <Pressable style={styles.launchButton} onPress={() => setShowNewProtocol(true)}><Text style={styles.launchText}>+ New protocol</Text></Pressable>
+          {activeProtocol ? <Pressable style={styles.launchButton} onPress={() => { setBuilderStep(1); setShowBuilder(true); }}><Text style={styles.launchText}>+ Add substance</Text></Pressable> : null}
         </View>
         <Modal visible={showNewProtocol} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { if (!busy) setShowNewProtocol(false); }}>
           <SafeAreaView style={styles.safe}>
             <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
               <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.modalPage}>
                 <View style={styles.builderCard}>
-                <View style={styles.modalToolbar}>
-                <Text style={styles.smallLabel}>NEW PROTOCOL</Text>
-                <Pressable style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Close new protocol" disabled={busy} onPress={() => setShowNewProtocol(false)}><Text style={styles.closeText}>CLOSE</Text></Pressable>
-                </View>
+                <SheetHeader label="New protocol" disabled={busy} onClose={() => setShowNewProtocol(false)} />
                 <Text style={styles.builderTitle}>Name your new protocol</Text>
                 <TextInput accessibilityLabel="Protocol name" maxLength={100} style={styles.input} placeholder="e.g. Daily regimen" placeholderTextColor={colors.muted} value={protocolName} onChangeText={setProtocolName} />
-                <Pressable accessibilityRole="button" style={styles.primary} disabled={busy} onPress={() => void addProtocol()}><Text style={styles.primaryText}>{busy ? 'CREATING…' : 'CREATE PROTOCOL'}</Text></Pressable>
+                <Pressable accessibilityRole="button" style={styles.primary} disabled={busy} onPress={() => void addProtocol()}><Text style={styles.primaryText}>{busy ? 'Creating…' : 'Create protocol'}</Text></Pressable>
                 </View>
               </ScrollView>
             </KeyboardAvoidingView>
@@ -367,44 +364,44 @@ export default function ProtocolScreen() {
         {protocols.length === 0 ? (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Create your first protocol</Text>
-            <Pressable accessibilityRole="button" style={styles.primary} onPress={() => setShowNewProtocol(true)}><Text style={styles.primaryText}>NEW PROTOCOL</Text></Pressable>
+            <Pressable accessibilityRole="button" style={styles.primary} onPress={() => setShowNewProtocol(true)}><Text style={styles.primaryText}>New protocol</Text></Pressable>
           </View>
         ) : (
           <>
-            {protocols.some((p) => p.status === 'active') ? <View style={styles.protocolPicker}><Text style={styles.smallLabel}>ACTIVE PROTOCOLS · SELECT TO MANAGE</Text><View style={styles.chips}>{protocols.filter((p) => p.status === 'active').map((p) => <Pressable accessibilityRole="button" accessibilityState={{ selected: activeProtocol?.id === p.id }} key={p.id} style={[styles.chip, activeProtocol?.id === p.id && styles.chipActive]} onPress={() => { setSelectedProtocolId(p.id); setShowBuilder(false); setEditingItemId(null); }}><Text style={[styles.chipText, activeProtocol?.id === p.id && styles.chipTextActive]}>{p.name}</Text></Pressable>)}</View></View> : null}
+            {protocols.some((p) => p.status === 'active') ? <View style={styles.protocolPicker}><Text style={styles.smallLabel}>Choose a protocol</Text><View style={styles.chips}>{protocols.filter((p) => p.status === 'active').map((p) => <Pressable accessibilityRole="button" accessibilityState={{ selected: activeProtocol?.id === p.id }} key={p.id} style={[styles.chip, activeProtocol?.id === p.id && styles.chipActive]} onPress={() => { setSelectedProtocolId(p.id); setShowBuilder(false); setEditingItemId(null); }}><Text style={[styles.chipText, activeProtocol?.id === p.id && styles.chipTextActive]}>{p.name}</Text></Pressable>)}</View></View> : null}
             {activeProtocol ? (
               <View style={styles.card}>
-                <Text style={styles.smallLabel}>ACTIVE PROTOCOL</Text>
+                <Text style={styles.smallLabel}>Selected protocol</Text>
                 <Text style={styles.cardTitle}>{activeProtocol.name}</Text>
                 <Text style={styles.cardDetail}>{visibleItems.length} tracked items</Text>
                 <View style={styles.protocolDateBand}>
-                  <View style={styles.protocolDateColumn}><Text style={styles.smallLabel}>START DATE</Text><Text style={styles.protocolDateText}>{displayProtocolDate(activeProtocol.starts_on)}</Text></View>
-                  <View style={styles.protocolDateColumn}><Text style={styles.smallLabel}>END DATE</Text><Text style={styles.protocolDateText}>{displayProtocolDate(activeProtocol.ends_on)}</Text></View>
+                  <View style={styles.protocolDateColumn}><Text style={styles.smallLabel}>Start date</Text><Text style={styles.protocolDateText}>{displayProtocolDate(activeProtocol.starts_on)}</Text></View>
+                  <View style={styles.protocolDateColumn}><Text style={styles.smallLabel}>End date</Text><Text style={styles.protocolDateText}>{displayProtocolDate(activeProtocol.ends_on)}</Text></View>
                 </View>
                 {editingProtocolId === activeProtocol.id ? (
                   <View style={styles.protocolEditPanel}>
-                    <Text style={styles.smallLabel}>PROTOCOL NAME</Text>
+                    <Text style={styles.smallLabel}>Protocol name</Text>
                     <TextInput accessibilityLabel="Edit protocol name" maxLength={100} style={styles.input} value={editProtocolName} onChangeText={setEditProtocolName} placeholderTextColor={colors.muted} />
-                    <Text style={styles.smallLabel}>TRACKING DATES · OPTIONAL</Text>
+                    <Text style={styles.smallLabel}>Tracking dates · optional</Text>
                     <View style={styles.dateFields}>
                       <ProtocolDatePicker label="Start date" value={editStartsOn} onChange={setEditStartsOn} optional />
                       <ProtocolDatePicker label="End date" value={editEndsOn} onChange={setEditEndsOn} optional />
                     </View>
                     <Text style={styles.protocolEditHint}>Dates restrict Today and the protocol map to that window. Leave either blank for an open boundary.</Text>
                     <View style={styles.protocolActions}>
-                      <Pressable accessibilityRole="button" disabled={busy} style={styles.secondaryAction} onPress={() => setEditingProtocolId(null)}><Text style={styles.secondaryActionText}>CANCEL</Text></Pressable>
-                      <Pressable accessibilityRole="button" disabled={busy} style={styles.primaryInline} onPress={() => void saveProtocolEdit()}><Text style={styles.primaryText}>{busy ? 'SAVING…' : 'SAVE CHANGES'}</Text></Pressable>
+                      <Pressable accessibilityRole="button" disabled={busy} style={styles.secondaryAction} onPress={() => setEditingProtocolId(null)}><Text style={styles.secondaryActionText}>Cancel</Text></Pressable>
+                      <Pressable accessibilityRole="button" disabled={busy} style={styles.primaryInline} onPress={() => void saveProtocolEdit()}><Text style={styles.primaryText}>{busy ? 'Saving…' : 'Save changes'}</Text></Pressable>
                     </View>
                   </View>
                 ) : (
-                  <Pressable accessibilityRole="button" accessibilityLabel="Edit protocol name and tracking dates" style={styles.protocolEditTrigger} onPress={() => startProtocolEdit(activeProtocol)}><Text style={styles.protocolEditTriggerText}>EDIT PROTOCOL DETAILS  ↗</Text></Pressable>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Edit protocol name and tracking dates" style={styles.protocolEditTrigger} onPress={() => startProtocolEdit(activeProtocol)}><Text style={styles.protocolEditTriggerText}>Edit protocol</Text></Pressable>
                 )}
                 <View style={styles.protocolActions}>
                   <Pressable style={styles.secondaryAction} disabled={busy} onPress={() => void setProtocolStatus(activeProtocol.id, 'paused')}>
-                    <Text style={styles.secondaryActionText}>PAUSE</Text>
+                    <Text style={styles.secondaryActionText}>Pause</Text>
                   </Pressable>
                   <Pressable style={styles.archiveAction} disabled={busy} onPress={() => confirmProtocolArchive(activeProtocol)}>
-                    <Text style={styles.archiveActionText}>ARCHIVE</Text>
+                    <Text style={styles.archiveActionText}>Archive</Text>
                   </Pressable>
                 </View>
               </View>
@@ -433,7 +430,7 @@ export default function ProtocolScreen() {
               <View style={styles.mapCard}>
                 <View style={styles.mapHeader}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.smallLabel}>PROTOCOL MAP</Text>
+                    <Text style={styles.smallLabel}>Schedule</Text>
                     <Text style={styles.mapTitle}>Your next 7 days</Text>
                     <Text style={styles.cardDetail}>A live view of how your routine is distributed across the week.</Text>
                   </View>
@@ -453,7 +450,7 @@ export default function ProtocolScreen() {
                   ))}
                 </View>
 
-                <Pressable accessibilityRole="button" accessibilityLabel={showMapDetails ? 'Hide schedule details' : 'Show schedule details'} onPress={() => setShowMapDetails((value) => !value)} style={styles.mapDetailsToggle}><Text style={styles.mapDetailsToggleText}>{showMapDetails ? 'HIDE DETAILS  −' : 'VIEW SCHEDULE DETAILS  +'}</Text></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={showMapDetails ? 'Hide schedule details' : 'Show schedule details'} onPress={() => setShowMapDetails((value) => !value)} style={styles.mapDetailsToggle}><Text style={styles.mapDetailsToggleText}>{showMapDetails ? 'Hide schedule details' : 'View schedule details'}</Text></Pressable>
                 {showMapDetails ? <View style={styles.mapScheduleList}>
                   {protocolMap.filter((day) => day.due.length > 0).slice(0, 4).map((day, index) => (
                     <View key={day.key} style={[styles.mapScheduleRow, index > 0 && styles.mapScheduleDivider]}>
@@ -476,7 +473,7 @@ export default function ProtocolScreen() {
                 <View style={styles.addIcon}><Text style={styles.addIconText}>＋</Text></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.cardTitle}>Add to your protocol</Text>
-                  <Text style={styles.cardDetail}>Set up an item, schedule and supply.</Text>
+                  <Text style={styles.cardDetail}>Add a substance and its schedule.</Text>
                 </View>
                 <Text style={styles.chevron}>›</Text>
               </Pressable>
@@ -488,11 +485,8 @@ export default function ProtocolScreen() {
                   <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
                     <ScrollView key={builderStep} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.modalPage}>
               <View style={styles.builderCard}>
-                <View style={styles.modalToolbar}>
-                  <Text style={styles.smallLabel}>ADD SUBSTANCE · STEP {builderStep} OF 3</Text>
-                  <Pressable style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Close add substance" disabled={busy} onPress={() => { setShowBuilder(false); setBuilderStep(1); }}><Text style={styles.closeText}>CLOSE</Text></Pressable>
-                </View>
-                <Text style={styles.builderTitle}>{builderStep === 1 ? 'What are you tracking?' : builderStep === 2 ? 'When do you take it?' : 'Supply & review'}</Text>
+                <SheetHeader label={`Add substance · ${builderStep} of 3`} disabled={busy} onClose={() => { setShowBuilder(false); setBuilderStep(1); }} />
+                <Text style={styles.builderTitle}>{builderStep === 1 ? 'What are you tracking?' : builderStep === 2 ? 'When do you take it?' : 'Inventory & review'}</Text>
                 <View style={styles.progress}><View style={[styles.progressFill, { width: builderStep === 1 ? '33%' : builderStep === 2 ? '66%' : '100%' }]} /></View>
 
                 {builderStep === 1 ? <>
@@ -501,16 +495,16 @@ export default function ProtocolScreen() {
                   <TextInput style={[styles.input, styles.flex]} placeholder="Dose" placeholderTextColor={colors.muted} keyboardType="decimal-pad" value={dose} onChangeText={setDose} />
                   <TextInput style={[styles.input, styles.flex]} placeholder="Unit" placeholderTextColor={colors.muted} value={unit} onChangeText={setUnit} autoCapitalize="none" />
                 </View>
-                <Text style={styles.smallLabel}>CATEGORY</Text>
+                <Text style={styles.smallLabel}>Category</Text>
                 <View style={styles.chips}>{CATEGORIES.map((value) => <Pressable key={value} onPress={() => setCategory(value)} style={[styles.chip, category === value && styles.chipActive]}><Text style={[styles.chipText, category === value && styles.chipTextActive]}>{value}</Text></Pressable>)}</View>
-                <Text style={styles.smallLabel}>ROUTE</Text>
+                <Text style={styles.smallLabel}>Route</Text>
                 <View style={styles.chips}>
                   {ROUTES.map((value) => <Pressable key={value} onPress={() => setRoute(value)} style={[styles.chip, route === value && styles.chipActive]}><Text style={[styles.chipText, route === value && styles.chipTextActive]}>{value}</Text></Pressable>)}
                 </View>
                 <Pressable style={styles.primary} onPress={() => {
                   if (!itemName.trim() || !Number(dose) || Number(dose) <= 0 || !unit.trim()) return Alert.alert('Add the basics first', 'Enter a name, dose and unit to continue.');
                   setBuilderStep(2);
-                }}><Text style={styles.primaryText}>CONTINUE</Text></Pressable>
+                }}><Text style={styles.primaryText}>Continue</Text></Pressable>
                 </> : null}
 
                 {builderStep === 2 ? <>
@@ -519,7 +513,7 @@ export default function ProtocolScreen() {
                 <Text style={styles.cardDetail}>{dose} {unit} · {route}</Text>
               </View>
 
-              <Text style={styles.smallLabel}>SCHEDULE</Text>
+              <Text style={styles.smallLabel}>Schedule</Text>
               <View style={styles.chips}>
                 {SCHEDULES.map((value) => (
                   <Pressable key={value} onPress={() => setScheduleType(value)} style={[styles.chip, scheduleType === value && styles.chipActive]}>
@@ -551,11 +545,11 @@ export default function ProtocolScreen() {
               ) : null}
 
               <View style={styles.builderNav}>
-                <Pressable style={styles.backButton} onPress={() => setBuilderStep(1)}><Text style={styles.backText}>BACK</Text></Pressable>
+                <Pressable style={styles.backButton} onPress={() => setBuilderStep(1)}><Text style={styles.backText}>Back</Text></Pressable>
                 <Pressable style={[styles.primary, styles.flex]} onPress={() => {
                   if (scheduleType === 'weekdays' && days.length === 0) return Alert.alert('Choose at least one day');
                   setBuilderStep(3);
-                }}><Text style={styles.primaryText}>CONTINUE</Text></Pressable>
+                }}><Text style={styles.primaryText}>Continue</Text></Pressable>
               </View>
               </> : null}
 
@@ -565,11 +559,11 @@ export default function ProtocolScreen() {
                   <Text style={styles.cardDetail}>{dose} {unit} · {route}</Text>
                   <Text style={styles.scheduleText}>{formatSchedule(buildSchedule())}</Text>
                 </View>
-                <Text style={styles.smallLabel}>SUPPLY · OPTIONAL</Text>
+                <Text style={styles.smallLabel}>Inventory · optional</Text>
                 <TextInput style={styles.input} placeholder={`Starting inventory in ${unit || 'same unit'}`} placeholderTextColor={colors.muted} keyboardType="decimal-pad" value={inventory} onChangeText={setInventory} />
                 <View style={styles.builderNav}>
-                  <Pressable style={styles.backButton} onPress={() => setBuilderStep(2)}><Text style={styles.backText}>BACK</Text></Pressable>
-                  <Pressable style={[styles.primary, styles.flex, busy && styles.disabled]} disabled={busy} onPress={() => void addItem()}><Text style={styles.primaryText}>{busy ? 'ADDING…' : 'ADD TO PROTOCOL'}</Text></Pressable>
+                  <Pressable style={styles.backButton} onPress={() => setBuilderStep(2)}><Text style={styles.backText}>Back</Text></Pressable>
+                  <Pressable style={[styles.primary, styles.flex, busy && styles.disabled]} disabled={busy} onPress={() => void addItem()}><Text style={styles.primaryText}>{busy ? 'Adding…' : 'Add substance'}</Text></Pressable>
                 </View>
               </> : null}
               </View>
@@ -582,11 +576,9 @@ export default function ProtocolScreen() {
             {activeProtocol ? (
               <View style={styles.libraryHeading}>
                 <View>
-                  <Text style={styles.libraryKicker}>SCIENCE BY HUGS · LIBRARY</Text>
                   <Text style={styles.libraryTitle}>Your substances</Text>
                   <Text style={styles.librarySubtitle}>{visibleItems.filter((item) => item.active !== false).length} tracking · {visibleItems.filter((item) => item.active === false).length} paused</Text>
                 </View>
-                <Text style={styles.libraryIndex}>SBH / 03</Text>
               </View>
             ) : null}
             {activeProtocol ? visibleItems.map((item) => {
@@ -601,7 +593,7 @@ export default function ProtocolScreen() {
                   <View style={styles.signatureTop}>
                     <SubstanceArtwork category={item.category} inactive={item.active === false} />
                     <View style={styles.signatureHeaderText}>
-                      <Text style={styles.signatureCategory}>{(item.category || 'OTHER').toUpperCase()}  /  {item.active === false ? 'PAUSED' : 'TRACKING'}</Text>
+                      <Text style={styles.signatureCategory}>{item.category || 'Other'} · {item.active === false ? 'Paused' : 'Active'}</Text>
                       <Text style={styles.signatureName}>{item.name}</Text>
                       <Text style={styles.signatureAmount}>{item.dose_amount} {item.dose_unit}  ·  {item.route}</Text>
                     </View>
@@ -609,12 +601,12 @@ export default function ProtocolScreen() {
                   <View style={styles.signatureDivider} />
                   <View style={styles.signatureMeta}>
                     <View style={styles.signatureMetaColumn}>
-                      <Text style={styles.signatureMetaLabel}>SCHEDULE</Text>
+                      <Text style={styles.signatureMetaLabel}>Schedule</Text>
                       <Text style={styles.signatureMetaValue}>{formatSchedule(item.schedule)}</Text>
                     </View>
                     <View style={styles.signatureStockColumn}>
-                      <Text style={styles.signatureMetaLabel}>RESERVOIR</Text>
-                      <Text style={[styles.signatureStock, isLow && styles.signatureLow]}>{inventoryItem ? `${inventoryItem.remaining_amount} ${inventoryItem.unit}` : 'NOT TRACKED'}</Text>
+                      <Text style={styles.signatureMetaLabel}>Inventory</Text>
+                      <Text style={[styles.signatureStock, isLow && styles.signatureLow]}>{inventoryItem ? `${inventoryItem.remaining_amount} ${inventoryItem.unit}` : 'Not tracked'}</Text>
                     </View>
                   </View>
                   {inventoryItem ? (
@@ -622,7 +614,7 @@ export default function ProtocolScreen() {
                       <View style={styles.signatureReservoirTrack}>
                         <View style={[styles.signatureReservoirFill, { width: `${fraction}%` as `${number}%`, backgroundColor: isLow ? colors.warning : colors.accent }]} />
                       </View>
-                      <Text style={styles.signatureReservoirFoot}>{isLow ? 'LOW STOCK · ' : ''}{Math.round(fraction)}% OF ORIGINAL CONTAINER QUANTITY</Text>
+                      <Text style={styles.signatureReservoirFoot}>{isLow ? 'Low stock · ' : ''}{Math.round(fraction)}% of starting quantity</Text>
                     </View>
                   ) : null}
                   <View style={{ gap: 9 }}>
@@ -657,8 +649,8 @@ export default function ProtocolScreen() {
                           </>
                         )}
                         <View style={styles.protocolActions}>
-                          <Pressable accessibilityRole="button" disabled={busy} style={styles.secondaryAction} onPress={() => setReservoirEditorId(null)}><Text style={styles.secondaryActionText}>CANCEL</Text></Pressable>
-                          <Pressable accessibilityRole="button" disabled={busy} style={styles.primaryInline} onPress={() => void saveReservoir(item)}><Text style={styles.primaryText}>SAVE</Text></Pressable>
+                          <Pressable accessibilityRole="button" disabled={busy} style={styles.secondaryAction} onPress={() => setReservoirEditorId(null)}><Text style={styles.secondaryActionText}>Cancel</Text></Pressable>
+                          <Pressable accessibilityRole="button" disabled={busy} style={styles.primaryInline} onPress={() => void saveReservoir(item)}><Text style={styles.primaryText}>Save</Text></Pressable>
                         </View>
                       </View>
                     ) : null}
@@ -668,7 +660,7 @@ export default function ProtocolScreen() {
                       <Text style={styles.signatureEditText}>EDIT DETAILS  ↗</Text>
                     </Pressable>
                     <Pressable accessibilityRole="button" accessibilityLabel={item.active === false ? `Resume ${item.name}` : `Pause ${item.name}`} style={styles.signaturePauseButton} disabled={busy} onPress={() => void toggleItem(item)}>
-                      <Text style={styles.signaturePauseText}>{item.active === false ? 'RESUME' : 'PAUSE'}</Text>
+                      <Text style={styles.signaturePauseText}>{item.active === false ? 'RESUME' : 'Pause'}</Text>
                     </Pressable>
                   </View>
                   <Pressable accessibilityRole="button" accessibilityLabel={`Archive ${item.name}`} disabled={busy} style={styles.archiveAction} onPress={() => confirmArchive(item)}><Text style={styles.archiveActionText}>ARCHIVE SUBSTANCE · PRESERVE HISTORY</Text></Pressable>
@@ -711,8 +703,8 @@ export default function ProtocolScreen() {
                       ) : null}
                       <Text style={styles.scheduleHint}>New settings apply to future tracking. Your existing recorded entries are preserved.</Text>
                       <View style={styles.builderNav}>
-                        <Pressable accessibilityRole="button" style={styles.backButton} disabled={busy} onPress={() => setEditingScheduleId(null)}><Text style={styles.backText}>CANCEL</Text></Pressable>
-                        <Pressable accessibilityRole="button" style={[styles.primary, styles.flex]} disabled={busy} onPress={() => void saveScheduleEdit()}><Text style={styles.primaryText}>{busy ? 'SAVING…' : 'SAVE SCHEDULE'}</Text></Pressable>
+                        <Pressable accessibilityRole="button" style={styles.backButton} disabled={busy} onPress={() => setEditingScheduleId(null)}><Text style={styles.backText}>Cancel</Text></Pressable>
+                        <Pressable accessibilityRole="button" style={[styles.primary, styles.flex]} disabled={busy} onPress={() => void saveScheduleEdit()}><Text style={styles.primaryText}>{busy ? 'Saving…' : 'SAVE SCHEDULE'}</Text></Pressable>
                       </View>
                     </View>
                   ) : null}
@@ -726,12 +718,12 @@ export default function ProtocolScreen() {
                         <TextInput accessibilityLabel="Dose amount" style={[styles.input, styles.flex]} keyboardType="decimal-pad" value={editDose} onChangeText={setEditDose} />
                         <TextInput accessibilityLabel="Dose unit" style={[styles.input, styles.flex]} value={editUnit} onChangeText={setEditUnit} />
                       </View>
-                      <Text style={styles.smallLabel}>ROUTE</Text>
+                      <Text style={styles.smallLabel}>Route</Text>
                       <View style={styles.chips}>{ROUTES.map((kind) => <Pressable key={kind} accessibilityRole="button" accessibilityState={{ selected: editRoute === kind }} style={[styles.chip, editRoute === kind && styles.chipActive]} onPress={() => setEditRoute(kind)}><Text style={[styles.chipText, editRoute === kind && styles.chipTextActive]}>{kind}</Text></Pressable>)}</View>
                       <Text style={styles.scheduleHint}>Changing units will not convert previously recorded inventory or dose history.</Text>
                       <View style={styles.builderNav}>
-                        <Pressable style={styles.backButton} disabled={busy} onPress={() => setEditingItemId(null)}><Text style={styles.backText}>CANCEL</Text></Pressable>
-                        <Pressable style={[styles.primary, styles.flex]} disabled={busy} onPress={() => void saveItemEdit()}><Text style={styles.primaryText}>{busy ? 'SAVING…' : 'SAVE DETAILS'}</Text></Pressable>
+                        <Pressable style={styles.backButton} disabled={busy} onPress={() => setEditingItemId(null)}><Text style={styles.backText}>Cancel</Text></Pressable>
+                        <Pressable style={[styles.primary, styles.flex]} disabled={busy} onPress={() => void saveItemEdit()}><Text style={styles.primaryText}>{busy ? 'Saving…' : 'SAVE DETAILS'}</Text></Pressable>
                       </View>
                     </View>
                   ) : null}
@@ -751,7 +743,7 @@ export default function ProtocolScreen() {
                   <Text style={styles.cardDetail}>{item.category || 'Other'} · Archived</Text>
                 </View>
                 <Pressable accessibilityRole="button" accessibilityLabel={`Restore ${item.name}`} disabled={busy} style={styles.activateButton} onPress={() => void archiveItem(item.id, false)}>
-                  <Text style={styles.activateText}>RESTORE</Text>
+                  <Text style={styles.activateText}>Restore</Text>
                 </Pressable>
               </View>
             ))}
@@ -768,11 +760,8 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   page: { padding: layout.pageInset, paddingBottom: layout.pageBottom },
   launchRow: { flexDirection: 'row', gap: 8, marginBottom: spacing.md },
-  launchButton: { flex: 1, minWidth: 0, paddingVertical: 14, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accentSoft, borderColor: colors.accentBorder, borderWidth: 1, borderRadius: radius.md },
-  launchText: { color: colors.accent, fontWeight: '900', fontSize: 10, letterSpacing: .7, textAlign: 'center' },
-  eyebrow: { color: colors.accent, fontSize: type.eyebrow, fontWeight: '900', letterSpacing: 1.8, marginTop: spacing.md },
-  title: { color: colors.text, fontSize: type.title, fontWeight: '700', letterSpacing: -1.4, marginTop: spacing.sm },
-  body: { color: colors.muted, fontSize: type.body, lineHeight: 21, marginTop: spacing.sm, marginBottom: spacing.md },
+  launchButton: { flex: 1, minHeight: 48, minWidth: 0, paddingVertical: 14, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accentSoft, borderColor: colors.accentBorder, borderWidth: 1, borderRadius: radius.md },
+  launchText: { color: colors.accent, fontWeight: '700', fontSize: 13, letterSpacing: 0, textAlign: 'center' },
   card: { backgroundColor: 'transparent', borderRadius: 0, padding: layout.cardInset, borderWidth: 0, borderColor: 'transparent', gap: 12, marginBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border, },
   cardTitle: { color: colors.text, fontSize: 18, fontWeight: '800' },
   cardDetail: { color: colors.muted, marginTop: 4, lineHeight: 20 },
@@ -781,8 +770,8 @@ const styles = StyleSheet.create({
   twoCol: { flexDirection: 'row', gap: 10 },
   flex: { flex: 1 },
   primary: { backgroundColor: colors.accent, borderRadius: radius.md, paddingVertical: 15, alignItems: 'center', marginTop: 2 },
-  primaryText: { color: '#03111f', fontWeight: '900', letterSpacing: 1 },
-  smallLabel: { color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.5, marginTop: 4 },
+  primaryText: { color: '#03111f', fontWeight: '700', fontSize: 15 },
+  smallLabel: { color: colors.muted, fontSize: 12, fontWeight: '700', letterSpacing: .5, marginTop: 4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { borderRadius: 999, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 11, paddingVertical: 8, backgroundColor: colors.panel2 },
   chipActive: { borderColor: colors.accentBorder, backgroundColor: colors.accentSoft },
@@ -793,18 +782,12 @@ const styles = StyleSheet.create({
   dayActive: { borderColor: colors.accentBorder, backgroundColor: colors.accentSoft },
   dayText: { color: colors.muted, fontWeight: '800' },
   protocolPicker: { backgroundColor: 'transparent', padding: layout.cardInset, borderRadius: 0, borderColor: 'transparent', borderWidth: 0, marginBottom: spacing.md, gap: 12, borderBottomWidth: 1, borderBottomColor: colors.border, },
-  stockBlock: { alignItems: 'flex-end', maxWidth: 100, gap: 7 },
-  itemStatus: { color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
-  smallItemAction: { borderColor: colors.accentBorder, backgroundColor: colors.accentSoft, borderWidth: 1, borderRadius: radius.sm, minWidth: 77, minHeight: 34, alignItems: 'center', justifyContent: 'center' },
-  smallItemActionText: { color: colors.accent, fontSize: 10, fontWeight: '900' },
   editCard: { backgroundColor: colors.panel2, borderRadius: radius.lg, padding: spacing.md, borderColor: colors.accentBorder, borderWidth: 1, marginTop: 6, gap: 12 },
   libraryHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingVertical: spacing.md, gap: spacing.sm },
-  libraryKicker: { color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1.5, marginBottom: 5 },
-  libraryTitle: { color: colors.text, fontSize: 23, fontWeight: '900', letterSpacing: -0.7 },
+  libraryTitle: { color: colors.text, fontSize: 23, fontWeight: '700', letterSpacing: -0.7 },
   librarySubtitle: { color: colors.muted, fontSize: 12, marginTop: 4 },
-  libraryIndex: { color: colors.subtle, fontSize: 9, fontWeight: '900', letterSpacing: 1.3 },
   scheduleEditTrigger: { backgroundColor: colors.bgElevated, borderWidth: 1, borderColor: colors.accentBorder, borderRadius: radius.md, minHeight: 55, paddingVertical: 11, paddingHorizontal: 13, justifyContent: 'center', gap: 4 },
-  scheduleEditTriggerText: { color: colors.accent, fontWeight: '900', fontSize: 11, letterSpacing: 0.7 },
+  scheduleEditTriggerText: { color: colors.accent, fontWeight: '700', fontSize: 11, letterSpacing: 0.7 },
   scheduleEditSubtext: { color: colors.muted, fontSize: 11, lineHeight: 16 },
   scheduleEditor: { backgroundColor: colors.panel2, borderWidth: 1, borderColor: colors.accentBorder, padding: spacing.md, borderRadius: radius.lg, gap: spacing.md },
   scheduleHint: { color: colors.muted, fontSize: 11, lineHeight: 17 },
@@ -813,16 +796,16 @@ const styles = StyleSheet.create({
   signatureAccent: { position: 'absolute', left: 0, top: 22, bottom: 22, width: 3, borderRadius: 3, backgroundColor: colors.accent },
   signatureTop: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   signatureHeaderText: { flex: 1, minWidth: 0, gap: 6 },
-  signatureCategory: { color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 },
-  signatureName: { color: colors.text, fontSize: 21, fontWeight: '900', lineHeight: 26, letterSpacing: -0.5, flexShrink: 1 },
+  signatureCategory: { color: colors.accent, fontSize: 9, fontWeight: '700', letterSpacing: .4 },
+  signatureName: { color: colors.text, fontSize: 21, fontWeight: '700', lineHeight: 26, letterSpacing: -0.5, flexShrink: 1 },
   signatureAmount: { color: colors.muted, fontSize: 12, lineHeight: 17, textTransform: 'capitalize' },
   signatureDivider: { height: 1, backgroundColor: colors.border },
   signatureMeta: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   signatureMetaColumn: { flex: 1, minWidth: 0, gap: 5 },
   signatureStockColumn: { flexShrink: 1, alignItems: 'flex-end', maxWidth: '43%', gap: 5 },
-  signatureMetaLabel: { color: colors.subtle, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 },
+  signatureMetaLabel: { color: colors.subtle, fontSize: 9, fontWeight: '700', letterSpacing: .4 },
   signatureMetaValue: { color: colors.text, fontSize: 12, lineHeight: 18, fontWeight: '700' },
-  signatureStock: { color: colors.accent, fontSize: 13, fontWeight: '900', fontVariant: ['tabular-nums'], textAlign: 'right' },
+  signatureStock: { color: colors.accent, fontSize: 13, fontWeight: '700', fontVariant: ['tabular-nums'], textAlign: 'right' },
   signatureLow: { color: colors.warning },
   signatureReservoir: { gap: 7 },
   signatureReservoirTrack: { height: 5, borderRadius: radius.pill, backgroundColor: colors.border, overflow: 'hidden' },
@@ -830,71 +813,66 @@ const styles = StyleSheet.create({
   signatureReservoirFoot: { color: colors.subtle, fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
   signatureActions: { flexDirection: 'row', gap: 9 },
   signatureEditButton: { flex: 1, minHeight: 44, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, backgroundColor: colors.accentSoft, borderRadius: radius.md, borderColor: colors.accentBorder, borderWidth: 1 },
-  signatureEditText: { color: colors.accent, fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
+  signatureEditText: { color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
   signaturePauseButton: { minWidth: 92, minHeight: 44, justifyContent: 'center', alignItems: 'center', borderRadius: radius.md, borderColor: colors.border, borderWidth: 1 },
-  signaturePauseText: { color: colors.muted, fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
-  itemCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, backgroundColor: 'transparent', borderRadius: 0, padding: spacing.md, borderWidth: 0, borderColor: 'transparent', marginTop: 8, borderBottomWidth: 1, borderBottomColor: colors.border, },
+  signaturePauseText: { color: colors.muted, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
   itemTitle: { color: colors.text, fontSize: 16, fontWeight: '800' },
-  stock: { color: colors.accent, fontWeight: '800', fontSize: 12, maxWidth: 92, textAlign: 'right', flexShrink: 1 },
   protocolDateBand: { flexDirection: 'row', gap: spacing.sm, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border },
   protocolDateColumn: { flex: 1, minWidth: 0, gap: 5 },
   protocolDateText: { color: colors.text, fontWeight: '800', fontSize: 12, fontVariant: ['tabular-nums'] },
   protocolEditPanel: { gap: 11, padding: spacing.md, backgroundColor: colors.bgElevated, borderColor: colors.accentBorder, borderWidth: 1, borderRadius: radius.lg },
   protocolEditTrigger: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, backgroundColor: colors.accentSoft, borderRadius: radius.md, borderWidth: 1, borderColor: colors.accentBorder },
-  protocolEditTriggerText: { color: colors.accent, fontSize: 11, fontWeight: '900', letterSpacing: .6 },
+  protocolEditTriggerText: { color: colors.accent, fontSize: 11, fontWeight: '700', letterSpacing: .6 },
   protocolEditHint: { color: colors.muted, fontSize: 11, lineHeight: 17 },
   primaryInline: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, borderRadius: radius.md },
   protocolActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   secondaryAction: { flex: 1, borderWidth: 1, borderColor: colors.accentBorder, borderRadius: radius.md, paddingVertical: 11, alignItems: 'center', backgroundColor: colors.accentSoft },
-  secondaryActionText: { color: colors.accent, fontWeight: '900', fontSize: 11, letterSpacing: .8 },
+  secondaryActionText: { color: colors.accent, fontWeight: '700', fontSize: 11, letterSpacing: .8 },
   archiveAction: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingVertical: 11, alignItems: 'center' },
-  archiveActionText: { color: colors.muted, fontWeight: '900', fontSize: 11, letterSpacing: .8 },
+  archiveActionText: { color: colors.muted, fontWeight: '700', fontSize: 11, letterSpacing: .8 },
   protocolRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'transparent', borderWidth: 0, borderColor: 'transparent', borderRadius: 0, padding: spacing.md, marginBottom: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border, },
   activateButton: { borderRadius: radius.md, backgroundColor: colors.accentSoft, borderWidth: 1, borderColor: colors.accentBorder, paddingHorizontal: 12, paddingVertical: 9 },
-  activateText: { color: colors.accent, fontWeight: '900', fontSize: 10, letterSpacing: .7 },
+  activateText: { color: colors.accent, fontWeight: '700', fontSize: 10, letterSpacing: .7 },
   mapCard: { backgroundColor: 'transparent', borderRadius: 0, padding: spacing.md, borderWidth: 0, borderColor: 'transparent', marginBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border, },
   mapHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
-  mapTitle: { color: colors.text, fontSize: 22, fontWeight: '900', marginTop: 4, letterSpacing: -.5 },
+  mapTitle: { color: colors.text, fontSize: 22, fontWeight: '700', marginTop: 4, letterSpacing: -.5 },
   mapLegendPill: { backgroundColor: colors.accentSoft, borderWidth: 1, borderColor: colors.accentBorder, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 6 },
-  mapLegendText: { color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  mapLegendText: { color: colors.accent, fontSize: 9, fontWeight: '700', letterSpacing: 1 },
   weekStrip: { flexDirection: 'row', justifyContent: 'space-between', gap: 5, marginTop: spacing.lg },
   dayColumn: { flex: 1, alignItems: 'center', borderRadius: radius.md, paddingVertical: 9, paddingHorizontal: 2, backgroundColor: colors.bgElevated, borderWidth: 1, borderColor: colors.border },
   dayColumnToday: { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder },
-  mapDayLabel: { color: colors.subtle, fontSize: 8, fontWeight: '900', letterSpacing: .7 },
+  mapDayLabel: { color: colors.subtle, fontSize: 8, fontWeight: '700', letterSpacing: .7 },
   mapDayLabelToday: { color: colors.accent },
-  mapDayNumber: { color: colors.text, fontSize: 16, lineHeight: 20, fontWeight: '900', marginTop: 2, fontVariant: ['tabular-nums'] },
+  mapDayNumber: { color: colors.text, fontSize: 16, lineHeight: 20, fontWeight: '700', marginTop: 2, fontVariant: ['tabular-nums'] },
   mapDayNumberToday: { color: colors.accent },
   loadTrack: { height: 34, width: 5, justifyContent: 'flex-end', backgroundColor: colors.border, borderRadius: radius.pill, overflow: 'hidden', marginTop: 7 },
   loadFill: { width: '100%', backgroundColor: colors.accent, borderRadius: radius.pill },
   loadFillEmpty: { height: 2, backgroundColor: colors.subtle },
-  mapCount: { color: colors.subtle, fontSize: 9, fontWeight: '900', marginTop: 5, fontVariant: ['tabular-nums'] },
+  mapCount: { color: colors.subtle, fontSize: 9, fontWeight: '700', marginTop: 5, fontVariant: ['tabular-nums'] },
   mapCountActive: { color: colors.accent },
   mapDetailsToggle: { paddingVertical: 14, alignItems: 'center', marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
-  mapDetailsToggleText: { fontSize: 10, fontWeight: '900', letterSpacing: 1.1, color: colors.accent },
+  mapDetailsToggleText: { fontSize: 10, fontWeight: '700', letterSpacing: .4, color: colors.accent },
   mapScheduleList: { marginTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
   mapScheduleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: 11 },
   mapScheduleDivider: { borderTopWidth: 1, borderTopColor: colors.border },
   mapScheduleDay: { width: 38, alignItems: 'center' },
-  mapScheduleDayText: { color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: .8 },
-  mapScheduleDate: { color: colors.text, fontSize: 18, lineHeight: 22, fontWeight: '900', fontVariant: ['tabular-nums'] },
+  mapScheduleDayText: { color: colors.accent, fontSize: 9, fontWeight: '700', letterSpacing: .8 },
+  mapScheduleDate: { color: colors.text, fontSize: 18, lineHeight: 22, fontWeight: '700', fontVariant: ['tabular-nums'] },
   mapScheduleItems: { color: colors.text, fontSize: 13, fontWeight: '800' },
   mapScheduleMeta: { color: colors.muted, fontSize: 10, marginTop: 3, fontVariant: ['tabular-nums'] },
   addItemLaunch: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.bgElevated, borderRadius: radius.xl, padding: layout.cardInset, borderWidth: 1, borderColor: colors.border, marginBottom: spacing.xl },
   addIcon: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accentSoft, borderWidth: 1, borderColor: colors.accentBorder },
   addIconText: { color: colors.accent, fontSize: 23, lineHeight: 27 },
   chevron: { color: colors.subtle, fontSize: 28 },
-  builderCard: { backgroundColor: colors.panel, borderRadius: radius.xl, padding: layout.cardInset, borderWidth: 1, borderColor: colors.accentBorder, gap: spacing.md, marginBottom: spacing.xl },
-  modalToolbar: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  closeButton: { minHeight: 44, minWidth: 72, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel2 },
+  builderCard: { backgroundColor: colors.panel, borderRadius: radius.xl, padding: layout.cardInset, borderWidth: 1, borderColor: colors.border, gap: spacing.md, marginBottom: spacing.xl },
   builderTitle: { color: colors.text, fontSize: 22, fontWeight: '800', marginTop: 5 },
-  closeText: { color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
   progress: { height: 3, borderRadius: 2, backgroundColor: colors.border, overflow: 'hidden', marginBottom: spacing.sm },
   progressFill: { height: 3, backgroundColor: colors.accent, borderRadius: 2 },
   builderSummary: { backgroundColor: colors.bgElevated, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md },
-  builderSummaryName: { color: colors.text, fontSize: 16, fontWeight: '900' },
+  builderSummaryName: { color: colors.text, fontSize: 16, fontWeight: '700' },
   builderNav: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
   backButton: { paddingHorizontal: 16, paddingVertical: 15, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border },
-  backText: { color: colors.muted, fontWeight: '900', fontSize: 11, letterSpacing: .8 },
+  backText: { color: colors.muted, fontWeight: '700', fontSize: 11, letterSpacing: .8 },
   reviewBox: { backgroundColor: colors.bgElevated, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: spacing.md },
   reviewName: { color: colors.text, fontSize: 20, fontWeight: '800' },
   disabled: { opacity: .55 }

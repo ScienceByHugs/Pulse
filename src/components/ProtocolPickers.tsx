@@ -32,7 +32,7 @@ export function ProtocolDatePicker({ label, value, onChange, optional = false }:
       setCursor(new Date(y || new Date().getFullYear(), (m || new Date().getMonth()+1)-1,1,12));
       setOpen(true);
     }}>
-      <Text style={styles.controlLabel}>{label.toUpperCase()}</Text>
+      <Text style={styles.controlLabel}>{label}</Text>
       <Text style={styles.value}>{displayProtocolDate(value)}  ▾</Text>
     </Pressable>
     <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -74,15 +74,15 @@ export function ProtocolTimePicker({ label, value, onChange }: { label: string; 
     <Pressable accessibilityRole="button" accessibilityLabel={`Select ${label}`} style={styles.control} onPress={() => {
       const h=Number(value.split(':')[0] || 8), m=Number(value.split(':')[1] || 0);
       setHour(h); setMinute(m); setPeriod(h >= 12 ? 'PM' : 'AM'); setOpen(true);
-    }}><Text style={styles.controlLabel}>{label.toUpperCase()}</Text><Text style={styles.value}>{formatted} ▾</Text></Pressable>
+    }}><Text style={styles.controlLabel}>{label}</Text><Text style={styles.value}>{formatted} ▾</Text></Pressable>
     <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
       <View style={styles.overlay}><View style={styles.dialog}>
         <Text style={styles.title}>{label}</Text>
         <View style={styles.monthRow}>{(['12','24'] as const).map(m => <Pressable key={m} style={[styles.option,mode===m && styles.selected]} onPress={() => setMode(m)}><Text style={styles.value}>{m === '12' ? '12-hour (AM/PM)' : '24-hour'}</Text></Pressable>)}</View>
         <Text style={styles.heading}>{mode === '24' ? pad(hour) : showHour}:{pad(minute)} {mode==='12' ? period : ''}</Text>
-        <Text style={styles.controlLabel}>HOUR</Text>
+        <Text style={styles.controlLabel}>Hour</Text>
         <ScrollView horizontal style={styles.hourScroll}>{hours.map(h=><Pressable key={h} style={[styles.option,showHour===h && styles.selected]} onPress={()=>selectHour(h)}><Text style={styles.value}>{pad(h)}</Text></Pressable>)}</ScrollView>
-        <Text style={styles.controlLabel}>MINUTE</Text>
+        <Text style={styles.controlLabel}>Minute</Text>
         <ScrollView horizontal style={styles.hourScroll}>{Array.from({length:60},(_,i)=>i).map(m=><Pressable key={m} style={[styles.option,minute===m && styles.selected]} onPress={()=>setMinute(m)}><Text style={styles.value}>{pad(m)}</Text></Pressable>)}</ScrollView>
         {mode==='12' ? <View style={styles.monthRow}>{(['AM','PM'] as const).map(p=><Pressable key={p} style={[styles.option,period===p && styles.selected]} onPress={()=>changePeriod(p)}><Text style={styles.value}>{p}</Text></Pressable>)}</View> : null}
         <Pressable style={[styles.action,styles.selected]} onPress={()=>{onChange(`${pad(hour)}:${pad(minute)}`);setOpen(false);}}><Text style={styles.value}>Save time</Text></Pressable>
@@ -94,7 +94,7 @@ export function ProtocolTimePicker({ label, value, onChange }: { label: string; 
 }
 const styles=StyleSheet.create({
   control:{backgroundColor:bg,borderColor:'#344F5E',borderWidth:1,borderRadius:12,padding:13,marginVertical:5,minWidth:0,flexShrink:1},
-  controlLabel:{color:cyan,fontSize:10,fontWeight:'800',letterSpacing:1.2,marginBottom:6},
+  controlLabel:{color:'#9AABBA',fontSize:12,fontWeight:'600',letterSpacing:0,marginBottom:6},
   value:{color:ink,fontSize:14,fontWeight:'600'},
   overlay:{flex:1,backgroundColor:'#000B',justifyContent:'center',padding:18},
   dialog:{backgroundColor:bg,borderRadius:20,padding:18,maxHeight:'85%'},

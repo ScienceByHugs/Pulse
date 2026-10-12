@@ -6,22 +6,22 @@ import { colors, layout, radius, spacing, type } from '@/theme';
 
 const sections = [
   {
-    title: 'YOUR WORKSPACE',
+    title: 'Tracking',
     links: [
       { label: 'Today', caption: 'Daily overview and quick logging', route: '/(tabs)', path: '/' },
-      { label: 'Protocol Library', caption: 'Substances and schedules', route: '/(tabs)/protocol', path: '/protocol' },
+      { label: 'Protocols', caption: 'Substances and schedules', route: '/(tabs)/protocol', path: '/protocol' },
       { label: 'Timeline', caption: 'Recorded history and cycles', route: '/(tabs)/log', path: '/log' },
       { label: 'Insights', caption: 'Activity and supply signals', route: '/(tabs)/insights', path: '/insights' }
     ]
   },
   {
-    title: 'CONNECTIONS',
+    title: 'Connections',
     links: [
       { label: 'Calendar', caption: 'Private opt-in schedule sync', route: '/calendar', path: '/calendar' }
     ]
   },
   {
-    title: 'ACCOUNT',
+    title: 'Account',
     links: [
       { label: 'Account & Privacy', caption: 'Profile, security and your data', route: '/(tabs)/you', path: '/you' },
       { label: 'About & Safety', caption: 'Tracking boundaries and privacy controls', route: '/about', path: '/about' }
@@ -49,16 +49,15 @@ export function PulseMenu() {
           <View style={styles.panel}>
             <View style={styles.panelTop}>
               <View style={styles.panelHeading}>
-                <Text style={styles.panelTitle}>Explore Pulse.</Text>
-                <Text style={styles.panelSubtitle}>YOUR WORKSPACE, ORGANIZED.</Text>
+                <Text style={styles.panelTitle}>Pulse</Text>
+                <Text style={styles.panelSubtitle}>Your tracking, in one place.</Text>
               </View>
               <Pressable accessibilityRole="button" accessibilityLabel="Close navigation" onPress={() => setOpen(false)} style={styles.close}><Text style={styles.closeText}>✕</Text></Pressable>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-              {sections.map((section, sectionIndex) => (
+              {sections.map((section) => (
                 <View key={section.title} style={styles.section}>
                   <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionIndex}>{String(sectionIndex + 1).padStart(2, '0')}</Text>
                     <Text style={styles.sectionTitle}>{section.title}</Text>
                     <View style={styles.sectionRule} />
                   </View>
@@ -88,10 +87,7 @@ export function PulseMenu() {
                   })}
                 </View>
               ))}
-              <View style={styles.footerBlock}>
-                <Text style={styles.footer}>YOUR PROTOCOLS. YOUR RHYTHM. YOUR RECORD.</Text>
-                <Text style={styles.footerSub}>SCIENCE BY HUGS · PULSE 02</Text>
-              </View>
+
             </ScrollView>
           </View>
         </View>
@@ -106,24 +102,20 @@ const styles = StyleSheet.create({
   wordmarkDot: { color: colors.accent },
   wordmarkByline: { color: '#A9BDCD', fontSize: 10, fontWeight: '500', marginTop: 1, letterSpacing: 0.1 },
   brandRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 54, marginBottom: layout.sectionGap },
-  brand: { color: colors.accent, fontSize: type.eyebrow, fontWeight: '900', letterSpacing: 2 },
-  pulse: { color: colors.text, fontSize: 21, fontWeight: '900', letterSpacing: 4, marginTop: 3 },
-  version: { color: colors.muted, fontSize: 9, letterSpacing: 1 },
   trigger: { minHeight: layout.minTapHeight, width: 46, borderWidth: 0, backgroundColor: 'transparent', borderRadius: radius.md, justifyContent: 'center', alignItems: 'center', gap: 5 },
   bar: { width: 18, height: 2, backgroundColor: colors.accent, borderRadius: 2 },
   scrim: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-start' },
   panel: { marginHorizontal: 12, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: '#0B1727', flexShrink: 1, overflow: 'hidden' },
   panelTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', padding: layout.cardInset, borderBottomWidth: 1, borderBottomColor: colors.border },
   panelHeading: { flex: 1, minWidth: 0 },
-  panelTitle: { color: colors.text, fontSize: 27, fontWeight: '900', letterSpacing: -0.9, marginTop: 7 },
-  panelSubtitle: { color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 1.2, marginTop: 4 },
+  panelTitle: { color: colors.text, fontSize: 27, fontWeight: '700', letterSpacing: -0.9, marginTop: 7 },
+  panelSubtitle: { color: colors.muted, fontSize: 13, fontWeight: '700', letterSpacing: 0, marginTop: 4 },
   close: { minHeight: 44, width: 44, justifyContent: 'center', alignItems: 'center' },
   closeText: { color: colors.text, fontSize: 23 },
   scrollContent: { padding: layout.cardInset, paddingBottom: 26, gap: spacing.lg },
   section: { gap: 7 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 3 },
-  sectionIndex: { color: colors.accent, fontSize: 10, fontWeight: '900', fontVariant: ['tabular-nums'] },
-  sectionTitle: { color: '#A9BDCD', fontSize: 10, fontWeight: '900', letterSpacing: 1.3 },
+  sectionTitle: { color: '#A9BDCD', fontSize: 10, fontWeight: '700', letterSpacing: .2 },
   sectionRule: { flex: 1, height: 1, backgroundColor: colors.border },
   item: { flexDirection: 'row', alignItems: 'center', minHeight: 59, paddingHorizontal: 11, paddingVertical: 9, borderRadius: radius.md, gap: 10, borderWidth: 1, borderColor: 'transparent' },
   itemActive: { borderColor: colors.accentBorder, backgroundColor: colors.accentSoft },
@@ -135,7 +127,4 @@ const styles = StyleSheet.create({
   itemCaption: { color: '#A9BDCD', fontSize: 12, lineHeight: 18 },
   arrow: { color: colors.subtle, fontSize: 18, fontWeight: '700' },
   arrowActive: { color: colors.accent, fontSize: 10 },
-  footerBlock: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 15, gap: 6 },
-  footer: { color: colors.accent, fontSize: 10, letterSpacing: 0.8, fontWeight: '900' },
-  footerSub: { color: colors.subtle, fontSize: 9, letterSpacing: 1.1 }
 });

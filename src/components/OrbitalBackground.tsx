@@ -25,7 +25,7 @@ export function OrbitalBackground() {
             height: size,
             borderRadius: size,
             backgroundColor: colors.accent,
-            opacity: size === 2 ? 0.19 : 0.13
+            opacity: size === 2 ? 0.10 : 0.06
           }}
         />
       ))}
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     height: 440,
     borderRadius: 220,
     backgroundColor: '#122640',
-    opacity: 0.35
+    opacity: 0.125
   },
   arc: {
     position: 'absolute',
@@ -53,6 +53,6 @@ const styles = StyleSheet.create({
     borderRadius: 235,
     borderWidth: 1,
     borderColor: '#36516C',
-    opacity: 0.2
+    opacity: 0.12
   }
 });

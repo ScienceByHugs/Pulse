@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/PageHeader';
 import { LogEditor } from '@/components/LogEditor';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -199,9 +200,7 @@ export default function LogScreen() {
       <OrbitalBackground />
       <ScrollView contentContainerStyle={styles.page} showsVerticalScrollIndicator={false}>
         <PulseMenu />
-        <Text style={styles.eyebrow}>YOUR HISTORY</Text>
-        <Text style={styles.title}>Timeline</Text>
-        <Text style={styles.body}>A clear record of what you logged, when you logged it, and where.</Text>
+        <PageHeader title="Timeline" description="Review and correct your recorded history." />
         {historyTruncated ? (
           <View style={styles.historyNotice}>
             <Text style={styles.historyNoticeTitle}>OLDER RECORDS MAY BE MISSING</Text>
@@ -214,7 +213,7 @@ export default function LogScreen() {
           <View style={styles.yearAtlasCard}>
             <View style={styles.calendarHeader}>
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={styles.signalEyebrow}>ANNUAL ATLAS / RECORDED ACTIVITY</Text>
+                <Text style={styles.signalEyebrow}>Recorded activity</Text>
                 <Text style={styles.yearAtlasHeading}>{yearValue}</Text>
                 <Text style={styles.yearAtlasSubheading}>A month-by-month view of your recorded history.</Text>
               </View>
@@ -249,7 +248,7 @@ export default function LogScreen() {
           <View style={styles.weekGridCard}>
             <View style={styles.calendarHeader}>
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={styles.signalEyebrow}>WEEKLY ACTIVITY / RECORD</Text>
+                <Text style={styles.signalEyebrow}>Recorded activity</Text>
                 <Text style={styles.weekGridTitle}>Your week at a glance</Text>
                 <Text style={styles.weekGridRange}>{weekLabel}</Text>
               </View>
@@ -320,7 +319,7 @@ export default function LogScreen() {
         <View style={styles.signalCard}>
           <View style={styles.signalHeader}>
             <View>
-              <Text style={styles.signalEyebrow}>ACTIVITY SIGNAL</Text>
+              <Text style={styles.signalEyebrow}>Recorded activity</Text>
               <Text style={styles.signalTitle}>{viewMode === 'cycle' ? 'Cycle activity · last 7 days' : 'Last 7 days · overview'}</Text>
             </View>
             <Text style={styles.signalTotal}>{viewMode === 'cycle' ? cycleEntries.length : filteredEntries.length}</Text>
@@ -365,7 +364,7 @@ export default function LogScreen() {
                   <View style={styles.statusRow}>
                     <View style={styles.statusDot} />
                     <Text style={styles.statusText}>{(entry.status || 'logged').toUpperCase()}</Text>
-                    <Pressable accessibilityRole="button" accessibilityLabel={`Edit ${entry.protocol_items?.name ?? 'entry'}`} style={{minHeight:44,justifyContent:'center',paddingHorizontal:12,marginLeft:'auto'}} onPress={() => setEditingEntry(entry)}><Text style={styles.statusText}>EDIT / UNDO</Text></Pressable>
+                    <Pressable accessibilityRole="button" accessibilityLabel={`Edit ${entry.protocol_items?.name ?? 'entry'}`} style={{minHeight:44,justifyContent:'center',paddingHorizontal:12,marginLeft:'auto'}} onPress={() => setEditingEntry(entry)}><Text style={styles.statusText}>Edit / Undo</Text></Pressable>
                   </View>
                 </View>
               </View>
@@ -382,44 +381,44 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   page: { padding: layout.pageInset, paddingBottom: layout.pageBottom },
   historyNotice: { backgroundColor: colors.bgElevated, padding: spacing.md, marginBottom: spacing.md, borderWidth: 1, borderColor: colors.warning, borderRadius: radius.lg, gap: 5 },
-  historyNoticeTitle: { color: colors.warning, fontSize: 10, fontWeight: '900', letterSpacing: .9 },
+  historyNoticeTitle: { color: colors.warning, fontSize: 10, fontWeight: '700', letterSpacing: .9 },
   historyNoticeBody: { color: colors.muted, fontSize: 12, lineHeight: 18 },
   modeStrip: { flexDirection: 'row', gap: 5, marginBottom: 14 },
   yearAtlasCard: { backgroundColor: 'transparent', borderRadius: 0, borderWidth: 0, borderColor: 'transparent', padding: spacing.md, marginBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border, },
-  yearAtlasHeading: { color: colors.text, fontSize: 30, fontWeight: '900', lineHeight: 36, marginTop: 4, fontVariant: ['tabular-nums'] },
+  yearAtlasHeading: { color: colors.text, fontSize: 30, fontWeight: '700', lineHeight: 36, marginTop: 4, fontVariant: ['tabular-nums'] },
   yearAtlasSubheading: { color: colors.muted, fontSize: 11, marginTop: 5, lineHeight: 16 },
   yearAtlasGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between' },
   yearAtlasTile: { width: '47.5%', borderRadius: radius.lg, backgroundColor: colors.panel, borderColor: colors.border, borderWidth: 1, padding: 12, gap: 10, minHeight: 93 },
   yearAtlasTileSelected: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
   yearAtlasTileTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  yearAtlasMonth: { color: colors.muted, fontSize: 11, fontWeight: '900', letterSpacing: 1 },
+  yearAtlasMonth: { color: colors.muted, fontSize: 11, fontWeight: '700', letterSpacing: 1 },
   yearAtlasSelectedText: { color: colors.accent },
-  yearAtlasCount: { color: colors.text, fontSize: 21, fontWeight: '900', fontVariant: ['tabular-nums'] },
+  yearAtlasCount: { color: colors.text, fontSize: 21, fontWeight: '700', fontVariant: ['tabular-nums'] },
   yearAtlasTrack: { height: 5, backgroundColor: colors.border, borderRadius: radius.pill, overflow: 'hidden' },
   yearAtlasFill: { height: '100%', borderRadius: radius.pill, backgroundColor: colors.accent },
   yearAtlasDays: { color: colors.subtle, fontSize: 9, fontWeight: '800', letterSpacing: 0.7 },
   weekGridCard: { backgroundColor: 'transparent', borderRadius: 0, borderColor: 'transparent', borderWidth: 0, padding: spacing.md, marginBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border, },
-  weekGridTitle: { color: colors.text, fontSize: 21, fontWeight: '900', marginTop: 5 },
+  weekGridTitle: { color: colors.text, fontSize: 21, fontWeight: '700', marginTop: 5 },
   weekGridRange: { color: colors.muted, fontSize: 11, marginTop: 5, fontVariant: ['tabular-nums'] },
   weekGrid: { flexDirection: 'row', gap: 4, justifyContent: 'space-between' },
   weekGridDay: { flex: 1, minWidth: 0, backgroundColor: colors.panel, borderRadius: radius.md, paddingVertical: 9, alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 5, minHeight: 135 },
   weekGridToday: { borderColor: colors.accentBorder },
   weekGridSelected: { backgroundColor: colors.accentSoft, borderColor: colors.accent },
-  weekGridDayLabel: { color: colors.subtle, fontSize: 8, fontWeight: '900' },
-  weekGridDate: { color: colors.text, fontSize: 15, fontWeight: '900', fontVariant: ['tabular-nums'] },
+  weekGridDayLabel: { color: colors.subtle, fontSize: 8, fontWeight: '700' },
+  weekGridDate: { color: colors.text, fontSize: 15, fontWeight: '700', fontVariant: ['tabular-nums'] },
   weekGridTrack: { width: 5, height: 43, backgroundColor: colors.border, borderRadius: radius.pill, justifyContent: 'flex-end', overflow: 'hidden' },
   weekGridTrackActive: { backgroundColor: colors.accentSoft },
   weekGridFill: { width: '100%', backgroundColor: colors.accent, borderRadius: radius.pill },
-  weekGridCount: { color: colors.subtle, fontSize: 10, fontWeight: '900', fontVariant: ['tabular-nums'] },
+  weekGridCount: { color: colors.subtle, fontSize: 10, fontWeight: '700', fontVariant: ['tabular-nums'] },
   weekGridHighlight: { color: colors.accent },
   calendarCard: { backgroundColor: colors.bgElevated, borderRadius: radius.xl, borderColor: colors.accentBorder, borderWidth: 1, padding: spacing.md, marginBottom: spacing.md },
   calendarHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: spacing.lg },
-  calendarMonth: { fontSize: 22, lineHeight: 29, color: colors.text, fontWeight: '900', letterSpacing: -0.5, marginTop: 5 },
+  calendarMonth: { fontSize: 22, lineHeight: 29, color: colors.text, fontWeight: '700', letterSpacing: -0.5, marginTop: 5 },
   monthNav: { width: 44, height: 44, backgroundColor: colors.accentSoft, borderWidth: 1, borderColor: colors.accentBorder, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
   monthNavText: { color: colors.accent, fontSize: 28, lineHeight: 32, fontWeight: '700' },
   calendarGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   calendarCell: { width: '14.2857%', alignItems: 'center', justifyContent: 'center', minHeight: 48, paddingVertical: 3 },
-  calendarWeekday: { color: colors.subtle, fontSize: 11, fontWeight: '900' },
+  calendarWeekday: { color: colors.subtle, fontSize: 11, fontWeight: '700' },
   calendarDay: { minHeight: 44, width: '92%', maxWidth: 46, borderRadius: radius.md, justifyContent: 'center', alignItems: 'center', gap: 3, borderWidth: 1, borderColor: 'transparent' },
   calendarToday: { borderColor: colors.accentBorder },
   calendarSelected: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
@@ -437,27 +436,24 @@ const styles = StyleSheet.create({
   cycleHint: { color: colors.muted, fontSize: 11, lineHeight: 17 },
   modeButton: { flex: 1, minWidth: 0, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingVertical: 11, alignItems: 'center', backgroundColor: colors.bgElevated },
   modeButtonActive: { borderColor: colors.accentBorder, backgroundColor: colors.accentSoft },
-  modeText: { fontSize: 8, fontWeight: '900', color: colors.muted },
+  modeText: { fontSize: 8, fontWeight: '700', color: colors.muted },
   modeTextActive: { color: colors.accent },
-  eyebrow: { color: colors.accent, fontSize: type.eyebrow, fontWeight: '900', letterSpacing: 1.8, marginTop: spacing.md },
-  title: { color: colors.text, fontSize: type.title, fontWeight: '700', letterSpacing: -1.4, marginTop: spacing.sm },
-  body: { color: colors.muted, fontSize: type.body, lineHeight: 21, marginTop: spacing.sm, marginBottom: spacing.xl, maxWidth: 340 },
   signalCard: { backgroundColor: 'transparent', borderRadius: 0, borderWidth: 0, borderColor: 'transparent', padding: spacing.lg, marginBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border, },
   signalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  signalEyebrow: { color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
-  signalTitle: { color: colors.text, fontSize: 20, fontWeight: '900', marginTop: 4 },
-  signalTotal: { color: colors.accent, fontSize: 28, lineHeight: 32, fontWeight: '900', fontVariant: ['tabular-nums'] },
+  signalEyebrow: { color: colors.accent, fontSize: 9, fontWeight: '700', letterSpacing: 1.5 },
+  signalTitle: { color: colors.text, fontSize: 20, fontWeight: '700', marginTop: 4 },
+  signalTotal: { color: colors.accent, fontSize: 28, lineHeight: 32, fontWeight: '700', fontVariant: ['tabular-nums'] },
   signalStrip: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8, marginTop: spacing.lg },
   signalDay: { flex: 1, alignItems: 'center' },
   signalTrack: { width: 10, height: 46, borderRadius: radius.pill, backgroundColor: colors.border, justifyContent: 'flex-end', overflow: 'hidden' },
   signalFill: { width: '100%', backgroundColor: colors.accent, borderRadius: radius.pill },
   signalFillEmpty: { backgroundColor: colors.subtle, opacity: .45 },
-  signalLabel: { color: colors.subtle, fontSize: 9, fontWeight: '900', marginTop: 7 },
+  signalLabel: { color: colors.subtle, fontSize: 9, fontWeight: '700', marginTop: 7 },
   signalLabelToday: { color: colors.accent },
-  signalCount: { color: colors.subtle, fontSize: 8, fontWeight: '900', marginTop: 2, fontVariant: ['tabular-nums'] },
+  signalCount: { color: colors.subtle, fontSize: 8, fontWeight: '700', marginTop: 2, fontVariant: ['tabular-nums'] },
   signalCountActive: { color: colors.text },
   group: { marginBottom: spacing.lg },
-  dayLabel: { color: colors.subtle, fontSize: 10, fontWeight: '900', letterSpacing: 1.4, marginBottom: spacing.sm, marginLeft: 4 },
+  dayLabel: { color: colors.subtle, fontSize: 10, fontWeight: '700', letterSpacing: .4, marginBottom: spacing.sm, marginLeft: 4 },
   timelineRow: { flexDirection: 'row', alignItems: 'stretch' },
   rail: { width: 24, alignItems: 'center' },
   dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: colors.accent, marginTop: 22, zIndex: 2 },
@@ -470,7 +466,7 @@ const styles = StyleSheet.create({
   site: { color: colors.subtle, fontSize: 10, fontWeight: '800', letterSpacing: .8, marginTop: spacing.sm },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.sm },
   statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.success },
-  statusText: { color: colors.subtle, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  statusText: { color: colors.subtle, fontSize: 9, fontWeight: '700', letterSpacing: 1 },
   emptyCard: { backgroundColor: 'transparent', borderRadius: 0, padding: spacing.xl, borderWidth: 0, borderColor: 'transparent', alignItems: 'flex-start', borderBottomWidth: 1, borderBottomColor: colors.border, },
   emptyDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent, marginBottom: spacing.lg },
   detail: { color: colors.muted, marginTop: 6, lineHeight: 20 }
