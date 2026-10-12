@@ -12,12 +12,13 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "icon": "./assets/icon.png"
+      "icon": "./assets/brand/pulse-icon.png"
     },
     "android": {
       "package": "com.sciencebyhugs.pulse",
       "adaptiveIcon": {
-        "backgroundColor": "#07111f"
+        "foregroundImage": "./assets/brand/pulse-adaptive-foreground.png",
+        "backgroundColor": "#070F1E"
       },
       "permissions": [
         "android.permission.USE_BIOMETRIC",
@@ -93,7 +94,7 @@
       }
     },
     "owner": "sciencebyhugss-team",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/brand/pulse-icon.png",
     "androidStatusBar": {
       "backgroundColor": "#050A10",
       "barStyle": "light-content",

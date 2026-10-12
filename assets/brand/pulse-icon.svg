@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <title>Pulse app icon</title>
+  <rect width="1024" height="1024" fill="#070F1E"/>
+  <path d="M330 748V430C330 350 385 300 466 300H487C579 300 637 359 637 449C637 539 579 598 487 598H330" fill="none" stroke="#62CCFF" stroke-width="92" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="728" cy="648" r="48" fill="#62CCFF"/>
+</svg>
