@@ -22,14 +22,16 @@ export async function exportPulseData() {
     items,
     inventory,
     logs,
-    adjustments
+    adjustments,
+    logRevisions
   ] = await Promise.all([
     allRows('profiles', user.id, 'user_id'),
     allRows('protocols', user.id, 'id'),
     allRows('protocol_items', user.id, 'id'),
     allRows('inventory_containers', user.id, 'id'),
     allRows('dose_logs', user.id, 'id'),
-    allRows('inventory_adjustments', user.id, 'id')
+    allRows('inventory_adjustments', user.id, 'id'),
+    allRows('dose_log_revisions', user.id, 'id')
   ]);
 
   const payload = {
@@ -40,7 +42,8 @@ export async function exportPulseData() {
     protocol_items: items,
     inventory_containers: inventory,
     dose_logs: logs,
-    inventory_adjustments: adjustments
+    inventory_adjustments: adjustments,
+    dose_log_revisions: logRevisions
   };
 
   const json = JSON.stringify(payload, null, 2);

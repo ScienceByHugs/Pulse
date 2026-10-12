@@ -1,3 +1,4 @@
+import { LogEditor } from '@/components/LogEditor';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useState } from 'react';
@@ -15,6 +16,7 @@ function dayKey(value: string) {
 }
 
 export default function LogScreen() {
+  const [editingEntry, setEditingEntry] = useState<TimelineEntry | null>(null);
   const [entries, setEntries] = useState<TimelineEntry[]>([]);
   const [historyTruncated, setHistoryTruncated] = useState(false);
   const [protocols, setProtocols] = useState<TrackedProtocol[]>([]);
@@ -363,6 +365,7 @@ export default function LogScreen() {
                   <View style={styles.statusRow}>
                     <View style={styles.statusDot} />
                     <Text style={styles.statusText}>{(entry.status || 'logged').toUpperCase()}</Text>
+                    <Pressable accessibilityRole="button" accessibilityLabel={`Edit ${entry.protocol_items?.name ?? 'entry'}`} style={{minHeight:44,justifyContent:'center',paddingHorizontal:12,marginLeft:'auto'}} onPress={() => setEditingEntry(entry)}><Text style={styles.statusText}>EDIT / UNDO</Text></Pressable>
                   </View>
                 </View>
               </View>
@@ -370,6 +373,7 @@ export default function LogScreen() {
           </View>
         ))}
       </ScrollView>
+      {editingEntry ? <LogEditor key={editingEntry.id} entry={editingEntry} onClose={() => setEditingEntry(null)} onSaved={load} /> : null}
     </SafeAreaView>
   );
 }

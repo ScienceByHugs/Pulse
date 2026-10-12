@@ -1,3 +1,4 @@
+import { todayRecordState } from '@/domain/todayState';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useRef, useState } from 'react';
@@ -5,8 +6,8 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { AccessibilityInfo, ActivityIndicator, Alert, Animated, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, layout, radius, spacing, type } from '@/theme';
 import { PulseMenu } from '@/components/PulseMenu';
-import { flushQuickLogOutbox, listDoseLogs, listTodayItems, listProtocolItems, listProtocols, quickLog, type TimelineEntry, type TodayItem } from '@/services/pulse';
-import { isDueOnDate, localDateKey, localDayRange, nextScheduledTimeToday, scheduleTime } from '@/domain/schedule';
+import { flushQuickLogOutbox, listDoseLogs, listTodayItems, listProtocolItems, listProtocols, skipDose, undoDoseLog, quickLog, type TimelineEntry, type TodayItem } from '@/services/pulse';
+import { isDueOnDate, nextScheduledTimeToday, scheduleTime } from '@/domain/schedule';
 import { sitesForRoute } from '@/domain/sites';
 import { rescheduleReminders } from '@/lib/reminders';
 import { notifyLowStock } from '@/lib/lowStock';
@@ -27,8 +28,9 @@ export default function TodayScreen() {
   const router = useRouter();
   const entrance = useRef(new Animated.Value(0)).current;
   const firstName = String(session?.user.user_metadata?.first_name ?? session?.user.user_metadata?.full_name ?? '').trim().split(/\s+/)[0] || '';
+  const [trackedCount, setTrackedCount] = useState(0);
+  const [pausedCount, setPausedCount] = useState(0);
   const [allItems, setAllItems] = useState<TodayItem[]>([]);
-  const [excludedItems, setExcludedItems] = useState<Array<{ id: string; name: string; reason: string }>>([]);
   const [todayLogs, setTodayLogs] = useState<TimelineEntry[]>([]);
   const [selectedSites, setSelectedSites] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -40,23 +42,10 @@ export default function TodayScreen() {
   const load = useCallback(async () => {
     try {
       await flushQuickLogOutbox();
-      const [items, logs, tracked, protocols] = await Promise.all([listTodayItems(), listDoseLogs(150), listProtocolItems(), listProtocols()]);
-      const protocolById = new Map(protocols.map((protocol) => [protocol.id, protocol]));
-      const todayKey = localDateKey();
-      const eligibleIds = new Set(items.map((item) => item.id));
-      setExcludedItems(tracked.filter((item) => !item.archived_at && (!eligibleIds.has(item.id) || !isDueOnDate(item.schedule))).map((item) => {
-        const protocol = protocolById.get(item.protocol_id);
-        let reason = 'Not scheduled for today';
-        if (item.archived_at) reason = 'Archived';
-        else if (item.active === false) reason = 'Substance paused';
-        else if (!protocol) reason = 'Protocol not found';
-        else if (protocol.status !== 'active') reason = 'Protocol ' + protocol.status;
-        else if (protocol.starts_on && todayKey < protocol.starts_on) reason = 'Protocol has not started';
-        else if (protocol.ends_on && todayKey > protocol.ends_on) reason = 'Protocol has ended';
-        else if (!isDueOnDate(item.schedule)) reason = 'Not scheduled for today — check weekday, interval, or cycle start date';
-        else reason = 'Not available in active tracking';
-        return { id: item.id, name: item.name, reason };
-      }));
+      const [items, logs, tracked, protocols] = await Promise.all([listTodayItems(), listDoseLogs(1000), listProtocolItems(), listProtocols()]);
+      setTrackedCount(tracked.filter(item => !item.archived_at).length);
+      const pausedProtocols = new Set(protocols.filter(protocol => protocol.status === 'paused').map(protocol => protocol.id));
+      setPausedCount(tracked.filter(item => !item.archived_at && (item.active === false || pausedProtocols.has(item.protocol_id))).length);
       setAllItems(items);
       setTodayLogs(logs);
       const dueItems = items.filter((item) => isDueOnDate(item.schedule));
@@ -95,23 +84,10 @@ export default function TodayScreen() {
     [allItems]
   );
 
-  const completion = useMemo(() => {
-    const { start, end } = localDayRange();
-    const completedIds = new Set(todayLogs.filter((entry) => {
-      const logged = new Date(entry.logged_at);
-      return logged >= start && logged < end && entry.status === 'completed' && Boolean(entry.protocol_item_id);
-    }).map((entry) => entry.protocol_item_id as string));
-    const completed = items.filter((item) => completedIds.has(item.id)).length;
-    return {
-      completed,
-      due: items.length,
-      percent: items.length ? Math.round((completed / items.length) * 100) : 100,
-      completedIds
-    };
-  }, [items, todayLogs]);
+  const completion = useMemo(() => todayRecordState(items, todayLogs), [items, todayLogs]);
 
-  const pendingItems = useMemo(() => items.filter((item) => !completion.completedIds.has(item.id)), [items, completion.completedIds]);
-  const completedItems = useMemo(() => items.filter((item) => completion.completedIds.has(item.id)), [items, completion.completedIds]);
+  const pendingItems = useMemo(() => items.filter((item) => !completion.resolvedIds.has(item.id)), [items, completion.resolvedIds]);
+  const completedItems = useMemo(() => items.filter((item) => completion.resolvedIds.has(item.id)), [items, completion.resolvedIds]);
 
   const dayBrief = useMemo(() => {
     const lowSupply = allItems.filter((item) => {
@@ -119,11 +95,11 @@ export default function TodayScreen() {
       return inventory ? inventory.remaining_amount <= inventory.low_threshold : false;
     }).length;
     const timedItems = items.filter((item) => Boolean(scheduleTime(item.schedule)));
-    const upcoming = nextScheduledTimeToday(items.filter((item) => !completion.completedIds.has(item.id)).map((item) => item.schedule));
-    const untimedRemaining = items.some((item) => !scheduleTime(item.schedule) && !completion.completedIds.has(item.id));
-    const nextTime = upcoming ? timeLabel(upcoming) : untimedRemaining ? 'ANY TIME' : items.length === 0 ? 'CLEAR' : completion.completed === items.length ? 'COMPLETE' : 'NO WINDOW';
+    const upcoming = nextScheduledTimeToday(items.filter((item) => !completion.resolvedIds.has(item.id)).map((item) => item.schedule));
+    const untimedRemaining = items.some((item) => !scheduleTime(item.schedule) && !completion.resolvedIds.has(item.id));
+    const nextTime = upcoming ? timeLabel(upcoming) : untimedRemaining ? 'ANY TIME' : items.length === 0 ? 'CLEAR' : completion.completed + completion.skipped === items.length ? 'COMPLETE' : 'NO WINDOW';
     return { lowSupply, nextTime, scheduled: timedItems.length };
-  }, [allItems, items, completion.completedIds]);
+  }, [allItems, items, completion.resolvedIds]);
 
   function cycleSite(item: TodayItem) {
     const options = sitesForRoute(item.route);
@@ -136,7 +112,7 @@ export default function TodayScreen() {
   }
 
   async function log(item: TodayItem) {
-    if (loggingId === item.id || recentLogAt[item.id]) return;
+    if (loggingId || recentLogAt[item.id]) return;
     try {
       setLoggingId(item.id);
       const result = await quickLog(item, selectedSites[item.id]);
@@ -168,6 +144,23 @@ export default function TodayScreen() {
     }
   }
 
+  async function resolveEntry(item: TodayItem, undo = false) {
+    if (loggingId) return;
+    setLoggingId(item.id);
+    try {
+      if (undo) {
+        const today = new Date().toDateString();
+        const entry = todayLogs.find(log => log.protocol_item_id === item.id && new Date(log.logged_at).toDateString() === today && (log.status === 'completed' || log.status === 'skipped'));
+        if (!entry) throw new Error('Reload Today to find the latest entry.');
+        await undoDoseLog(entry);
+      } else await skipDose(item);
+      setRecentLogAt(current => { const next = {...current}; delete next[item.id]; return next; });
+      setLogFeedback(null);
+      await load();
+    } catch (error) { Alert.alert('Could not update entry', error instanceof Error ? error.message : 'Try again.'); }
+    finally { setLoggingId(null); }
+  }
+
   const consistency = useMemo(() => calculateSevenDayConsistency(allItems, todayLogs), [allItems, todayLogs]);
   const dateLabel = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 
@@ -195,28 +188,20 @@ export default function TodayScreen() {
             <View style={styles.summaryCell}><Text style={styles.summaryNumber}>{allItems.length}</Text><Text style={styles.summaryLabel}>ACTIVE ITEMS</Text></View>
           </View>
 
-          <Text style={styles.heroFooterText}>{pendingItems.length ? `${pendingItems.length} left to log` : 'You’re all caught up'}</Text>
+          <Text style={styles.heroFooterText}>{pendingItems.length ? `${pendingItems.length} scheduled · not yet recorded` : items.length ? `${completion.completed} logged · ${completion.skipped} skipped` : 'No scheduled entries today'}</Text>
         </Animated.View>
 
+        {!loading && pausedCount > 0 ? <Pressable accessibilityRole="button" style={{minHeight:44,justifyContent:'center'}} onPress={() => router.push('/(tabs)/protocol')}><Text style={styles.detail}>{pausedCount} paused {pausedCount === 1 ? 'substance' : 'substances'} · Manage in Protocol →</Text></Pressable> : null}
         {loading && allItems.length === 0 ? <ActivityIndicator color={colors.accent} style={{ marginTop: 32 }} /> : null}
 
         {!loading && items.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.cardTitle}>Nothing scheduled today.</Text>
-            <Text style={styles.detail}>{allItems.length ? 'Your active routine has no items due today.' : 'Create your first protocol in the Protocol tab to start tracking.'}</Text>
+            <Text style={styles.detail}>{trackedCount ? 'An off-day or a paused routine is normal. Manage your schedule in Protocol.' : 'Create your first protocol in the Protocol tab to start tracking.'}</Text>
           </View>
         ) : null}
 
-        {!loading && excludedItems.length > 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.cardTitle}>Other tracked substances</Text>
-            <Text style={styles.detail}>These are in Protocol but not on today's due list. Select Edit Schedule or resume them in Protocol to adjust.</Text>
-            {excludedItems.map((item) => <Text key={item.id} style={styles.detail}>{item.name} · {item.reason}</Text>)}
-            <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/protocol')}><Text style={styles.createActionText}>OPEN PROTOCOL →</Text></Pressable>
-          </View>
-        ) : null}
-
-        {allItems.length === 0 && !loading ? <Pressable accessibilityRole="button" style={styles.createAction} onPress={() => router.push('/(tabs)/protocol')}><Text style={styles.createActionText}>＋ CREATE YOUR FIRST PROTOCOL</Text><Text style={styles.createActionArrow}>↗</Text></Pressable> : null}
+        {trackedCount === 0 && !loading ? <Pressable accessibilityRole="button" style={styles.createAction} onPress={() => router.push('/(tabs)/protocol')}><Text style={styles.createActionText}>＋ CREATE YOUR FIRST PROTOCOL</Text><Text style={styles.createActionArrow}>↗</Text></Pressable> : null}
 
         {[...pendingItems, ...completedItems].map((item, index) => {
           const inventory = item.inventory_containers?.find((container) => container.is_active);
@@ -226,14 +211,14 @@ export default function TodayScreen() {
 
           return (
             <View key={item.id}>
-              <Text style={styles.sectionLabel}>{completion.completedIds.has(item.id) ? (index === pendingItems.length ? 'COMPLETED TODAY' : 'COMPLETED') : (index === 0 ? 'UP NEXT' : 'UPCOMING')}</Text>
+              <Text style={styles.sectionLabel}>{completion.skippedIds.has(item.id) ? 'SKIPPED TODAY' : completion.completedIds.has(item.id) ? 'LOGGED TODAY' : 'SCHEDULED · NOT YET RECORDED'}</Text>
               <View style={[styles.heroCard, low && styles.lowCard, completion.completedIds.has(item.id) && styles.completedCard]}>
                 <View style={styles.heroTop}>
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Text style={styles.substanceKind}>{item.category?.toUpperCase() ?? 'TRACKED SUBSTANCE'}</Text>
                     <Text style={styles.medName}>{item.name}</Text>
                     <Text style={styles.detail}>{item.dose_amount} {item.dose_unit} · {item.route}</Text>
-                    {completion.completedIds.has(item.id) ? <Text style={styles.completedLabel}>LOGGED TODAY</Text> : null}
+                    {completion.resolvedIds.has(item.id) ? <Text style={styles.completedLabel}>{completion.skippedIds.has(item.id) ? 'SKIPPED · NO STOCK USED' : 'LOGGED TODAY'}</Text> : null}
                   </View>
                   <View style={styles.duePill}><Text style={styles.dueText}>{timeLabel(scheduleTime(item.schedule))}</Text></View>
                 </View>
@@ -258,12 +243,13 @@ export default function TodayScreen() {
                 )}
 
                 <Pressable
-                  style={[styles.primaryButton, loggingId === item.id && styles.disabled]}
-                  disabled={loggingId === item.id || Boolean(recentLogAt[item.id])}
+                  style={[styles.primaryButton, Boolean(loggingId) && styles.disabled]}
+                  disabled={Boolean(loggingId) || Boolean(recentLogAt[item.id])}
                   onPress={() => void log(item)}
                 >
                   <Text style={styles.primaryButtonText}>{loggingId === item.id ? 'LOGGING…' : recentLogAt[item.id] ? 'LOGGED ✓' : completion.completedIds.has(item.id) ? 'LOG ANOTHER ENTRY' : 'CONFIRM LOG'}</Text>
                 </Pressable>
+                {!completion.resolvedIds.has(item.id) ? <Pressable accessibilityRole="button" disabled={Boolean(loggingId)} style={{minHeight:44,justifyContent:'center',alignItems:'center'}} onPress={() => Alert.alert('Skip today’s entry?', 'Record that you skipped it. Inventory will stay unchanged.', [{text:'Cancel',style:'cancel'},{text:'Skip today',onPress:()=>void resolveEntry(item)}])}><Text style={styles.changeText}>SKIP TODAY</Text></Pressable> : <Pressable accessibilityRole="button" disabled={Boolean(loggingId)} style={{minHeight:44,justifyContent:'center',alignItems:'center'}} onPress={() => Alert.alert('Undo latest entry?', 'Remove the latest entry for this substance today and restore any stock it used.', [{text:'Cancel',style:'cancel'},{text:'Undo entry',onPress:()=>void resolveEntry(item,true)}])}><Text style={styles.changeText}>UNDO LATEST ENTRY</Text></Pressable>}
                 {logFeedback?.id === item.id ? <Text accessibilityRole="text" style={styles.inlineFeedback}>{logFeedback.message}</Text> : null}
               </View>
             </View>

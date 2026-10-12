@@ -27,7 +27,11 @@ export function ProtocolDatePicker({ label, value, onChange, optional = false }:
   const first = new Date(year, month, 1).getDay();
   const shift = (by: number) => setCursor(new Date(year, month + by, 1, 12));
   return <>
-    <Pressable accessibilityRole="button" accessibilityLabel={`Select ${label}`} style={styles.control} onPress={() => setOpen(true)}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Select ${label}`} style={styles.control} onPress={() => {
+      const [y,m] = value.split('-').map(Number);
+      setCursor(new Date(y || new Date().getFullYear(), (m || new Date().getMonth()+1)-1,1,12));
+      setOpen(true);
+    }}>
       <Text style={styles.controlLabel}>{label.toUpperCase()}</Text>
       <Text style={styles.value}>{displayProtocolDate(value)}  ▾</Text>
     </Pressable>
@@ -67,7 +71,10 @@ export function ProtocolTimePicker({ label, value, onChange }: { label: string; 
   const changePeriod = (p: 'AM' | 'PM') => { setPeriod(p); setHour((hour % 12) + (p === 'PM' ? 12 : 0)); };
   const formatted = value ? (mode === '24' ? value : `${Number(value.slice(0,2)) % 12 || 12}:${value.slice(3,5)} ${Number(value.slice(0,2)) >= 12 ? 'PM' : 'AM'}`) : 'Not set';
   return <>
-    <Pressable accessibilityRole="button" accessibilityLabel={`Select ${label}`} style={styles.control} onPress={() => setOpen(true)}><Text style={styles.controlLabel}>{label.toUpperCase()}</Text><Text style={styles.value}>{formatted} ▾</Text></Pressable>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Select ${label}`} style={styles.control} onPress={() => {
+      const h=Number(value.split(':')[0] || 8), m=Number(value.split(':')[1] || 0);
+      setHour(h); setMinute(m); setPeriod(h >= 12 ? 'PM' : 'AM'); setOpen(true);
+    }}><Text style={styles.controlLabel}>{label.toUpperCase()}</Text><Text style={styles.value}>{formatted} ▾</Text></Pressable>
     <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
       <View style={styles.overlay}><View style={styles.dialog}>
         <Text style={styles.title}>{label}</Text>
@@ -86,7 +93,7 @@ export function ProtocolTimePicker({ label, value, onChange }: { label: string; 
   </>;
 }
 const styles=StyleSheet.create({
-  control:{backgroundColor:bg,borderColor:'#344F5E',borderWidth:1,borderRadius:12,padding:13,marginVertical:5},
+  control:{backgroundColor:bg,borderColor:'#344F5E',borderWidth:1,borderRadius:12,padding:13,marginVertical:5,minWidth:0,flexShrink:1},
   controlLabel:{color:cyan,fontSize:10,fontWeight:'800',letterSpacing:1.2,marginBottom:6},
   value:{color:ink,fontSize:14,fontWeight:'600'},
   overlay:{flex:1,backgroundColor:'#000B',justifyContent:'center',padding:18},

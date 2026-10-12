@@ -16,6 +16,8 @@ export function calculateSevenDayConsistency(items: TodayItem[], logs: TimelineE
     for (const item of items) {
       if (item.active === false || item.archived_at) continue;
       if (item.created_at && key < localDateKey(new Date(item.created_at))) continue;
+      if (item.starts_on && key < item.starts_on) continue;
+      if (item.ends_on && key > item.ends_on) continue;
       if (isDueOnDate(item.schedule, day)) due.add(`${item.id}:${key}`);
     }
   }
@@ -91,7 +93,7 @@ export function calculateSupplyForecast(items: TodayItem[]) {
 }
 
 export function siteRotationSummary(logs: TimelineEntry[]) {
-  const recent = logs.filter((log) => log.site).slice(0, 30);
+  const recent = logs.filter((log) => log.site && log.status === 'completed').slice(0, 30);
   return {
     uniqueSites: new Set(recent.map((log) => log.site)).size,
     administrations: recent.length

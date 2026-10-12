@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Host, Icon } from '@expo/ui';
-import { Redirect, Tabs } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { ActivityIndicator, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import { useAuth } from '@/providers/AuthProvider';
 import { colors } from '@/theme';
@@ -57,7 +57,9 @@ export default function TabsLayout() {
     );
   }
 
-  if (!session) return <Redirect href="/sign-in" />;
+  // The root protected stack owns logout navigation. A second Redirect here
+  // races with removal of this native tab navigator during sign-out.
+  if (!session) return null;
 
   return (
     <Tabs

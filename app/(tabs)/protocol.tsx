@@ -2,7 +2,7 @@ import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors, layout, radius, spacing, type } from '@/theme';
 import { PulseMenu } from '@/components/PulseMenu';
 import { SubstanceArtwork } from '@/components/SubstanceArtwork';
@@ -343,16 +343,31 @@ export default function ProtocolScreen() {
         <Text style={styles.body}>Your substances and routines, organized your way. Track more than one protocol.</Text>
 
         <View style={styles.launchRow}>
-          <Pressable style={styles.launchButton} onPress={() => setShowNewProtocol((value) => !value)}><Text style={styles.launchText}>＋ NEW PROTOCOL</Text></Pressable>
+          <Pressable style={styles.launchButton} onPress={() => setShowNewProtocol(true)}><Text style={styles.launchText}>＋ NEW PROTOCOL</Text></Pressable>
           {activeProtocol ? <Pressable style={styles.launchButton} onPress={() => { setBuilderStep(1); setShowBuilder(true); }}><Text style={styles.launchText}>＋ ADD SUBSTANCE</Text></Pressable> : null}
         </View>
-        {showNewProtocol && protocols.length > 0 ? <View style={styles.card}><Text style={styles.cardTitle}>Name your new protocol</Text><TextInput style={styles.input} placeholder="e.g. Daily regimen" placeholderTextColor={colors.muted} value={protocolName} onChangeText={setProtocolName} /><Pressable style={styles.primary} disabled={busy} onPress={() => void addProtocol()}><Text style={styles.primaryText}>CREATE PROTOCOL</Text></Pressable></View> : null}
+        <Modal visible={showNewProtocol} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { if (!busy) setShowNewProtocol(false); }}>
+          <SafeAreaView style={styles.safe}>
+            <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+              <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.modalPage}>
+                <View style={styles.builderCard}>
+                <View style={styles.modalToolbar}>
+                <Text style={styles.smallLabel}>NEW PROTOCOL</Text>
+                <Pressable style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Close new protocol" disabled={busy} onPress={() => setShowNewProtocol(false)}><Text style={styles.closeText}>CLOSE</Text></Pressable>
+                </View>
+                <Text style={styles.builderTitle}>Name your new protocol</Text>
+                <TextInput accessibilityLabel="Protocol name" maxLength={100} style={styles.input} placeholder="e.g. Daily regimen" placeholderTextColor={colors.muted} value={protocolName} onChangeText={setProtocolName} />
+                <Pressable accessibilityRole="button" style={styles.primary} disabled={busy} onPress={() => void addProtocol()}><Text style={styles.primaryText}>{busy ? 'CREATING…' : 'CREATE PROTOCOL'}</Text></Pressable>
+                </View>
+              </ScrollView>
+            </KeyboardAvoidingView>
+          </SafeAreaView>
+        </Modal>
 
         {protocols.length === 0 ? (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Create your first protocol</Text>
-            <TextInput style={styles.input} placeholder="e.g. Daily routine" placeholderTextColor={colors.muted} value={protocolName} onChangeText={setProtocolName} />
-            <Pressable style={styles.primary} disabled={busy} onPress={() => void addProtocol()}><Text style={styles.primaryText}>CREATE PROTOCOL</Text></Pressable>
+            <Pressable accessibilityRole="button" style={styles.primary} onPress={() => setShowNewProtocol(true)}><Text style={styles.primaryText}>NEW PROTOCOL</Text></Pressable>
           </View>
         ) : (
           <>
@@ -371,7 +386,7 @@ export default function ProtocolScreen() {
                     <Text style={styles.smallLabel}>PROTOCOL NAME</Text>
                     <TextInput accessibilityLabel="Edit protocol name" maxLength={100} style={styles.input} value={editProtocolName} onChangeText={setEditProtocolName} placeholderTextColor={colors.muted} />
                     <Text style={styles.smallLabel}>TRACKING DATES · OPTIONAL</Text>
-                    <View style={styles.twoCol}>
+                    <View style={styles.dateFields}>
                       <ProtocolDatePicker label="Start date" value={editStartsOn} onChange={setEditStartsOn} optional />
                       <ProtocolDatePicker label="End date" value={editEndsOn} onChange={setEditEndsOn} optional />
                     </View>
@@ -468,14 +483,16 @@ export default function ProtocolScreen() {
             ) : null}
 
             {activeProtocol && showBuilder ? (
+              <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { if (!busy) setShowBuilder(false); }}>
+                <SafeAreaView style={styles.safe}>
+                  <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+                    <ScrollView key={builderStep} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.modalPage}>
               <View style={styles.builderCard}>
-                <View style={styles.builderTop}>
-                  <View>
-                    <Text style={styles.smallLabel}>ADD ITEM · STEP {builderStep} OF 3</Text>
-                    <Text style={styles.builderTitle}>{builderStep === 1 ? 'What are you tracking?' : builderStep === 2 ? 'When do you take it?' : 'Supply & review'}</Text>
-                  </View>
-                  <Pressable onPress={() => { setShowBuilder(false); setBuilderStep(1); }}><Text style={styles.closeText}>CLOSE</Text></Pressable>
+                <View style={styles.modalToolbar}>
+                  <Text style={styles.smallLabel}>ADD SUBSTANCE · STEP {builderStep} OF 3</Text>
+                  <Pressable style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Close add substance" disabled={busy} onPress={() => { setShowBuilder(false); setBuilderStep(1); }}><Text style={styles.closeText}>CLOSE</Text></Pressable>
                 </View>
+                <Text style={styles.builderTitle}>{builderStep === 1 ? 'What are you tracking?' : builderStep === 2 ? 'When do you take it?' : 'Supply & review'}</Text>
                 <View style={styles.progress}><View style={[styles.progressFill, { width: builderStep === 1 ? '33%' : builderStep === 2 ? '66%' : '100%' }]} /></View>
 
                 {builderStep === 1 ? <>
@@ -556,6 +573,10 @@ export default function ProtocolScreen() {
                 </View>
               </> : null}
               </View>
+                    </ScrollView>
+                  </KeyboardAvoidingView>
+                </SafeAreaView>
+              </Modal>
             ) : null}
 
             {activeProtocol ? (
@@ -742,6 +763,8 @@ export default function ProtocolScreen() {
 }
 
 const styles = StyleSheet.create({
+  modalPage: { padding: layout.pageInset, paddingBottom: 32, gap: 16 },
+  dateFields: { gap: 8 },
   safe: { flex: 1, backgroundColor: colors.bg },
   page: { padding: layout.pageInset, paddingBottom: layout.pageBottom },
   launchRow: { flexDirection: 'row', gap: 8, marginBottom: spacing.md },
@@ -861,7 +884,8 @@ const styles = StyleSheet.create({
   addIconText: { color: colors.accent, fontSize: 23, lineHeight: 27 },
   chevron: { color: colors.subtle, fontSize: 28 },
   builderCard: { backgroundColor: colors.panel, borderRadius: radius.xl, padding: layout.cardInset, borderWidth: 1, borderColor: colors.accentBorder, gap: spacing.md, marginBottom: spacing.xl },
-  builderTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.md },
+  modalToolbar: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  closeButton: { minHeight: 44, minWidth: 72, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel2 },
   builderTitle: { color: colors.text, fontSize: 22, fontWeight: '800', marginTop: 5 },
   closeText: { color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
   progress: { height: 3, borderRadius: 2, backgroundColor: colors.border, overflow: 'hidden', marginBottom: spacing.sm },

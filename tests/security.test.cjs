@@ -103,3 +103,29 @@ test('simultaneous logs remain separate by account and no queued logs are lost',
   assert.equal(await legacy.getItem('pulse.quick_log_outbox.v1'), null);
   assert.ok(await createChunkedStorage(backing).getItem('pulse.quick_log_outbox.unassigned'));
 });
+
+const { todayRecordState } = load('src/domain/todayState.ts', { './schedule': schedule });
+const { calculateSevenDayConsistency } = load('src/domain/insights.ts', { '@/domain/schedule': schedule });
+test('Today distinguishes skipped and completed records and ignores undone and other-day entries', () => {
+  const now = new Date(2026,9,11,12);
+  const items = [{id:'a'},{id:'b'},{id:'c'}];
+  const logged_at = new Date(2026,9,11,9).toISOString();
+  const result=todayRecordState(items,[
+    {protocol_item_id:'a',status:'skipped',logged_at},
+    {protocol_item_id:'a',status:'completed',logged_at},
+    {protocol_item_id:'b',status:'skipped',logged_at},
+    {protocol_item_id:'c',status:'voided',logged_at},
+    {protocol_item_id:'c',status:'completed',logged_at:new Date(2026,9,10,9).toISOString()}
+  ],now);
+  assert.equal(result.completed,1); assert.equal(result.skipped,1);
+  assert.equal(result.resolvedIds.size,2); assert.equal(result.skippedIds.has('a'),false);
+});
+test('Consistency excludes off-days, paused items and dates outside protocol boundaries', () => {
+  const now = new Date(2026,9,11,12);
+  const result = calculateSevenDayConsistency([
+    {id:'a',starts_on:'2026-10-10',ends_on:'2026-10-10',schedule:{type:'daily'}},
+    {id:'b',active:false,schedule:{type:'daily'}},
+    {id:'c',schedule:{type:'weekdays',days:[]}}
+  ],[],now);
+  assert.equal(result.due,1);
+});

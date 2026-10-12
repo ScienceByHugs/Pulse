@@ -1,0 +1,65 @@
+import { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ProtocolDatePicker, ProtocolTimePicker } from './ProtocolPickers';
+import { localDateKey } from '@/domain/schedule';
+import { correctDoseLog, undoDoseLog, type TimelineEntry } from '@/services/pulse';
+import { colors, radius, spacing } from '@/theme';
+
+export function LogEditor({ entry, onClose, onSaved }: { entry: TimelineEntry; onClose: () => void; onSaved: () => Promise<void> }) {
+  const originalDate = new Date(entry.logged_at);
+  const [amount, setAmount] = useState(String(entry.amount));
+  const [date, setDate] = useState(localDateKey(originalDate));
+  const [time, setTime] = useState(`${String(originalDate.getHours()).padStart(2,'0')}:${String(originalDate.getMinutes()).padStart(2,'0')}`);
+  const [site, setSite] = useState(entry.site ?? '');
+  const [busy, setBusy] = useState(false);
+  async function save(undo = false) {
+    if (busy) return;
+    try {
+      setBusy(true);
+      if (undo) await undoDoseLog(entry);
+      else {
+        const value = Number(amount);
+        if (!Number.isFinite(value) || value <= 0) throw new Error('Enter a positive amount.');
+        if (!date || !time) throw new Error('Choose a date and time.');
+        // Preserve the exact original instant unless the user changes its local date/time.
+        const unchanged = date === localDateKey(originalDate) && time === `${String(originalDate.getHours()).padStart(2,'0')}:${String(originalDate.getMinutes()).padStart(2,'0')}`;
+        const loggedAt = unchanged ? entry.logged_at : new Date(`${date}T${time}:00`).toISOString();
+        await correctDoseLog(entry, { amount: value, loggedAt, site: site.trim() || null, status: entry.status === 'skipped' ? 'skipped' : 'completed' });
+      }
+      await onSaved();
+      onClose();
+    } catch (error) {
+      Alert.alert('Could not update entry', error instanceof Error ? error.message : 'Please try again.');
+    } finally { setBusy(false); }
+  }
+  return <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { if (!busy) onClose(); }}>
+    <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}>
+          <View style={styles.card}>
+            <View style={styles.header}><Text style={styles.label}>EDIT HISTORY</Text><Pressable accessibilityRole="button" accessibilityLabel="Close log editor" disabled={busy} style={styles.close} onPress={onClose}><Text style={styles.label}>CLOSE</Text></Pressable></View>
+            <Text style={styles.title}>{entry.protocol_items?.name ?? 'Recorded entry'}</Text>
+            <Text style={styles.body}>{entry.status === 'skipped' ? 'Skipped entry · no inventory consumed.' : 'Amount changes adjust the original container’s inventory automatically.'}</Text>
+            <Text style={styles.label}>{entry.status === 'skipped' ? 'SCHEDULED AMOUNT' : 'RECORDED AMOUNT'} · {entry.unit}</Text>
+            <TextInput accessibilityLabel={`Recorded amount in ${entry.unit}`} style={styles.input} keyboardType="decimal-pad" value={amount} onChangeText={setAmount} />
+            <ProtocolDatePicker label="Recorded date" value={date} onChange={setDate} />
+            <ProtocolTimePicker label="Recorded time" value={time} onChange={setTime} />
+            <Text style={styles.body}>Times use this device’s local timezone.</Text>
+            <TextInput accessibilityLabel="Recorded site" style={styles.input} value={site} onChangeText={setSite} maxLength={100} placeholder="Site · optional" placeholderTextColor={colors.muted} />
+            <Pressable accessibilityRole="button" disabled={busy} style={styles.primary} onPress={() => void save()}><Text style={styles.primaryText}>{busy ? 'SAVING…' : 'SAVE CHANGES'}</Text></Pressable>
+            <Pressable accessibilityRole="button" disabled={busy} style={styles.close} onPress={() => Alert.alert('Undo this entry?', 'Remove it from your active history and restore any inventory it used. The correction record is retained.', [{text:'Cancel',style:'cancel'},{text:'Undo entry',onPress:()=>void save(true)}])}><Text style={styles.label}>UNDO ENTRY</Text></Pressable>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  </Modal>;
+}
+const styles=StyleSheet.create({
+ safe:{flex:1,backgroundColor:colors.bg},page:{padding:spacing.md,paddingBottom:32},
+ card:{padding:spacing.md,backgroundColor:colors.panel,borderRadius:radius.xl,borderWidth:1,borderColor:colors.accentBorder,gap:14},
+ header:{flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between',alignItems:'center',gap:8},
+ close:{minHeight:44,minWidth:72,paddingHorizontal:12,alignItems:'center',justifyContent:'center',borderRadius:radius.md,borderWidth:1,borderColor:colors.border},
+ label:{color:colors.accent,fontSize:11,fontWeight:'800',letterSpacing:1},title:{color:colors.text,fontSize:24,fontWeight:'800'},body:{color:colors.muted,lineHeight:21},
+ input:{color:colors.text,backgroundColor:colors.panel2,padding:14,borderRadius:radius.md,fontSize:16},primary:{backgroundColor:colors.accent,padding:16,borderRadius:radius.md,alignItems:'center'},primaryText:{color:'#03111f',fontWeight:'900'}
+});

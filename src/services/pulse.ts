@@ -38,6 +38,7 @@ export type TimelineEntry = {
   site: string | null;
   status: string;
   logged_at: string;
+  revision: number;
   protocol_items?: { name: string } | null;
 };
 
@@ -350,6 +351,7 @@ export async function listRecentSites(limit = 100) {
   const { data, error } = await supabase
     .from('dose_logs')
     .select('protocol_item_id,site,logged_at')
+    .eq('status', 'completed')
     .not('site', 'is', null)
     .order('logged_at', { ascending: false })
     .limit(limit);
@@ -378,7 +380,8 @@ export async function listTimelineHistory(maxEntries = 10000) {
     const take = Math.min(pageSize, maxEntries - from);
     const { data, error } = await supabase
       .from('dose_logs')
-      .select('id,protocol_item_id,amount,unit,route,site,status,logged_at,protocol_items(name)')
+      .select('id,protocol_item_id,amount,unit,route,site,status,logged_at,revision,protocol_items(name)')
+      .neq('status', 'voided')
       .order('logged_at', { ascending: false })
       .order('id', { ascending: false })
       .range(from, from + take - 1);
@@ -389,7 +392,7 @@ export async function listTimelineHistory(maxEntries = 10000) {
   }
   // Determine whether the cap is reached with more records remaining.
   const { data: beyond, error } = await supabase
-    .from('dose_logs').select('id')
+    .from('dose_logs').select('id').neq('status', 'voided')
     .order('logged_at', { ascending: false }).order('id', { ascending: false })
     .range(maxEntries, maxEntries);
   if (error) throw error;
@@ -400,7 +403,8 @@ export async function listTimelineHistory(maxEntries = 10000) {
 export async function listDoseLogs(limit = 50) {
   const { data, error } = await supabase
     .from('dose_logs')
-    .select('id,protocol_item_id,amount,unit,route,site,status,logged_at,protocol_items(name)')
+    .select('id,protocol_item_id,amount,unit,route,site,status,logged_at,revision,protocol_items(name)')
+    .neq('status', 'voided')
     .order('logged_at', { ascending: false })
     .limit(limit);
 
@@ -441,4 +445,24 @@ export async function correctInventoryRemaining(containerId: string, newAmount: 
     p_reason: explanation
   });
   if (error) throw error;
+}
+
+export async function correctDoseLog(entry: TimelineEntry, changes: { amount: number; loggedAt: string; site: string | null; status: 'completed' | 'skipped' | 'voided' }) {
+  const { data, error } = await supabase.rpc('correct_dose_log', {
+    p_log_id: entry.id, p_revision: entry.revision,
+    p_amount: changes.amount, p_logged_at: changes.loggedAt,
+    p_site: changes.site, p_status: changes.status
+  });
+  if (error) throw error;
+  return data as TimelineEntry;
+}
+
+export function undoDoseLog(entry: TimelineEntry) {
+  return correctDoseLog(entry, { amount: entry.amount, loggedAt: entry.logged_at, site: entry.site, status: 'voided' });
+}
+
+export async function skipDose(item: TodayItem) {
+  const { data, error } = await supabase.rpc('skip_dose', { p_item_id: item.id, p_client_event_id: clientEventId() });
+  if (error) throw error;
+  return data as TimelineEntry;
 }
