@@ -1,6 +1,20 @@
+import { randomUUID } from 'expo-crypto';
+import {
+  deviceTimeZone,
+  zonedDateKey,
+  type OccurrenceFields,
+} from '@/domain/occurrences';
+import { preferredContainer } from '@/domain/inventory';
+import { isNetworkError } from '@/domain/network';
 import { supabase } from '@/lib/supabase';
 import { localDateKey, validateTrackedSchedule } from '@/domain/schedule';
-import { enqueueQuickLog, readOutbox, removeQuickLog, type QuickLogPayload } from '@/lib/outbox';
+import {
+  enqueueQuickLog,
+  readOutbox,
+  removeQuickLog,
+  updateQuickLog,
+  type QuickLogPayload,
+} from '@/lib/outbox';
 
 export type InventorySummary = {
   id: string;
@@ -9,6 +23,10 @@ export type InventorySummary = {
   unit: string;
   low_threshold: number;
   is_active: boolean;
+  opened_at?: string | null;
+  expires_at?: string | null;
+  user_use_by_at?: string | null;
+  lot_number?: string | null;
 };
 
 export type TodayItem = {
@@ -39,6 +57,14 @@ export type TimelineEntry = {
   status: string;
   logged_at: string;
   revision: number;
+  client_event_id?: string | null;
+  occurrence_key?: string | null;
+  local_date?: string | null;
+  time_zone?: string | null;
+  scheduled_for?: string | null;
+  snapshot?: Record<string, unknown> | null;
+  pending?: boolean;
+  notes?: string | null;
   protocol_items?: { name: string } | null;
 };
 
@@ -58,7 +84,10 @@ export async function listProtocols() {
   return data;
 }
 
-export async function updateProtocolStatus(protocolId: string, status: 'active' | 'paused' | 'archived') {
+export async function updateProtocolStatus(
+  protocolId: string,
+  status: 'active' | 'paused' | 'archived',
+) {
   const userId = await currentUserId();
   const { data, error } = await supabase
     .from('protocols')
@@ -69,36 +98,62 @@ export async function updateProtocolStatus(protocolId: string, status: 'active' 
     .maybeSingle();
 
   if (error) throw error;
-  if (!data) throw new Error('Protocol not found or you do not have permission to change it.');
+  if (!data)
+    throw new Error(
+      'Protocol not found or you do not have permission to change it.',
+    );
 }
 
 function validCalendarDate(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const [year = 0, month = 0, day = 0] = value.split('-').map(Number);
   const parsed = new Date(Date.UTC(year, month - 1, day));
-  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+  return (
+    parsed.getUTCFullYear() === year &&
+    parsed.getUTCMonth() === month - 1 &&
+    parsed.getUTCDate() === day
+  );
 }
 
-export async function updateProtocolDetails(protocolId: string, name: string, startsOn: string | null, endsOn: string | null) {
+export async function updateProtocolDetails(
+  protocolId: string,
+  name: string,
+  startsOn: string | null,
+  endsOn: string | null,
+) {
   const userId = await currentUserId();
   const cleanName = name.trim();
-  if (!cleanName || cleanName.length > 100) throw new Error('Use a protocol name of 1–100 characters.');
-  if (startsOn && !validCalendarDate(startsOn)) throw new Error('Start date must be a real date in YYYY-MM-DD format.');
-  if (endsOn && !validCalendarDate(endsOn)) throw new Error('End date must be a real date in YYYY-MM-DD format.');
-  if (startsOn && endsOn && endsOn < startsOn) throw new Error('End date cannot be before the start date.');
-  const { data, error } = await supabase.from('protocols')
-    .update({ name: cleanName, starts_on: startsOn, ends_on: endsOn, updated_at: new Date().toISOString() })
+  if (!cleanName || cleanName.length > 100)
+    throw new Error('Use a protocol name of 1–100 characters.');
+  if (startsOn && !validCalendarDate(startsOn))
+    throw new Error('Start date must be a real date in YYYY-MM-DD format.');
+  if (endsOn && !validCalendarDate(endsOn))
+    throw new Error('End date must be a real date in YYYY-MM-DD format.');
+  if (startsOn && endsOn && endsOn < startsOn)
+    throw new Error('End date cannot be before the start date.');
+  const { data, error } = await supabase
+    .from('protocols')
+    .update({
+      name: cleanName,
+      starts_on: startsOn,
+      ends_on: endsOn,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', protocolId)
     .eq('user_id', userId)
     .select('id')
     .maybeSingle();
   if (error) throw error;
-  if (!data) throw new Error('Protocol not found or you do not have permission to update it.');
+  if (!data)
+    throw new Error(
+      'Protocol not found or you do not have permission to update it.',
+    );
 }
 
 export async function setProtocolItemActive(itemId: string, active: boolean) {
   const userId = await currentUserId();
-  const { error } = await supabase.from('protocol_items')
+  const { error } = await supabase
+    .from('protocol_items')
     .update({ active })
     .eq('id', itemId)
     .eq('user_id', userId)
@@ -106,52 +161,95 @@ export async function setProtocolItemActive(itemId: string, active: boolean) {
   if (error) throw error;
 }
 
-export async function setProtocolItemArchived(itemId: string, archived: boolean) {
+export async function setProtocolItemArchived(
+  itemId: string,
+  archived: boolean,
+) {
   const userId = await currentUserId();
-  const { data, error } = await supabase.from('protocol_items')
-    .update({ archived_at: archived ? new Date().toISOString() : null, active: false })
+  const { data, error } = await supabase
+    .from('protocol_items')
+    .update({
+      archived_at: archived ? new Date().toISOString() : null,
+      active: false,
+    })
     .eq('id', itemId)
     .eq('user_id', userId)
     .select('id')
     .maybeSingle();
   if (error) throw error;
-  if (!data) throw new Error('Substance not found or you do not have permission to archive it.');
+  if (!data)
+    throw new Error(
+      'Substance not found or you do not have permission to archive it.',
+    );
 }
 
-export async function updateProtocolItemDetails(itemId: string, name: string, category: string, doseAmount: number, doseUnit: string, route: string) {
+export async function updateProtocolItemDetails(
+  itemId: string,
+  name: string,
+  category: string,
+  doseAmount: number,
+  doseUnit: string,
+  route: string,
+) {
   const userId = await currentUserId();
   const cleaned = name.trim();
-  if (!cleaned || cleaned.length > 100) throw new Error('Enter a substance name up to 100 characters.');
-  if (!Number.isFinite(doseAmount) || doseAmount <= 0) throw new Error('Enter a positive dose amount.');
-  if (!doseUnit.trim() || doseUnit.trim().length > 30) throw new Error('Enter a valid dose unit.');
-  if (!['subcutaneous', 'intramuscular', 'oral', 'topical', 'other'].includes(route)) throw new Error('Choose a valid route.');
-  const { data, error } = await supabase.from('protocol_items')
-    .update({ name: cleaned, category: category.trim() || null, dose_amount: doseAmount, dose_unit: doseUnit.trim(), route })
+  if (!cleaned || cleaned.length > 100)
+    throw new Error('Enter a substance name up to 100 characters.');
+  if (!Number.isFinite(doseAmount) || doseAmount <= 0)
+    throw new Error('Enter a positive dose amount.');
+  if (!doseUnit.trim() || doseUnit.trim().length > 30)
+    throw new Error('Enter a valid dose unit.');
+  if (
+    !['subcutaneous', 'intramuscular', 'oral', 'topical', 'other'].includes(
+      route,
+    )
+  )
+    throw new Error('Choose a valid route.');
+  const { data, error } = await supabase
+    .from('protocol_items')
+    .update({
+      name: cleaned,
+      category: category.trim() || null,
+      dose_amount: doseAmount,
+      dose_unit: doseUnit.trim(),
+      route,
+    })
     .eq('id', itemId)
     .eq('user_id', userId)
     .select('id')
     .maybeSingle();
   if (error) throw error;
-  if (!data) throw new Error('Substance was not updated. Check your permissions and try again.');
+  if (!data)
+    throw new Error(
+      'Substance was not updated. Check your permissions and try again.',
+    );
 }
 
-export async function updateProtocolItemSchedule(itemId: string, schedule: Record<string, unknown>) {
+export async function updateProtocolItemSchedule(
+  itemId: string,
+  schedule: Record<string, unknown>,
+) {
   const userId = await currentUserId();
   const validated = validateTrackedSchedule(schedule);
-  const { data, error } = await supabase.from('protocol_items')
+  const { data, error } = await supabase
+    .from('protocol_items')
     .update({ schedule: validated })
     .eq('id', itemId)
     .eq('user_id', userId)
     .select('id')
     .maybeSingle();
   if (error) throw error;
-  if (!data) throw new Error('Substance not found or you do not have permission to update it.');
+  if (!data)
+    throw new Error(
+      'Substance not found or you do not have permission to update it.',
+    );
 }
 
 export async function createProtocol(name: string) {
   const userId = await currentUserId();
   const cleanName = name.trim();
-  if (!cleanName || cleanName.length > 100) throw new Error('Use a protocol name of 1–100 characters.');
+  if (!cleanName || cleanName.length > 100)
+    throw new Error('Use a protocol name of 1–100 characters.');
   const { data, error } = await supabase
     .from('protocols')
     .insert({ user_id: userId, name: cleanName })
@@ -165,7 +263,9 @@ export async function createProtocol(name: string) {
 export async function listProtocolItems(protocolId?: string) {
   let query = supabase
     .from('protocol_items')
-    .select('id,protocol_id,name,category,route,form,dose_amount,dose_unit,schedule,active,archived_at,site_rotation_enabled,created_at,inventory_containers(id,remaining_amount,total_amount,unit,low_threshold,is_active)')
+    .select(
+      'id,protocol_id,name,category,route,form,dose_amount,dose_unit,schedule,active,archived_at,site_rotation_enabled,created_at,inventory_containers(id,remaining_amount,total_amount,unit,low_threshold,is_active,opened_at,expires_at,user_use_by_at,lot_number)',
+    )
     .order('created_at', { ascending: false });
 
   if (protocolId) query = query.eq('protocol_id', protocolId);
@@ -178,21 +278,21 @@ export async function listProtocolItems(protocolId?: string) {
 export async function listTodayItems() {
   const { data, error } = await supabase
     .from('protocol_items')
-    .select('id,protocol_id,created_at,name,category,route,dose_amount,dose_unit,schedule,site_rotation_enabled,inventory_containers(id,remaining_amount,total_amount,unit,low_threshold,is_active),protocols!inner(status,starts_on,ends_on)')
+    .select(
+      'id,protocol_id,created_at,name,category,route,dose_amount,dose_unit,schedule,site_rotation_enabled,inventory_containers(id,remaining_amount,total_amount,unit,low_threshold,is_active,opened_at,expires_at,user_use_by_at,lot_number),protocols!inner(status,starts_on,ends_on)',
+    )
     .eq('active', true)
     .is('archived_at', null)
     .eq('protocols.status', 'active')
     .order('created_at', { ascending: true });
 
   if (error) throw error;
-  const today = localDateKey();
-  const current = (data ?? []).filter((row) => {
-    const protocol = row.protocols as unknown as { starts_on: string | null; ends_on: string | null };
-    return (!protocol.starts_on || today >= protocol.starts_on) &&
-      (!protocol.ends_on || today <= protocol.ends_on);
-  });
-  return current.map(row => {
-    const protocol = row.protocols as unknown as { starts_on: string | null; ends_on: string | null };
+  const current = data ?? [];
+  return current.map((row) => {
+    const protocol = row.protocols as unknown as {
+      starts_on: string | null;
+      ends_on: string | null;
+    };
     return { ...row, starts_on: protocol.starts_on, ends_on: protocol.ends_on };
   }) as unknown as TodayItem[];
 }
@@ -221,8 +321,9 @@ export async function createProtocolItem(input: CreateItemInput) {
       route: input.route,
       dose_amount: input.doseAmount,
       dose_unit: input.doseUnit.trim(),
-      schedule: input.schedule,
-      site_rotation_enabled: input.route === 'subcutaneous' || input.route === 'intramuscular'
+      schedule: validateTrackedSchedule(input.schedule),
+      site_rotation_enabled:
+        input.route === 'subcutaneous' || input.route === 'intramuscular',
     })
     .select()
     .single();
@@ -230,121 +331,202 @@ export async function createProtocolItem(input: CreateItemInput) {
   if (error) throw error;
 
   if (input.inventoryAmount && input.inventoryAmount > 0) {
-    const { error: inventoryError } = await supabase.from('inventory_containers').insert({
-      user_id: userId,
-      protocol_item_id: item.id,
-      total_amount: input.inventoryAmount,
-      remaining_amount: input.inventoryAmount,
-      unit: input.doseUnit.trim(),
-      low_threshold: Math.max(input.lowThreshold ?? input.doseAmount * 3, 0),
-      is_active: true
-    });
+    const { error: inventoryError } = await supabase
+      .from('inventory_containers')
+      .insert({
+        user_id: userId,
+        protocol_item_id: item.id,
+        total_amount: input.inventoryAmount,
+        remaining_amount: input.inventoryAmount,
+        unit: input.doseUnit.trim(),
+        low_threshold: Math.max(input.lowThreshold ?? input.doseAmount * 3, 0),
+        is_active: true,
+      });
     if (inventoryError) throw inventoryError;
   }
 
   return item;
 }
 
-function clientEventId() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
-    const value = Math.floor(Math.random() * 16);
-    const next = char === 'x' ? value : (value & 0x3) | 0x8;
-    return next.toString(16);
-  });
-}
+const clientEventId = randomUUID;
 
 async function sendQuickLog(payload: QuickLogPayload) {
-  return supabase.rpc('log_dose_and_decrement', {
-    p_protocol_item_id: payload.protocolItemId,
+  return supabase.rpc('record_tracking_event', {
+    p_item_id: payload.protocolItemId,
+    p_event_id: payload.clientEventId,
     p_amount: payload.amount,
     p_unit: payload.unit,
     p_route: payload.route ?? null,
     p_site: payload.site ?? null,
-    p_inventory_container_id: payload.inventoryContainerId ?? null,
+    p_container_id: payload.inventoryContainerId ?? null,
+    p_logged_at: payload.loggedAt,
     p_scheduled_for: payload.scheduledFor ?? null,
-    p_client_event_id: payload.clientEventId
+    p_occurrence_key: payload.occurrenceKey ?? null,
+    p_local_date: payload.localDate,
+    p_time_zone: payload.timeZone,
+    p_status: payload.status ?? 'completed',
   });
 }
-
-function isNetworkError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error ?? '');
-  return /network|fetch|offline|connection/i.test(message);
+export function selectInventoryContainer(
+  item: TodayItem,
+): InventorySummary | null {
+  return preferredContainer(item);
 }
-
-export function selectInventoryContainer(item: TodayItem): InventorySummary | null {
-  const containers = item.inventory_containers ?? [];
-  if (containers.length === 0) return null;
-  const eligible = containers
-    .filter((container) =>
-      container.is_active &&
-      container.unit === item.dose_unit &&
-      Number.isFinite(Number(container.remaining_amount)) &&
-      Number(container.remaining_amount) >= item.dose_amount
-    )
-    .sort((a, b) =>
-      Number(a.remaining_amount) - Number(b.remaining_amount) || a.id.localeCompare(b.id)
-    );
-  return eligible[0] ?? null;
-}
-
-export async function quickLog(item: TodayItem, site?: string) {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('Sign in before logging.');
-  const userId = session.user.id;
-  const activeInventory = selectInventoryContainer(item);
-  if ((item.inventory_containers?.length ?? 0) > 0 && !activeInventory) {
-    throw new Error('No active container has enough matching-unit stock. Update your Supply Reservoir before logging.');
-  }
-  const payload: QuickLogPayload = {
-    protocolItemId: item.id,
-    amount: item.dose_amount,
-    unit: item.dose_unit,
-    route: item.route,
-    site: site ?? null,
-    inventoryContainerId: activeInventory?.id ?? null,
-    scheduledFor: null,
-    clientEventId: clientEventId()
-  };
-
-  try {
-    const { data, error } = await sendQuickLog(payload);
-    if (error) throw error;
-    return { data, queued: false };
-  } catch (error) {
-    if (!isNetworkError(error)) throw error;
-    await enqueueQuickLog(userId, payload);
-    return { data: null, queued: true };
-  }
-}
-
-export async function flushQuickLogOutbox() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return 0;
-  const userId = session.user.id;
-  const queued = await readOutbox(userId);
-  let flushed = 0;
-
-  for (const payload of queued) {
-    const { data: { session: current } } = await supabase.auth.getSession();
-    if (current?.user.id !== userId) break;
-    try {
-      const { error } = await sendQuickLog(payload);
-      if (error) {
-        // Keep a rejected entry for a future retry, but continue attempting
-        // later entries so one malformed/stale record cannot block the queue.
+let syncing: Promise<number> | null = null;
+export async function flushQuickLogOutbox(retryReviewed = false) {
+  if (syncing) return syncing;
+  syncing = (async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return 0;
+    const userId = session.user.id;
+    let flushed = 0;
+    for (const payload of await readOutbox(userId)) {
+      const {
+        data: { session: current },
+      } = await supabase.auth.getSession();
+      if (current?.user.id !== userId) break;
+      if (
+        !payload.undoRequested &&
+        (!payload.loggedAt || !payload.localDate || !payload.timeZone)
+      ) {
+        await updateQuickLog(userId, payload.clientEventId, {
+          needsReview: true,
+          syncError:
+            'This older entry needs its original date and time before it can sync.',
+        });
         continue;
       }
-      await removeQuickLog(userId, payload.clientEventId);
-      flushed += 1;
-    } catch (error) {
-      // A thrown network failure means the connection is unavailable; stop
-      // here and leave the remaining queue untouched.
-      if (isNetworkError(error)) break;
-      continue;
+      if (payload.needsReview && !retryReviewed && !payload.undoRequested)
+        continue;
+      try {
+        if (payload.undoRequested) {
+          const { error } = await supabase.rpc('undo_tracking_event', {
+            p_event_id: payload.clientEventId,
+          });
+          if (error) throw error;
+          if (await removeQuickLog(userId, payload.clientEventId, true))
+            flushed++;
+          continue;
+        }
+        const { data, error } = await sendQuickLog(payload);
+        if (error) throw error;
+        const latest = (await readOutbox(userId)).find(
+          (p) => p.clientEventId === payload.clientEventId,
+        );
+        let undone = !data || data.status === 'voided';
+        if (latest?.undoRequested && !undone) {
+          const { error: undoError } = await supabase.rpc(
+            'undo_tracking_event',
+            { p_event_id: payload.clientEventId },
+          );
+          if (undoError) throw undoError;
+          undone = true;
+        }
+        if (await removeQuickLog(userId, payload.clientEventId, undone))
+          flushed++;
+      } catch (error) {
+        if (isNetworkError(error)) break;
+        await updateQuickLog(userId, payload.clientEventId, {
+          needsReview: true,
+          syncError:
+            (error as { message?: string })?.message ??
+            'Review this entry before retrying.',
+        });
+      }
     }
+    return flushed;
+  })();
+  try {
+    return await syncing;
+  } finally {
+    syncing = null;
   }
-
-  return flushed;
+}
+let logging: Promise<unknown> = Promise.resolve();
+export function quickLog(
+  item: TodayItem & Partial<OccurrenceFields>,
+  site?: string,
+  status: 'completed' | 'skipped' = 'completed',
+) {
+  const work = logging.then(async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) throw new Error('Sign in before logging.');
+    const userId = session.user.id;
+    const pending = await readOutbox(userId);
+    if (
+      item.occurrenceKey &&
+      pending.some((p) => p.occurrenceKey === item.occurrenceKey)
+    )
+      throw new Error('This scheduled entry is already pending sync.');
+    const adjusted = {
+      ...item,
+      inventory_containers: item.inventory_containers?.map((c) => ({
+        ...c,
+        remaining_amount:
+          Number(c.remaining_amount) -
+          pending
+            .filter(
+              (p) => p.inventoryContainerId === c.id && p.status !== 'skipped',
+            )
+            .reduce((sum, p) => sum + p.amount, 0),
+      })),
+    };
+    const stock =
+      status === 'completed' ? selectInventoryContainer(adjusted) : null;
+    if (
+      status === 'completed' &&
+      (item.inventory_containers?.length ?? 0) > 0 &&
+      !stock
+    )
+      throw new Error(
+        'No usable container has enough matching-unit stock after pending logs. Review Inventory.',
+      );
+    const loggedAt = new Date().toISOString();
+    const zone = item.timeZone ?? deviceTimeZone();
+    const payload: QuickLogPayload = {
+      protocolItemId: item.id,
+      amount: item.dose_amount,
+      unit: item.dose_unit,
+      route: item.route,
+      site: site ?? null,
+      inventoryContainerId: stock?.id ?? null,
+      scheduledFor: item.scheduledFor ?? null,
+      occurrenceKey: item.occurrenceKey ?? null,
+      loggedAt,
+      localDate: item.dayKey ?? zonedDateKey(new Date(loggedAt), zone),
+      timeZone: zone,
+      clientEventId: clientEventId(),
+      status,
+      itemName: item.name,
+    };
+    // Persist first: interruption after a server commit safely replays the same UUID.
+    await enqueueQuickLog(userId, payload);
+    try {
+      const { data, error } = await sendQuickLog(payload);
+      if (error) throw error;
+      await removeQuickLog(userId, payload.clientEventId);
+      return {
+        data: data as TimelineEntry,
+        queued: false,
+        eventId: payload.clientEventId,
+      };
+    } catch (error) {
+      if (isNetworkError(error))
+        return { data: null, queued: true, eventId: payload.clientEventId };
+      await updateQuickLog(userId, payload.clientEventId, {
+        needsReview: true,
+        syncError:
+          (error as { message?: string })?.message ?? 'Review this entry.',
+      });
+      throw error;
+    }
+  });
+  logging = work.catch(() => undefined);
+  return work;
 }
 
 export async function listRecentSites(limit = 100) {
@@ -380,7 +562,9 @@ export async function listTimelineHistory(maxEntries = 10000) {
     const take = Math.min(pageSize, maxEntries - from);
     const { data, error } = await supabase
       .from('dose_logs')
-      .select('id,protocol_item_id,amount,unit,route,site,status,logged_at,revision,protocol_items(name)')
+      .select(
+        'id,protocol_item_id,amount,unit,route,site,status,logged_at,revision,client_event_id,occurrence_key,local_date,time_zone,scheduled_for,snapshot,protocol_items(name)',
+      )
       .neq('status', 'voided')
       .order('logged_at', { ascending: false })
       .order('id', { ascending: false })
@@ -392,8 +576,11 @@ export async function listTimelineHistory(maxEntries = 10000) {
   }
   // Determine whether the cap is reached with more records remaining.
   const { data: beyond, error } = await supabase
-    .from('dose_logs').select('id').neq('status', 'voided')
-    .order('logged_at', { ascending: false }).order('id', { ascending: false })
+    .from('dose_logs')
+    .select('id')
+    .neq('status', 'voided')
+    .order('logged_at', { ascending: false })
+    .order('id', { ascending: false })
     .range(maxEntries, maxEntries);
   if (error) throw error;
   truncated = (beyond?.length ?? 0) > 0;
@@ -403,7 +590,9 @@ export async function listTimelineHistory(maxEntries = 10000) {
 export async function listDoseLogs(limit = 50) {
   const { data, error } = await supabase
     .from('dose_logs')
-    .select('id,protocol_item_id,amount,unit,route,site,status,logged_at,revision,protocol_items(name)')
+    .select(
+      'id,protocol_item_id,amount,unit,route,site,status,logged_at,revision,client_event_id,occurrence_key,local_date,time_zone,scheduled_for,snapshot,protocol_items(name)',
+    )
     .neq('status', 'voided')
     .order('logged_at', { ascending: false })
     .limit(limit);
@@ -412,17 +601,36 @@ export async function listDoseLogs(limit = 50) {
   return data as unknown as TimelineEntry[];
 }
 
-export async function addInventoryContainer(itemId: string, amount: number, unit: string, lowThreshold: number) {
+export async function addInventoryContainer(
+  itemId: string,
+  amount: number,
+  unit: string,
+  lowThreshold: number,
+) {
   const userId = await currentUserId();
-  if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(lowThreshold) || lowThreshold < 0) {
-    throw new Error('Enter a positive quantity and a nonnegative low-stock threshold.');
+  if (
+    !Number.isFinite(amount) ||
+    amount <= 0 ||
+    !Number.isFinite(lowThreshold) ||
+    lowThreshold < 0
+  ) {
+    throw new Error(
+      'Enter a positive quantity and a nonnegative low-stock threshold.',
+    );
   }
-  const { data: item, error: itemError } = await supabase.from('protocol_items')
+  const { data: item, error: itemError } = await supabase
+    .from('protocol_items')
     .select('id,dose_unit')
-    .eq('id', itemId).eq('user_id', userId).maybeSingle();
+    .eq('id', itemId)
+    .eq('user_id', userId)
+    .maybeSingle();
   if (itemError) throw itemError;
-  if (!item) throw new Error('Substance is missing or not owned by this account.');
-  if (unit.trim() !== item.dose_unit) throw new Error('Container unit must match the substance unit. Convert quantities before adding.');
+  if (!item)
+    throw new Error('Substance is missing or not owned by this account.');
+  if (unit.trim() !== item.dose_unit)
+    throw new Error(
+      'Container unit must match the substance unit. Convert quantities before adding.',
+    );
   const { error } = await supabase.from('inventory_containers').insert({
     user_id: userId,
     protocol_item_id: itemId,
@@ -430,39 +638,122 @@ export async function addInventoryContainer(itemId: string, amount: number, unit
     remaining_amount: amount,
     unit: unit.trim(),
     low_threshold: lowThreshold,
-    is_active: true
+    is_active: true,
   });
   if (error) throw error;
 }
 
-export async function correctInventoryRemaining(containerId: string, newAmount: number, reason: string) {
-  if (!Number.isFinite(newAmount) || newAmount < 0) throw new Error('Remaining quantity must be zero or higher.');
+export async function correctInventoryRemaining(
+  containerId: string,
+  newAmount: number,
+  reason: string,
+) {
+  if (!Number.isFinite(newAmount) || newAmount < 0)
+    throw new Error('Remaining quantity must be zero or higher.');
   const explanation = reason.trim();
-  if (explanation.length < 3 || explanation.length > 500) throw new Error('Explain the correction in 3–500 characters.');
+  if (explanation.length < 3 || explanation.length > 500)
+    throw new Error('Explain the correction in 3–500 characters.');
   const { error } = await supabase.rpc('correct_inventory_remaining', {
     p_container_id: containerId,
     p_new_amount: newAmount,
-    p_reason: explanation
+    p_reason: explanation,
   });
   if (error) throw error;
 }
 
-export async function correctDoseLog(entry: TimelineEntry, changes: { amount: number; loggedAt: string; site: string | null; status: 'completed' | 'skipped' | 'voided' }) {
+export async function correctDoseLog(
+  entry: TimelineEntry,
+  changes: {
+    amount: number;
+    loggedAt: string;
+    site: string | null;
+    status: 'completed' | 'skipped' | 'voided';
+  },
+) {
   const { data, error } = await supabase.rpc('correct_dose_log', {
-    p_log_id: entry.id, p_revision: entry.revision,
-    p_amount: changes.amount, p_logged_at: changes.loggedAt,
-    p_site: changes.site, p_status: changes.status
+    p_log_id: entry.id,
+    p_revision: entry.revision,
+    p_amount: changes.amount,
+    p_logged_at: changes.loggedAt,
+    p_site: changes.site,
+    p_status: changes.status,
   });
   if (error) throw error;
   return data as TimelineEntry;
 }
 
 export function undoDoseLog(entry: TimelineEntry) {
-  return correctDoseLog(entry, { amount: entry.amount, loggedAt: entry.logged_at, site: entry.site, status: 'voided' });
+  return correctDoseLog(entry, {
+    amount: entry.amount,
+    loggedAt: entry.logged_at,
+    site: entry.site,
+    status: 'voided',
+  });
 }
 
-export async function skipDose(item: TodayItem) {
-  const { data, error } = await supabase.rpc('skip_dose', { p_item_id: item.id, p_client_event_id: clientEventId() });
+export async function skipDose(item: TodayItem & Partial<OccurrenceFields>) {
+  return quickLog(item, undefined, 'skipped');
+}
+
+export async function duplicateProtocol(
+  sourceId: string,
+  name: string,
+  start: string,
+  end: string | null,
+) {
+  const { data, error } = await supabase.rpc('duplicate_protocol', {
+    p_source_id: sourceId,
+    p_name: name.trim(),
+    p_start: start,
+    p_end: end,
+  });
   if (error) throw error;
-  return data as TimelineEntry;
+  return data;
+}
+export async function updateInventoryDates(
+  containerId: string,
+  changes: {
+    opened_at: string | null;
+    expires_at: string | null;
+    user_use_by_at: string | null;
+    lot_number: string | null;
+    is_active: boolean;
+  },
+) {
+  const userId = await currentUserId();
+  for (const field of ['opened_at', 'expires_at', 'user_use_by_at'] as const)
+    if (changes[field] && !Number.isFinite(new Date(changes[field]).getTime()))
+      throw new Error('Choose valid container dates.');
+  if (changes.lot_number && changes.lot_number.length > 100)
+    throw new Error('Lot number is too long.');
+  const { data, error } = await supabase
+    .from('inventory_containers')
+    .update({ ...changes, updated_at: new Date().toISOString() })
+    .eq('id', containerId)
+    .eq('user_id', userId)
+    .select('id')
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error('Container not found.');
+}
+export type ItemVersion = {
+  id: string;
+  protocol_item_id: string;
+  version_order?: number;
+  effective_at: string;
+  snapshot: Record<string, unknown>;
+};
+export async function listItemVersions() {
+  const from = new Date();
+  from.setDate(from.getDate() - 14);
+  from.setHours(0, 0, 0, 0);
+  const result: ItemVersion[] = [];
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await supabase
+      .rpc('get_schedule_versions', { p_from: from.toISOString() })
+      .range(offset, offset + 499);
+    if (error) throw error;
+    result.push(...(data as ItemVersion[]));
+    if (data.length < 500) return result;
+  }
 }

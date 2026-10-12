@@ -72,7 +72,9 @@
           "cameraPermission": false,
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-sharing",
+      "expo-asset"
     ],
     "extra": {
       "router": {

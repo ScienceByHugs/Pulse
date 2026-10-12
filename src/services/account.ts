@@ -1,3 +1,4 @@
+import { privateStorage } from '@/lib/privateStorage';
 import { Share } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { clearOutbox } from '@/lib/outbox';
@@ -6,8 +7,12 @@ import { exportProfilePhoto } from '@/services/profilePhoto';
 async function allRows(table: string, userId: string, order: string) {
   const rows: Record<string, unknown>[] = [];
   for (let from = 0; ; from += 500) {
-    const { data, error } = await supabase.from(table).select('*').eq('user_id', userId)
-      .order(order).range(from, from + 499);
+    const { data, error } = await supabase
+      .from(table)
+      .select('*')
+      .eq('user_id', userId)
+      .order(order)
+      .range(from, from + 499);
     if (error) throw error;
     rows.push(...(data ?? []));
     if ((data?.length ?? 0) < 500) return rows;
@@ -15,8 +20,12 @@ async function allRows(table: string, userId: string, order: string) {
 }
 
 export async function exportPulseData() {
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) throw authError ?? new Error('Sign in before exporting.');
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user)
+    throw authError ?? new Error('Sign in before exporting.');
   const [
     profile,
     protocols,
@@ -25,7 +34,10 @@ export async function exportPulseData() {
     logs,
     adjustments,
     logRevisions,
-    profilePhoto
+    profilePhoto,
+    checkins,
+    itemVersions,
+    cancellations,
   ] = await Promise.all([
     allRows('profiles', user.id, 'user_id'),
     allRows('protocols', user.id, 'id'),
@@ -34,43 +46,59 @@ export async function exportPulseData() {
     allRows('dose_logs', user.id, 'id'),
     allRows('inventory_adjustments', user.id, 'id'),
     allRows('dose_log_revisions', user.id, 'id'),
-    exportProfilePhoto(user.id)
+    exportProfilePhoto(user.id),
+    allRows('daily_checkins', user.id, 'id'),
+    allRows('protocol_item_versions', user.id, 'id'),
+    allRows('tracking_event_cancellations', user.id, 'event_id'),
   ]);
 
   const payload = {
     exported_at: new Date().toISOString(),
     format: 'pulse-2-export-v1',
-    account_profile: { full_name: user.user_metadata?.full_name ?? '', contact_phone: user.user_metadata?.contact_phone ?? '', photo: profilePhoto },
+    account_profile: {
+      full_name: user.user_metadata?.full_name ?? '',
+      contact_phone: user.user_metadata?.contact_phone ?? '',
+      photo: profilePhoto,
+    },
     profile,
     protocols,
     protocol_items: items,
     inventory_containers: inventory,
     dose_logs: logs,
     inventory_adjustments: adjustments,
-    dose_log_revisions: logRevisions
+    dose_log_revisions: logRevisions,
+    daily_checkins: checkins,
+    protocol_item_versions: itemVersions,
+    tracking_event_cancellations: cancellations,
   };
 
   const json = JSON.stringify(payload, null, 2);
   await Share.share({
     title: 'Pulse data export',
-    message: json
+    message: json,
   });
 
   return payload;
 }
 
 export async function deletePulseAccount() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const { data, error } = await supabase.functions.invoke('delete-account', {
     method: 'POST',
-    body: {}
+    body: {},
   });
 
   if (error) throw error;
-  if (!data?.deleted) throw new Error('Account deletion was not confirmed by the server');
+  if (!data?.deleted)
+    throw new Error('Account deletion was not confirmed by the server');
 
   try {
-    if (session) await clearOutbox(session.user.id);
+    if (session) {
+      await clearOutbox(session.user.id);
+      await privateStorage.removeItem(`pulse.today-cache.${session.user.id}`);
+    }
   } finally {
     await supabase.auth.signOut({ scope: 'local' });
   }

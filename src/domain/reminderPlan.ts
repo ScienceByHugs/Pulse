@@ -1,4 +1,9 @@
-import { isDueOnDate, localDateKey, scheduleTime } from './schedule';
+import {
+  occurrencesForDay,
+  deviceTimeZone,
+  zonedDateKey,
+  wallTimeToInstant,
+} from './occurrences';
 
 type ReminderItem = {
   id: string;
@@ -7,23 +12,40 @@ type ReminderItem = {
   ends_on?: string | null;
 };
 
-export function buildReminderPlan<T extends ReminderItem>(items: T[], now = new Date(), limit = 60) {
-  const candidates: Array<{ item: T; when: Date }> = [];
-  for (let offset = 0; offset < 30; offset++) {
-    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
-    const key = localDateKey(day);
-    for (const item of items) {
-      if ((item.starts_on && key < item.starts_on) || (item.ends_on && key > item.ends_on)) continue;
-      if (!isDueOnDate(item.schedule, day)) continue;
-      const time = scheduleTime(item.schedule, day) ?? '09:00';
-      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) continue;
-      const [hour = 9, minute = 0] = time.split(':').map(Number);
-      const when = new Date(day);
-      when.setHours(hour, minute, 0, 0);
-      if (when > now) candidates.push({ item, when });
+export function buildReminderPlan<T extends ReminderItem>(
+  items: T[],
+  now = new Date(),
+  limit = 60,
+) {
+  const candidates: Array<{ item: T; when: Date; occurrenceKey: string }> = [];
+  for (const item of items) {
+    const zone =
+      typeof item.schedule.timeZone === 'string' &&
+      item.schedule.timeZone !== 'local'
+        ? item.schedule.timeZone
+        : deviceTimeZone();
+    const first = zonedDateKey(now, zone);
+    const [y = 0, m = 1, d = 1] = first.split('-').map(Number);
+    for (let offset = 0; offset < 30; offset++) {
+      const key = new Date(Date.UTC(y, m - 1, d + offset, 12))
+        .toISOString()
+        .slice(0, 10);
+      for (const entry of occurrencesForDay(item, key, zone)) {
+        const when = entry.scheduledFor
+          ? new Date(entry.scheduledFor)
+          : wallTimeToInstant(key, '09:00', zone)!;
+        if (when > now)
+          candidates.push({ item, when, occurrenceKey: entry.occurrenceKey });
+      }
     }
   }
   // iOS has a finite pending-notification queue. Keep the nearest events,
   // with room for a manual test; refresh the rolling window when Pulse opens.
-  return candidates.sort((a, b) => a.when.getTime() - b.when.getTime() || a.item.id.localeCompare(b.item.id)).slice(0, limit);
+  return candidates
+    .sort(
+      (a, b) =>
+        a.when.getTime() - b.when.getTime() ||
+        a.item.id.localeCompare(b.item.id),
+    )
+    .slice(0, limit);
 }

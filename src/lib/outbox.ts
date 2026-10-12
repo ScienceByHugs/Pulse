@@ -22,6 +22,15 @@ export type QuickLogPayload = {
   inventoryContainerId?: string | null;
   scheduledFor?: string | null;
   clientEventId: string;
+  loggedAt?: string;
+  localDate?: string;
+  timeZone?: string;
+  occurrenceKey?: string | null;
+  status?: 'completed' | 'skipped';
+  itemName?: string;
+  syncError?: string;
+  needsReview?: boolean;
+  undoRequested?: boolean;
 };
 
 export async function readOutbox(userId: string): Promise<QuickLogPayload[]> {
@@ -42,21 +51,58 @@ export async function readOutbox(userId: string): Promise<QuickLogPayload[]> {
   }
 }
 
-export async function enqueueQuickLog(userId: string, payload: QuickLogPayload) {
+export async function enqueueQuickLog(
+  userId: string,
+  payload: QuickLogPayload,
+) {
   return serialize(async () => {
     const current = await readOutbox(userId);
-    if (current.some((item) => item.clientEventId === payload.clientEventId)) return;
-    await privateStorage.setItem(storageKey(userId), JSON.stringify([...current, payload]));
+    if (current.some((item) => item.clientEventId === payload.clientEventId))
+      return;
+    await privateStorage.setItem(
+      storageKey(userId),
+      JSON.stringify([...current, payload]),
+    );
   });
 }
 
-export async function removeQuickLog(userId: string, clientEventId: string) {
+export async function removeQuickLog(
+  userId: string,
+  clientEventId: string,
+  undoHandled = false,
+) {
   return serialize(async () => {
     const current = await readOutbox(userId);
-    await privateStorage.setItem(storageKey(userId), JSON.stringify(current.filter((item) => item.clientEventId !== clientEventId)));
+    const next = current.filter(
+      (item) =>
+        item.clientEventId !== clientEventId ||
+        (item.undoRequested && !undoHandled),
+    );
+    await privateStorage.setItem(storageKey(userId), JSON.stringify(next));
+    return next.length < current.length;
   });
 }
 
 export async function clearOutbox(userId: string) {
   return serialize(() => privateStorage.removeItem(storageKey(userId)));
+}
+
+export async function updateQuickLog(
+  userId: string,
+  eventId: string,
+  changes: Partial<QuickLogPayload>,
+) {
+  return serialize(async () => {
+    const records = await readOutbox(userId);
+    await privateStorage.setItem(
+      storageKey(userId),
+      JSON.stringify(
+        records.map((row) =>
+          row.clientEventId === eventId
+            ? { ...row, ...changes, clientEventId: row.clientEventId }
+            : row,
+        ),
+      ),
+    );
+  });
 }

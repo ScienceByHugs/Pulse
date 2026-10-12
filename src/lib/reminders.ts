@@ -1,16 +1,23 @@
+import { supabase } from '@/lib/supabase';
+import { readOutbox } from '@/lib/outbox';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { buildReminderPlan } from '@/domain/reminderPlan';
-import { getPrivateNotifications, getRemindersEnabled, setRemindersEnabled } from '@/lib/privacy';
-import type { TodayItem } from '@/services/pulse';
+import {
+  getPrivateNotifications,
+  getRemindersEnabled,
+  setRemindersEnabled,
+} from '@/lib/privacy';
+import type { QuickLogPayload } from '@/lib/outbox';
+import type { TimelineEntry, TodayItem } from '@/services/pulse';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
     shouldShowList: true,
     shouldPlaySound: false,
-    shouldSetBadge: false
-  })
+    shouldSetBadge: false,
+  }),
 });
 
 export async function requestReminderPermission() {
@@ -19,7 +26,7 @@ export async function requestReminderPermission() {
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('pulse-reminders', {
       name: 'Pulse reminders',
-      importance: Notifications.AndroidImportance.DEFAULT
+      importance: Notifications.AndroidImportance.DEFAULT,
     });
   }
 
@@ -29,7 +36,11 @@ export async function requestReminderPermission() {
   return requested.status === 'granted';
 }
 
-export async function rescheduleReminders(items: TodayItem[]) {
+export async function rescheduleReminders(
+  items: TodayItem[],
+  logs?: TimelineEntry[],
+  pending?: QuickLogPayload[],
+) {
   if (Platform.OS === 'web') return 0;
   if (!(await getRemindersEnabled())) return 0;
 
@@ -38,23 +49,56 @@ export async function rescheduleReminders(items: TodayItem[]) {
   const permission = await Notifications.getPermissionsAsync();
   if (!permission.granted) return 0;
 
+  if (!logs) {
+    const day = new Date();
+    day.setDate(day.getDate() - 1);
+    const from = day.toISOString().slice(0, 10);
+    logs = [];
+    for (let offset = 0; ; offset += 500) {
+      const { data, error } = await supabase
+        .from('dose_logs')
+        .select('occurrence_key,status')
+        .gte('local_date', from)
+        .in('status', ['completed', 'skipped'])
+        .order('id')
+        .range(offset, offset + 499);
+      if (error) throw error;
+      logs.push(...(data as TimelineEntry[]));
+      if (data.length < 500) break;
+    }
+  }
+  if (!pending) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    pending = session ? await readOutbox(session.user.id) : [];
+  }
   await Notifications.cancelAllScheduledNotificationsAsync();
   const privateMode = await getPrivateNotifications();
   const now = new Date();
   let count = 0;
 
-  for (const { item, when } of buildReminderPlan(items, now)) {
+  const resolved = new Set([
+    ...logs
+      .filter((l) => ['completed', 'skipped'].includes(l.status))
+      .map((l) => l.occurrence_key),
+    ...pending.map((p) => p.occurrenceKey),
+  ]);
+  for (const { item, when, occurrenceKey } of buildReminderPlan(items, now)) {
+    if (resolved.has(occurrenceKey)) continue;
     await Notifications.scheduleNotificationAsync({
       content: {
         title: 'Pulse reminder',
-        body: privateMode ? 'You have something scheduled in Pulse.' : `${item.name} · ${item.dose_amount} ${item.dose_unit}`,
-        data: { protocolItemId: item.id }
+        body: privateMode
+          ? 'You have something scheduled in Pulse.'
+          : `${item.name} · ${item.dose_amount} ${item.dose_unit}`,
+        data: { protocolItemId: item.id, occurrenceKey },
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: when,
-        channelId: Platform.OS === 'android' ? 'pulse-reminders' : undefined
-      }
+        channelId: Platform.OS === 'android' ? 'pulse-reminders' : undefined,
+      },
     });
     count += 1;
   }
@@ -72,7 +116,8 @@ export async function enableReminders(items: TodayItem[]) {
 
 export async function disableReminders() {
   await setRemindersEnabled(false);
-  if (Platform.OS !== 'web') await Notifications.cancelAllScheduledNotificationsAsync();
+  if (Platform.OS !== 'web')
+    await Notifications.cancelAllScheduledNotificationsAsync();
 }
 
 /** One-off local test. Does not change the user's reminder preferences. */
@@ -80,7 +125,9 @@ export async function sendTestNotification(): Promise<boolean> {
   if (Platform.OS === 'web') return false;
   const permission = await Notifications.getPermissionsAsync();
   // A test button is an explicit user action, so requesting missing permission is allowed.
-  const allowed = permission.granted || (permission.canAskAgain && await requestReminderPermission());
+  const allowed =
+    permission.granted ||
+    (permission.canAskAgain && (await requestReminderPermission()));
   if (!allowed) return false;
 
   await Notifications.scheduleNotificationAsync({
@@ -88,13 +135,23 @@ export async function sendTestNotification(): Promise<boolean> {
       title: 'Pulse test notification',
       body: 'Notifications are working. Live long and prosper. 🖖',
       sound: false,
-      data: { kind: 'manual-notification-test' }
+      data: { kind: 'manual-notification-test' },
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: new Date(Date.now() + 8000),
-      channelId: Platform.OS === 'android' ? 'pulse-reminders' : undefined
-    }
+      channelId: Platform.OS === 'android' ? 'pulse-reminders' : undefined,
+    },
   });
   return true;
+}
+
+export async function cancelOccurrenceReminder(key: string) {
+  if (Platform.OS === 'web') return;
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  await Promise.all(
+    scheduled
+      .filter((n) => n.content.data?.occurrenceKey === key)
+      .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)),
+  );
 }
