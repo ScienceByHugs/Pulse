@@ -1,3 +1,4 @@
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import type { PropsWithChildren } from 'react';
 import {
   Keyboard,
@@ -25,6 +26,7 @@ export function FormSheet({
   visible?: boolean;
   contentKey?: string | number;
 }>) {
+  const reduceMotion = useReduceMotion();
   const close = () => {
     if (!busy) {
       Keyboard.dismiss();
@@ -34,7 +36,7 @@ export function FormSheet({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={reduceMotion ? 'none' : 'slide'}
       presentationStyle="pageSheet"
       onRequestClose={close}
     >

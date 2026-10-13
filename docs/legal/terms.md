@@ -1,6 +1,6 @@
 # Terms of Use
 
-**Draft for operator and legal review — not yet published.**
+Draft — not yet effective.
 
 ## Agreement and operator
 
@@ -12,7 +12,7 @@ Pulse records the routines and quantities you enter, schedules reminders, tracks
 
 ## Eligibility and account responsibilities
 
-You must be legally able to enter an agreement and comply with the final minimum-age policy, which is pending confirmation. Provide accurate account information, protect access credentials and report suspected unauthorized access. You are responsible for checking the accuracy of your entries and following qualified medical advice. Never share account passwords with support.
+Pulse is intended for United States residents who are at least 18 years old and legally able to enter an agreement. Signup asks you to confirm that eligibility; it is self-attestation rather than verified identity or location. Provide accurate account information, protect credentials and report suspected unauthorized access. Check your own entries and follow qualified medical advice. Never share account passwords with support.
 
 ## Acceptable use
 

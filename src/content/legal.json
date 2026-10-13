@@ -5,7 +5,7 @@
     "sections": [
       {
         "heading": "About this policy",
-        "body": "Pulse by SBH, also called Pulse, is a personal routine tracker by Science By Hugs. This draft describes the current app. Operator identity, privacy contact, distribution territories and retention settings must be confirmed before publication. Version: 2026-10-12. Effective date: to be set on publication."
+        "body": "Pulse by SBH, also called Pulse, is a personal routine tracker by Science By Hugs, operated as a sole proprietorship. This draft describes the current app for United States residents age 18 or older. The proprietor’s full legal name and public mailing address remain pending confirmation. Privacy and legal requests: legal@sciencebyhugs.com. Version: 2026-10-12. Effective date: to be set on publication."
       },
       {
         "heading": "Information you provide",
@@ -21,7 +21,7 @@
       },
       {
         "heading": "Providers and disclosures",
-        "body": "Supabase provides backend authentication, database and private profile-photo storage. Expo provides app development/build/distribution infrastructure; Apple and Google provide their platforms and related services. Their processing depends on the service you use. We may provide limited access to authorized personnel and contracted providers for service operation, security and requested support, or disclose information when legally required. We do not operate advertising, data-sale or health-data AI-training features in the reviewed app. Confirm actual vendor practices and contracts before publishing this statement."
+        "body": "Supabase provides backend authentication, database and private profile-photo storage. Expo provides app development/build/distribution infrastructure; Apple and Google provide their platforms and related services. Their processing depends on the service you use. We may provide limited access to authorized personnel and contracted providers for service operation, security and requested support, or disclose information when legally required. We do not operate advertising, data-sale or health-data AI-training features in the reviewed app. Confirm actual vendor practices and contracts before publishing this statement. We promote Pulse outside the app. The app has no advertising feature, and we do not sell personal information or disclose health records for advertising."
       },
       {
         "heading": "Your sharing choices",
@@ -29,7 +29,7 @@
       },
       {
         "heading": "Permissions and device storage",
-        "body": "Photo access selects an optional avatar; the app uploads a resized JPEG rather than your entire photo library. Notification, calendar and biometric-lock features use optional platform permissions. Pulse receives a biometric authentication result, not your face or fingerprint template. Native sessions, cached routine records and pending logs use platform secure storage. The web app uses browser storage for sessions and local state. See our Device Storage Notice for more detail. Optional substance photos are resized and stored on this device only, separately from the backend profile photo. On native devices they use private secure storage; on web they use browser storage. They can be replaced or removed and included in an account export from this device."
+        "body": "Photo access selects an optional avatar; the app uploads a resized JPEG rather than your entire photo library. Notification, calendar and biometric-lock features use optional platform permissions. Pulse receives a biometric authentication result, not your face or fingerprint template. Native sessions, cached routine records and pending logs use platform secure storage. The web app uses browser storage for sessions and local state. See our Device Storage Notice for more detail. Optional substance photos are resized and stored on this device only, separately from the backend profile photo. On native devices they use private secure storage; on web they use browser storage. They can be replaced or removed and included in an account export from this device. Unconfirmed creation requests retain their identifiers and original input in private device storage so interrupted saves can be retried without duplicating records. Successful requests are cleared; remaining requests can be included in an account export from that device."
       },
       {
         "heading": "Retention and deletion",
@@ -37,19 +37,19 @@
       },
       {
         "heading": "Your controls and rights",
-        "body": "You can update profile details, remove your photo, edit supported records, export your account data and request account deletion in Account & Privacy. You can disable reminders/calendar sync or revoke OS permissions. Depending on your location, you may have access, correction, deletion, consent-withdrawal, appeal or other privacy rights. We verify requests using proportionate account-verification steps and will not ask you to email a password. Required request/appeal contact details must be supplied before publication."
+        "body": "You can update profile details, remove your photo, edit supported records, export your account data and request account deletion in Account & Privacy. You can disable reminders/calendar sync or revoke OS permissions. Depending on your location, you may have access, correction, deletion, consent-withdrawal, appeal or other privacy rights. We verify requests using proportionate account-verification steps and will not ask you to email a password. Contact legal@sciencebyhugs.com for privacy requests and appeals."
       },
       {
         "heading": "Security and international processing",
-        "body": "Account ownership restrictions and other safeguards limit access to records. No service is perfectly secure. Protect your device, account and exports. Providers may process data outside your country; hosting regions, applicable transfer safeguards and contractual arrangements must be confirmed before publication. Pulse does not claim that all data is end-to-end encrypted or that HIPAA applies to every account."
+        "body": "Account ownership restrictions and other safeguards limit access to records. No service is perfectly secure. Protect your device, account and exports. The primary Supabase database is configured in us-east-2 (United States), verified on 2026-10-12. This does not mean every provider, connection log or support process stays in the United States; provider processing arrangements remain to be confirmed. Pulse does not claim that all data is end-to-end encrypted or that HIPAA applies to every account."
       },
       {
         "heading": "Children and changes",
-        "body": "The intended minimum age and launch territories remain pending operator confirmation. Do not publish or describe an enforced age restriction until the matching signup controls are implemented. We will update the policy when practices change, identify the effective version, and provide additional notice or obtain consent when required. Business transitions require continued protection of information and any legally required notice/consent."
+        "body": "Pulse is intended for United States residents age 18 or older. The normal signup flow asks users to confirm that eligibility; it does not independently verify age or location, and does not collect a birth date or GPS location for this purpose. Signup confirmation and its date are saved with the account. We will update this policy when practices change and identify the effective version. Business transitions require continued protection of information and legally required notice or consent."
       },
       {
         "heading": "Contact",
-        "body": "DRAFT: insert the confirmed legal operator, privacy email and public business mailing address. Do not use placeholder details in store submissions."
+        "body": "Privacy/legal: legal@sciencebyhugs.com. Support: support@sciencebyhugs.com. DRAFT: confirm the legal operator and public business mailing address. Do not use placeholder details in store submissions."
       }
     ]
   },
@@ -67,7 +67,7 @@
       },
       {
         "heading": "Purposes of collection",
-        "body": "We process these records to provide the tracking, sync, reminders, history, inventory, check-in summaries and exports you request. We do not use these features to diagnose conditions, prescribe or choose treatments. We do not operate health-data advertising, sale or AI-training features in the reviewed app."
+        "body": "We process these records to provide the tracking, sync, reminders, history, inventory, check-in summaries and exports you request. We do not use these features to diagnose conditions, prescribe or choose treatments. We do not operate health-data advertising, sale or AI-training features in the reviewed app. We promote Pulse outside the app. The app has no advertising feature, and we do not sell personal information or disclose health records for advertising."
       },
       {
         "heading": "Sharing and recipients",
@@ -79,11 +79,11 @@
       },
       {
         "heading": "Access, deletion and appeals",
-        "body": "Use Account & Privacy to export records or delete the account. For additional health-data access, deletion, withdrawal or appeal requests, contact the privacy address to be confirmed. Requests will be verified proportionately and processed within applicable legal deadlines. Deletion requests must be propagated to applicable processors/recipients where required; exported copies you independently share may be outside our control. Final request and appeal procedures must be established before publication."
+        "body": "Use Account & Privacy to export records or delete the account. For additional health-data access, deletion, withdrawal or appeal requests, contact legal@sciencebyhugs.com. Requests will be verified proportionately and processed within applicable legal deadlines. Deletion requests must be propagated to applicable processors/recipients where required; exported copies you independently share may be outside our control. Final request and appeal procedures must be established before publication."
       },
       {
         "heading": "Policy link and contact",
-        "body": "Publish this document through a distinct, conspicuous Consumer Health Privacy link on the public homepage and inside Legal & Privacy. DRAFT: insert confirmed operator and privacy contact details."
+        "body": "Publish this document through a distinct, conspicuous Consumer Health Privacy link on the public homepage and inside Legal & Privacy. Privacy/legal: legal@sciencebyhugs.com. DRAFT: confirm the legal operator and public mailing address."
       }
     ]
   },
@@ -101,11 +101,11 @@
       },
       {
         "heading": "Eligibility and account responsibilities",
-        "body": "You must be legally able to enter an agreement and comply with the final minimum-age policy, which is pending confirmation. Provide accurate account information, protect access credentials and report suspected unauthorized access. You are responsible for checking the accuracy of your entries and following qualified medical advice. Never share account passwords with support."
+        "body": "Pulse is intended for United States residents who are at least 18 years old and legally able to enter an agreement. Signup asks you to confirm that eligibility; it is self-attestation rather than verified identity or location. Provide accurate account information, protect credentials and report suspected unauthorized access. Check your own entries and follow qualified medical advice. Never share account passwords with support."
       },
       {
         "heading": "Acceptable use",
-        "body": "Use Pulse lawfully. Do not use it to promote illegal activity, upload content you have no right to use, access another person\u2019s records without authorization, compromise security, abuse infrastructure or misrepresent records. Pulse is not a marketplace for substances and provides no authorization to buy, sell or use any substance."
+        "body": "Use Pulse lawfully. Do not use it to promote illegal activity, upload content you have no right to use, access another person’s records without authorization, compromise security, abuse infrastructure or misrepresent records. Pulse is not a marketplace for substances and provides no authorization to buy, sell or use any substance."
       },
       {
         "heading": "Your records and permission to operate",
@@ -121,7 +121,7 @@
       },
       {
         "heading": "App license and platform terms",
-        "body": "Subject to applicable terms, you may use the app for personal tracking. App intellectual property remains with its owners; third-party components retain their licenses. Apple/Google platform terms continue to apply. These service terms do not replace the applicable App Store EULA. Confirm whether Apple\u2019s standard EULA or a compliant custom license is used before submission."
+        "body": "Subject to applicable terms, you may use the app for personal tracking. App intellectual property remains with its owners; third-party components retain their licenses. Apple/Google platform terms continue to apply. These service terms do not replace the applicable App Store EULA. Confirm whether Apple’s standard EULA or a compliant custom license is used before submission."
       },
       {
         "heading": "Suspension, termination and changes",
@@ -147,7 +147,7 @@
       },
       {
         "heading": "Clinical decisions",
-        "body": "Pulse does not prescribe, recommend doses, choose an injection site or establish whether a peptide, medication or supplement is safe or effective. Consult a qualified clinician or pharmacist before starting, stopping or changing a substance or routine. Follow their instructions and the product\u2019s lawful labeling. A substance name in your records does not imply approval or endorsement."
+        "body": "Pulse does not prescribe, recommend doses, choose an injection site or establish whether a peptide, medication or supplement is safe or effective. Consult a qualified clinician or pharmacist before starting, stopping or changing a substance or routine. Follow their instructions and the product’s lawful labeling. A substance name in your records does not imply approval or endorsement."
       },
       {
         "heading": "Reminders and inventory",
@@ -173,7 +173,7 @@
       },
       {
         "heading": "Native app",
-        "body": "Pulse uses platform secure storage for authentication sessions, cached records and pending tracking events. Local app preferences support notification privacy, biometric lock and related settings. Device/OS settings may also affect backups and storage. Temporary generated PDF files are removed after sharing completes; copies you save remain in your selected destination. Optional substance photos are stored per account/substance on this device, not uploaded to Pulse or an image-generation provider."
+        "body": "Pulse uses platform secure storage for authentication sessions, cached records and pending tracking events. Local app preferences support notification privacy, biometric lock and related settings. Device/OS settings may also affect backups and storage. Temporary generated PDF files are removed after sharing completes; copies you save remain in your selected destination. Optional substance photos are stored per account/substance on this device, not uploaded to Pulse or an image-generation provider. Unconfirmed creation requests retain their identifiers and original input in private device storage so interrupted saves can be retried without duplicating records. Successful requests are cleared; remaining requests can be included in an account export from that device."
       },
       {
         "heading": "Web app",
@@ -185,7 +185,7 @@
       },
       {
         "heading": "Controls",
-        "body": "You can manage permissions in device settings, clear browser storage and use the app\u2019s privacy controls. Revoking calendar permission does not necessarily delete existing events. Remove Pulse-created calendar entries before disconnecting or deleting the account if you want those copies removed. DRAFT: add verified privacy contact and hosting details before publication."
+        "body": "You can manage permissions in device settings, clear browser storage and use the app’s privacy controls. Revoking calendar permission does not necessarily delete existing events. Remove Pulse-created calendar entries before disconnecting or deleting the account if you want those copies removed. Privacy/legal: legal@sciencebyhugs.com. DRAFT: verify hosting details before publication."
       }
     ]
   },
@@ -195,11 +195,11 @@
     "sections": [
       {
         "heading": "Delete inside Pulse",
-        "body": "Open Pulse, sign in and go to You \u2192 Account & Privacy. Choose Delete account & data and confirm. The server removes your profile photo and authentication account; associated synced protocol, item, inventory, tracking, correction, schedule-history and check-in records are removed through account deletion. The deletion must be confirmed by the server; an error is not a completed deletion."
+        "body": "Open Pulse, sign in and go to You → Account & Privacy. Choose Delete account & data and confirm. The server removes your profile photo and authentication account; associated synced protocol, item, inventory, tracking, correction, schedule-history and check-in records are removed through account deletion. The deletion must be confirmed by the server; an error is not a completed deletion."
       },
       {
         "heading": "Request deletion without the app",
-        "body": "DRAFT: supply a monitored support/privacy email or secure request form before publishing this page. Contact that channel with the account email and a request to delete your Pulse account and associated data. We will verify account ownership through a secure process. Do not send your password, medical records or identity documents unless a proportionate verified process specifically requires them. Requests must not require reinstalling the app."
+        "body": "Email support@sciencebyhugs.com with the subject “Pulse account deletion” and your account email. Do not send your password or health records. We will verify ownership using a secure account-verification process before acting on the request. Reinstalling the app is not required. DRAFT: the operator must finalize request tracking and response procedures, retention periods before public launch. Privacy/legal contact: legal@sciencebyhugs.com."
       },
       {
         "heading": "What can remain",
@@ -211,7 +211,7 @@
       },
       {
         "heading": "Request tracking and contact",
-        "body": "DRAFT: insert the verified contact and documented request/response procedure. This page must be publicly hosted without login and linked in Google Play\u2019s account-deletion URL field."
+        "body": "DRAFT: insert the verified contact and documented request/response procedure. This page must be publicly hosted without login and linked in Google Play’s account-deletion URL field."
       }
     ]
   }

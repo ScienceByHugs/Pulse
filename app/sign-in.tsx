@@ -37,6 +37,7 @@ export default function SignInScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [notice, setNotice] = useState('');
+  const [adultUS, setAdultUS] = useState(false);
 
   function openSheet(mode: 'signup' | 'reset' | 'verify') {
     setSheetEmail(email.trim());
@@ -44,6 +45,7 @@ export default function SignInScreen() {
     setConfirmPassword('');
     setShowNewPassword(false);
     setNotice('');
+    setAdultUS(false);
     setSheet(mode);
   }
   function closeSheet() {
@@ -153,6 +155,11 @@ export default function SignInScreen() {
 
   async function signUp() {
     if (busy) return;
+    if (!adultUS)
+      return Alert.alert(
+        'Eligibility confirmation required',
+        'Pulse is for adults 18 or older residing in the United States.',
+      );
     const address = sheetEmail.trim();
     if (!isValidEmail(address) || newPassword.length < 8) {
       return Alert.alert(
@@ -170,7 +177,16 @@ export default function SignInScreen() {
       const { data, error } = await supabase.auth.signUp({
         email: address,
         password: newPassword,
-        options: { emailRedirectTo: AUTH_REDIRECT_URL },
+        options: {
+          emailRedirectTo: AUTH_REDIRECT_URL,
+          data: {
+            eligibility_confirmation: {
+              age18Plus: true,
+              usResident: true,
+              confirmedAt: new Date().toISOString(),
+            },
+          },
+        },
       });
       if (error) throw error;
 
@@ -424,10 +440,36 @@ export default function SignInScreen() {
                 />
               </>
             )}
+            {sheet === 'signup' && (
+              <Pressable
+                accessibilityRole="checkbox"
+                aria-checked={adultUS}
+                accessibilityState={{ checked: adultUS, disabled: busy }}
+                disabled={busy}
+                onPress={() => setAdultUS((v) => !v)}
+                style={{
+                  minHeight: 48,
+                  paddingVertical: 12,
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                }}
+              >
+                <Text style={{ color: colors.accent, fontSize: 20 }}>
+                  {adultUS ? '☑' : '☐'}
+                </Text>
+                <Text style={[styles.subtitle, { flex: 1, marginTop: 0 }]}>
+                  I am 18 or older and reside in the United States.
+                </Text>
+              </Pressable>
+            )}
             <Pressable
               accessibilityRole="button"
-              disabled={busy}
-              style={[styles.primary, busy && styles.disabled]}
+              disabled={busy || (sheet === 'signup' && !adultUS)}
+              style={[
+                styles.primary,
+                (busy || (sheet === 'signup' && !adultUS)) && styles.disabled,
+              ]}
               onPress={() =>
                 void (sheet === 'signup'
                   ? signUp()

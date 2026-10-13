@@ -1,6 +1,6 @@
 # Health & Safety Notice
 
-**Draft for operator and legal review — not yet published.**
+Draft — not yet effective.
 
 ## Tracking boundaries
 

@@ -1,34 +1,49 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Host, Icon } from '@expo/ui';
 import { Tabs } from 'expo-router';
-import { ActivityIndicator, StyleSheet, Text, View, type ColorValue } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  View,
+  type ColorValue,
+  useWindowDimensions,
+} from 'react-native';
 import { useAuth } from '@/providers/AuthProvider';
 import { colors } from '@/theme';
 
 const tabIcons = {
   index: Icon.select({
     ios: 'house.fill',
-    android: require('../../assets/icons/today.xml')
+    android: require('../../assets/icons/today.xml'),
   }),
   protocol: Icon.select({
     ios: 'list.bullet.rectangle.fill',
-    android: require('../../assets/icons/protocol.xml')
+    android: require('../../assets/icons/protocol.xml'),
   }),
   log: Icon.select({
     ios: 'clock.fill',
-    android: require('../../assets/icons/timeline.xml')
+    android: require('../../assets/icons/timeline.xml'),
   }),
   insights: Icon.select({
     ios: 'chart.bar.fill',
-    android: require('../../assets/icons/insights.xml')
+    android: require('../../assets/icons/insights.xml'),
   }),
   you: Icon.select({
     ios: 'person.fill',
-    android: require('../../assets/icons/you.xml')
-  })
+    android: require('../../assets/icons/you.xml'),
+  }),
 } as const;
 
-function TabIcon({ routeName, color, focused }: { routeName: string; color: ColorValue; focused: boolean }) {
+function TabIcon({
+  routeName,
+  color,
+  focused,
+}: {
+  routeName: string;
+  color: ColorValue;
+  focused: boolean;
+}) {
   const name = tabIcons[routeName as keyof typeof tabIcons] ?? tabIcons.index;
   return (
     <View style={styles.iconShell}>
@@ -42,16 +57,38 @@ function TabIcon({ routeName, color, focused }: { routeName: string; color: Colo
   );
 }
 
-function TabLabel({ label, focused, color }: { label: string; focused: boolean; color: ColorValue }) {
-  return <Text style={[styles.tabLabel, { color }, focused && styles.tabLabelActive]}>{label}</Text>;
+function TabLabel({
+  label,
+  focused,
+  color,
+}: {
+  label: string;
+  focused: boolean;
+  color: ColorValue;
+}) {
+  return (
+    <Text
+      style={[styles.tabLabel, { color }, focused && styles.tabLabelActive]}
+    >
+      {label}
+    </Text>
+  );
 }
 
 export default function TabsLayout() {
+  const { fontScale } = useWindowDimensions();
   const { session, loading } = useAuth();
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
+      <SafeAreaView
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.bg,
+        }}
+      >
         <ActivityIndicator color={colors.accent} />
       </SafeAreaView>
     );
@@ -68,17 +105,35 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.subtle,
         tabBarHideOnKeyboard: true,
-        tabBarIcon: ({ color, focused }) => <TabIcon routeName={route.name} color={color} focused={focused} />,
-        tabBarLabel: ({ color, focused }) => <TabLabel label={({ index: 'Today', protocol: 'Protocol', log: 'Timeline', insights: 'Insights', you: 'You' } as Record<string, string>)[route.name] ?? route.name} focused={focused} color={color} />,
+        tabBarIcon: ({ color, focused }) => (
+          <TabIcon routeName={route.name} color={color} focused={focused} />
+        ),
+        tabBarLabel: ({ color, focused }) => (
+          <TabLabel
+            label={
+              (
+                {
+                  index: 'Today',
+                  protocol: 'Protocol',
+                  log: 'Timeline',
+                  insights: 'Insights',
+                  you: 'You',
+                } as Record<string, string>
+              )[route.name] ?? route.name
+            }
+            focused={focused}
+            color={color}
+          />
+        ),
         tabBarStyle: {
           position: 'absolute',
           backgroundColor: colors.bgElevated,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 88,
+          height: 88 + Math.max(0, fontScale - 1) * 24,
           paddingTop: 7,
-          paddingBottom: 12
-        }
+          paddingBottom: 12,
+        },
       })}
     >
       <Tabs.Screen name="index" options={{ title: 'Today' }} />
@@ -91,10 +146,28 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  iconShell: { width: 44, height: 38, alignItems: 'center', justifyContent: 'center', paddingTop: 5 },
-  activeSignalLine: { position: 'absolute', top: 0, width: 22, height: 2, backgroundColor: colors.accent },
-  iconCore: { width: 28, height: 27, alignItems: 'center', justifyContent: 'center', opacity: .68 },
+  iconShell: {
+    width: 44,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 5,
+  },
+  activeSignalLine: {
+    position: 'absolute',
+    top: 0,
+    width: 22,
+    height: 2,
+    backgroundColor: colors.accent,
+  },
+  iconCore: {
+    width: 28,
+    height: 27,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.68,
+  },
   iconCoreActive: { opacity: 1 },
   tabLabel: { fontSize: 11, fontWeight: '600', letterSpacing: 0, marginTop: 1 },
-  tabLabelActive: { fontWeight: '700' }
+  tabLabelActive: { fontWeight: '700' },
 });

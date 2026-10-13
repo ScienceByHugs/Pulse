@@ -155,3 +155,28 @@ export async function cancelOccurrenceReminder(key: string) {
       .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)),
   );
 }
+
+/** Reads status without requesting permission or scheduling anything. */
+export async function getReminderHealth() {
+  const enabled = await getRemindersEnabled();
+  if (Platform.OS === 'web')
+    return {
+      enabled,
+      permission: { granted: false, canAskAgain: false },
+      count: 0,
+      web: true,
+    };
+  const [permission, pending] = await Promise.all([
+    Notifications.getPermissionsAsync(),
+    Notifications.getAllScheduledNotificationsAsync(),
+  ]);
+  return {
+    enabled,
+    permission: {
+      granted: permission.granted,
+      canAskAgain: permission.canAskAgain,
+    },
+    count: pending.length,
+    web: false,
+  };
+}

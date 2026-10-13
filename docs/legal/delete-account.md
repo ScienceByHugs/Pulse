@@ -1,6 +1,6 @@
 # Account & Data Deletion
 
-**Draft for operator and legal review — not yet published.**
+Draft — not yet effective.
 
 ## Delete inside Pulse
 
@@ -8,7 +8,7 @@ Open Pulse, sign in and go to You → Account & Privacy. Choose Delete account &
 
 ## Request deletion without the app
 
-DRAFT: supply a monitored support/privacy email or secure request form before publishing this page. Contact that channel with the account email and a request to delete your Pulse account and associated data. We will verify account ownership through a secure process. Do not send your password, medical records or identity documents unless a proportionate verified process specifically requires them. Requests must not require reinstalling the app.
+Email support@sciencebyhugs.com with the subject “Pulse account deletion” and your account email. Do not send your password or health records. We will verify ownership using a secure account-verification process before acting on the request. Reinstalling the app is not required. DRAFT: the operator must finalize request tracking and response procedures, retention periods before public launch. Privacy/legal contact: legal@sciencebyhugs.com.
 
 ## What can remain
 

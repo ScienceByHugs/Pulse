@@ -1,3 +1,5 @@
+import { useWindowDimensions } from 'react-native';
+import { InventoryHistoryButton } from '@/components/InventoryHistorySheet';
 import { FormSheet } from '@/components/FormSheet';
 import { RetryNotice } from '@/components/RetryNotice';
 import { matchingSubstances } from '@/domain/substanceCatalog';
@@ -64,7 +66,13 @@ const ROUTES = [
   'topical',
   'other',
 ] as const;
-const SCHEDULES = ['daily', 'weekdays', 'interval', 'cycle'] as const;
+const SCHEDULES = [
+  'daily',
+  'weekdays',
+  'interval',
+  'cycle',
+  'as_needed',
+] as const;
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const CATEGORIES = [
   'Peptide',
@@ -77,6 +85,7 @@ const CATEGORIES = [
 ] as const;
 
 export default function ProtocolScreen() {
+  const { fontScale } = useWindowDimensions();
   const [duplicateSource, setDuplicateSource] = useState<Protocol | null>(null);
   const [additionalTimes, setAdditionalTimes] = useState<string[]>([]);
   const [timeZone, setTimeZone] = useState('local');
@@ -122,10 +131,10 @@ export default function ProtocolScreen() {
   const [showNewProtocol, setShowNewProtocol] = useState(false);
   const [dose, setDose] = useState('');
   const [unit, setUnit] = useState('mg');
-  const [route, setRoute] = useState<(typeof ROUTES)[number]>('subcutaneous');
+  const [route, setRoute] = useState<(typeof ROUTES)[number] | null>(null);
   const [scheduleType, setScheduleType] =
     useState<(typeof SCHEDULES)[number]>('daily');
-  const [time, setTime] = useState('08:00');
+  const [time, setTime] = useState('');
   const [days, setDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [everyDays, setEveryDays] = useState('2');
   const [onDays, setOnDays] = useState('5');
@@ -258,10 +267,11 @@ export default function ProtocolScreen() {
     if (!protocolName.trim()) return;
     try {
       setBusy(true);
-      await createProtocol(protocolName);
+      const created = await createProtocol(protocolName);
       setProtocolName('');
       setShowNewProtocol(false);
       await load();
+      setSelectedProtocolId(created.id);
     } catch (error) {
       Alert.alert(
         'Could not create protocol',
@@ -563,6 +573,7 @@ export default function ProtocolScreen() {
   }
 
   function buildSchedule() {
+    if (scheduleType === 'as_needed') return { type: 'as_needed' };
     const startDate = localDateKey();
     const extra = {
       times: [time, ...additionalTimes].filter(Boolean),
@@ -601,10 +612,16 @@ export default function ProtocolScreen() {
         'Enter a positive total quantity, or leave it blank.',
       );
     if (!activeProtocol) return Alert.alert('Create a protocol first');
-    if (!itemName.trim() || !numericDose || numericDose <= 0 || !unit.trim()) {
+    if (
+      !itemName.trim() ||
+      !numericDose ||
+      numericDose <= 0 ||
+      !unit.trim() ||
+      !route
+    ) {
       return Alert.alert(
         'Check item details',
-        'Name, dose and unit are required.',
+        'Name, amount, unit and administration type are required.',
       );
     }
     if (scheduleType === 'weekdays' && days.length === 0) {
@@ -629,6 +646,7 @@ export default function ProtocolScreen() {
       setItemName('');
       setShowSubstanceChoices(false);
       setDose('');
+      setRoute(null);
       setInventory('');
       setShowBuilder(false);
       setBuilderStep(1);
@@ -647,7 +665,12 @@ export default function ProtocolScreen() {
     <SafeAreaView style={styles.safe}>
       <OrbitalBackground />
       <ScrollView
-        contentContainerStyle={styles.page}
+        contentContainerStyle={[
+          styles.page,
+          {
+            paddingBottom: layout.pageBottom + Math.max(0, fontScale - 1) * 24,
+          },
+        ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
@@ -741,11 +764,35 @@ export default function ProtocolScreen() {
           </View>
         </FormSheet>
 
+        {activeProtocol && visibleItems.length === 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Next: add your first substance</Text>
+            <Text style={styles.cardDetail}>
+              Choose a name or enter your own, then record your own
+              administration type, amount and routine.
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              style={styles.primary}
+              onPress={() => {
+                setBuilderStep(1);
+                setShowBuilder(true);
+              }}
+            >
+              <Text style={styles.primaryText}>Add first substance</Text>
+            </Pressable>
+          </View>
+        )}
         {protocolLoading && <ActivityIndicator color={colors.accent} />}
         {protocols.length === 0 ? (
           protocolLoading || loadError ? null : (
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Create your first protocol</Text>
+              <Text style={styles.cardTitle}>Set up your first routine</Text>
+              <Text style={styles.cardDetail}>
+                1. Name your protocol. 2. Add a substance. 3. Review your own
+                amount, method and schedule. Pulse does not choose these for
+                you.
+              </Text>
               <Pressable
                 accessibilityRole="button"
                 style={styles.primary}
@@ -1274,11 +1321,12 @@ export default function ProtocolScreen() {
                             !itemName.trim() ||
                             !Number(dose) ||
                             Number(dose) <= 0 ||
-                            !unit.trim()
+                            !unit.trim() ||
+                            !route
                           )
                             return Alert.alert(
                               'Add the basics first',
-                              'Enter a name, dose and unit to continue.',
+                              'Enter a name, amount, unit and administration type to continue.',
                             );
                           setBuilderStep(2);
                         }}
@@ -1317,23 +1365,32 @@ export default function ProtocolScreen() {
                                 scheduleType === value && styles.chipTextActive,
                               ]}
                             >
-                              {value}
+                              {value === 'as_needed' ? 'As needed' : value}
                             </Text>
                           </Pressable>
                         ))}
                       </View>
-                      <ProtocolTimePicker
-                        label="Scheduled time"
-                        value={time}
-                        onChange={setTime}
-                      />
-                      <ScheduleExtras
-                        times={additionalTimes}
-                        onTimes={setAdditionalTimes}
-                        zone={timeZone}
-                        onZone={setTimeZone}
-                      />
-
+                      {scheduleType !== 'as_needed' ? (
+                        <>
+                          {' '}
+                          <ProtocolTimePicker
+                            label="Scheduled time"
+                            value={time}
+                            onChange={setTime}
+                          />
+                          <ScheduleExtras
+                            times={additionalTimes}
+                            onTimes={setAdditionalTimes}
+                            zone={timeZone}
+                            onZone={setTimeZone}
+                          />
+                        </>
+                      ) : (
+                        <Text style={styles.scheduleHint}>
+                          No automatic due time or reminder. Use Today’s
+                          as-needed section to record actual activity.
+                        </Text>
+                      )}
                       {scheduleType === 'weekdays' ? (
                         <View style={styles.dayRow}>
                           {DAY_LABELS.map((label, day) => (
@@ -1598,6 +1655,7 @@ export default function ProtocolScreen() {
                       ) : null}
                       <View style={{ gap: 9 }}>
                         <InventoryEstimate item={item} />
+                        <InventoryHistoryButton item={item} />
                         {(item.inventory_containers ?? []).map(
                           (container, index) => (
                             <View key={container.id} style={styles.protocolRow}>
@@ -1668,11 +1726,7 @@ export default function ProtocolScreen() {
                                 title="Could not save inventory"
                                 message={saveError.message}
                                 busy={busy}
-                                onRetry={
-                                  reservoirContainerId
-                                    ? () => void saveReservoir(item)
-                                    : undefined
-                                }
+                                onRetry={() => void saveReservoir(item)}
                               />
                             )}
                             <Text style={styles.smallLabel}>

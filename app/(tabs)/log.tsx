@@ -1,3 +1,5 @@
+import { useWindowDimensions } from 'react-native';
+import { matchesTimelineSearch } from '@/domain/timelineSearch';
 import { entryName, recordDay } from '@/domain/occurrences';
 import { ProtocolDatePicker } from '@/components/ProtocolPickers';
 import { ReportSheet } from '@/components/ReportSheet';
@@ -45,6 +47,7 @@ function dayKey(value: string) {
 }
 
 export default function LogScreen() {
+  const { fontScale } = useWindowDimensions();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [substanceFilter, setSubstanceFilter] = useState('');
@@ -291,7 +294,7 @@ export default function LogScreen() {
         const text =
           `${entryName(entry)} ${entry.snapshot?.protocolName ?? ''} ${protocolItems.find((item) => item.id === entry.protocol_item_id)?.name ?? ''}`.toLowerCase();
         return (
-          (!search.trim() || text.includes(search.trim().toLowerCase())) &&
+          matchesTimelineSearch(entry, search, protocolItems) &&
           (!statusFilter || entry.status === statusFilter) &&
           (!substanceFilter || entry.protocol_item_id === substanceFilter) &&
           (!protocolFilter || entry.snapshot?.protocolId === protocolFilter) &&
@@ -307,6 +310,7 @@ export default function LogScreen() {
       protocolFilter,
       fromDate,
       throughDate,
+      protocolItems,
     ],
   );
   const activity = useMemo(() => {
@@ -352,7 +356,12 @@ export default function LogScreen() {
     <SafeAreaView style={styles.safe}>
       <OrbitalBackground />
       <ScrollView
-        contentContainerStyle={styles.page}
+        contentContainerStyle={[
+          styles.page,
+          {
+            paddingBottom: layout.pageBottom + Math.max(0, fontScale - 1) * 24,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <PulseMenu />
@@ -362,6 +371,11 @@ export default function LogScreen() {
         />
         <SyncStatus />
         <ReportSheet />
+        <Text
+          style={{ color: colors.text, fontWeight: '600', marginBottom: 8 }}
+        >
+          Search substance or protocol
+        </Text>
         <TextInput
           accessibilityLabel="Search Timeline"
           placeholder="Search substance or protocol"
@@ -379,6 +393,38 @@ export default function LogScreen() {
             backgroundColor: colors.panel2,
           }}
         />
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+            marginTop: 8,
+          }}
+        >
+          <Text
+            accessibilityLiveRegion="polite"
+            style={{ color: colors.muted }}
+          >
+            {filteredEntries.length} matching{' '}
+            {filteredEntries.length === 1 ? 'entry' : 'entries'}
+            {historyTruncated ? ' in loaded history' : ''}
+          </Text>
+          {!!search && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setSearch('')}
+              style={{
+                minHeight: 44,
+                justifyContent: 'center',
+                paddingHorizontal: 12,
+              }}
+            >
+              <Text style={{ color: colors.accent }}>Clear search</Text>
+            </Pressable>
+          )}
+        </View>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}

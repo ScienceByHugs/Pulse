@@ -1,6 +1,6 @@
 # Consumer Health Data Privacy Policy
 
-**Draft for operator and legal review — not yet published.**
+Draft — not yet effective.
 
 ## Scope
 
@@ -12,7 +12,7 @@ Health data may include your entered substances/medications, quantities, routes,
 
 ## Purposes of collection
 
-We process these records to provide the tracking, sync, reminders, history, inventory, check-in summaries and exports you request. We do not use these features to diagnose conditions, prescribe or choose treatments. We do not operate health-data advertising, sale or AI-training features in the reviewed app.
+We process these records to provide the tracking, sync, reminders, history, inventory, check-in summaries and exports you request. We do not use these features to diagnose conditions, prescribe or choose treatments. We do not operate health-data advertising, sale or AI-training features in the reviewed app. We promote Pulse outside the app. The app has no advertising feature, and we do not sell personal information or disclose health records for advertising.
 
 ## Sharing and recipients
 
@@ -24,8 +24,8 @@ Where applicable law requires consent, collection or sharing beyond what is nece
 
 ## Access, deletion and appeals
 
-Use Account & Privacy to export records or delete the account. For additional health-data access, deletion, withdrawal or appeal requests, contact the privacy address to be confirmed. Requests will be verified proportionately and processed within applicable legal deadlines. Deletion requests must be propagated to applicable processors/recipients where required; exported copies you independently share may be outside our control. Final request and appeal procedures must be established before publication.
+Use Account & Privacy to export records or delete the account. For additional health-data access, deletion, withdrawal or appeal requests, contact legal@sciencebyhugs.com. Requests will be verified proportionately and processed within applicable legal deadlines. Deletion requests must be propagated to applicable processors/recipients where required; exported copies you independently share may be outside our control. Final request and appeal procedures must be established before publication.
 
 ## Policy link and contact
 
-Publish this document through a distinct, conspicuous Consumer Health Privacy link on the public homepage and inside Legal & Privacy. DRAFT: insert confirmed operator and privacy contact details.
+Publish this document through a distinct, conspicuous Consumer Health Privacy link on the public homepage and inside Legal & Privacy. Privacy/legal: legal@sciencebyhugs.com. DRAFT: confirm the legal operator and public mailing address.

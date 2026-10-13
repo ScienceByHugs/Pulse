@@ -1,3 +1,4 @@
+import { useWindowDimensions } from 'react-native';
 import { ReportSheet } from '@/components/ReportSheet';
 import { checkinTrends } from '@/domain/checkinTrends';
 import { listCheckIns, type CheckIn } from '@/services/checkins';
@@ -28,6 +29,7 @@ import {
 import { isDueOnDate } from '@/domain/schedule';
 
 export default function InsightsScreen() {
+  const { fontScale } = useWindowDimensions();
   const [historyItems, setHistoryItems] = useState<TodayItem[]>([]);
   const [checkins, setCheckins] = useState<CheckIn[]>([]);
   const [versions, setVersions] = useState<ItemVersion[]>([]);
@@ -114,7 +116,12 @@ export default function InsightsScreen() {
     <SafeAreaView style={styles.safe}>
       <OrbitalBackground />
       <ScrollView
-        contentContainerStyle={styles.page}
+        contentContainerStyle={[
+          styles.page,
+          {
+            paddingBottom: layout.pageBottom + Math.max(0, fontScale - 1) * 24,
+          },
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

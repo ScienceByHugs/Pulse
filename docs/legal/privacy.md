@@ -1,10 +1,10 @@
 # Privacy Policy
 
-**Draft for operator and legal review — not yet published.**
+Draft — not yet effective.
 
 ## About this policy
 
-Pulse by SBH, also called Pulse, is a personal routine tracker by Science By Hugs. This draft describes the current app. Operator identity, privacy contact, distribution territories and retention settings must be confirmed before publication. Version: 2026-10-12. Effective date: to be set on publication.
+Pulse by SBH, also called Pulse, is a personal routine tracker by Science By Hugs, operated as a sole proprietorship. This draft describes the current app for United States residents age 18 or older. The proprietor’s full legal name and public mailing address remain pending confirmation. Privacy and legal requests: legal@sciencebyhugs.com. Version: 2026-10-12. Effective date: to be set on publication.
 
 ## Information you provide
 
@@ -20,7 +20,7 @@ We use information to authenticate accounts, save and synchronize your records, 
 
 ## Providers and disclosures
 
-Supabase provides backend authentication, database and private profile-photo storage. Expo provides app development/build/distribution infrastructure; Apple and Google provide their platforms and related services. Their processing depends on the service you use. We may provide limited access to authorized personnel and contracted providers for service operation, security and requested support, or disclose information when legally required. We do not operate advertising, data-sale or health-data AI-training features in the reviewed app. Confirm actual vendor practices and contracts before publishing this statement.
+Supabase provides backend authentication, database and private profile-photo storage. Expo provides app development/build/distribution infrastructure; Apple and Google provide their platforms and related services. Their processing depends on the service you use. We may provide limited access to authorized personnel and contracted providers for service operation, security and requested support, or disclose information when legally required. We do not operate advertising, data-sale or health-data AI-training features in the reviewed app. Confirm actual vendor practices and contracts before publishing this statement. We promote Pulse outside the app. The app has no advertising feature, and we do not sell personal information or disclose health records for advertising.
 
 ## Your sharing choices
 
@@ -28,7 +28,7 @@ Calendar sync is optional. Calendar entries can be accessible to your calendar p
 
 ## Permissions and device storage
 
-Photo access selects an optional avatar; the app uploads a resized JPEG rather than your entire photo library. Notification, calendar and biometric-lock features use optional platform permissions. Pulse receives a biometric authentication result, not your face or fingerprint template. Native sessions, cached routine records and pending logs use platform secure storage. The web app uses browser storage for sessions and local state. See our Device Storage Notice for more detail. Optional substance photos are resized and stored on this device only, separately from the backend profile photo. On native devices they use private secure storage; on web they use browser storage. They can be replaced or removed and included in an account export from this device.
+Photo access selects an optional avatar; the app uploads a resized JPEG rather than your entire photo library. Notification, calendar and biometric-lock features use optional platform permissions. Pulse receives a biometric authentication result, not your face or fingerprint template. Native sessions, cached routine records and pending logs use platform secure storage. The web app uses browser storage for sessions and local state. See our Device Storage Notice for more detail. Optional substance photos are resized and stored on this device only, separately from the backend profile photo. On native devices they use private secure storage; on web they use browser storage. They can be replaced or removed and included in an account export from this device. Unconfirmed creation requests retain their identifiers and original input in private device storage so interrupted saves can be retried without duplicating records. Successful requests are cleared; remaining requests can be included in an account export from that device.
 
 ## Retention and deletion
 
@@ -36,16 +36,16 @@ Synced account records are retained while your account exists unless you remove 
 
 ## Your controls and rights
 
-You can update profile details, remove your photo, edit supported records, export your account data and request account deletion in Account & Privacy. You can disable reminders/calendar sync or revoke OS permissions. Depending on your location, you may have access, correction, deletion, consent-withdrawal, appeal or other privacy rights. We verify requests using proportionate account-verification steps and will not ask you to email a password. Required request/appeal contact details must be supplied before publication.
+You can update profile details, remove your photo, edit supported records, export your account data and request account deletion in Account & Privacy. You can disable reminders/calendar sync or revoke OS permissions. Depending on your location, you may have access, correction, deletion, consent-withdrawal, appeal or other privacy rights. We verify requests using proportionate account-verification steps and will not ask you to email a password. Contact legal@sciencebyhugs.com for privacy requests and appeals.
 
 ## Security and international processing
 
-Account ownership restrictions and other safeguards limit access to records. No service is perfectly secure. Protect your device, account and exports. Providers may process data outside your country; hosting regions, applicable transfer safeguards and contractual arrangements must be confirmed before publication. Pulse does not claim that all data is end-to-end encrypted or that HIPAA applies to every account.
+Account ownership restrictions and other safeguards limit access to records. No service is perfectly secure. Protect your device, account and exports. The primary Supabase database is configured in us-east-2 (United States), verified on 2026-10-12. This does not mean every provider, connection log or support process stays in the United States; provider processing arrangements remain to be confirmed. Pulse does not claim that all data is end-to-end encrypted or that HIPAA applies to every account.
 
 ## Children and changes
 
-The intended minimum age and launch territories remain pending operator confirmation. Do not publish or describe an enforced age restriction until the matching signup controls are implemented. We will update the policy when practices change, identify the effective version, and provide additional notice or obtain consent when required. Business transitions require continued protection of information and any legally required notice/consent.
+Pulse is intended for United States residents age 18 or older. The normal signup flow asks users to confirm that eligibility; it does not independently verify age or location, and does not collect a birth date or GPS location for this purpose. Signup confirmation and its date are saved with the account. We will update this policy when practices change and identify the effective version. Business transitions require continued protection of information and legally required notice or consent.
 
 ## Contact
 
-DRAFT: insert the confirmed legal operator, privacy email and public business mailing address. Do not use placeholder details in store submissions.
+Privacy/legal: legal@sciencebyhugs.com. Support: support@sciencebyhugs.com. DRAFT: confirm the legal operator and public business mailing address. Do not use placeholder details in store submissions.

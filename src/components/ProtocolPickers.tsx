@@ -1,3 +1,4 @@
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { SheetHeader } from './SheetHeader';
 import { colors } from '@/theme';
 import { useState } from 'react';
@@ -34,6 +35,7 @@ export function ProtocolDatePicker({
   onChange: (value: string) => void;
   optional?: boolean;
 }) {
+  const reduceMotion = useReduceMotion();
   const [open, setOpen] = useState(false);
   const [cursor, setCursor] = useState(() => {
     const [y, m] = value.split('-').map(Number);
@@ -75,7 +77,7 @@ export function ProtocolDatePicker({
       <Modal
         visible={open}
         transparent
-        animationType="fade"
+        animationType={reduceMotion ? 'none' : 'fade'}
         onRequestClose={() => setOpen(false)}
       >
         <View style={styles.overlay}>
@@ -173,6 +175,7 @@ export function ProtocolTimePicker({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const reduceMotion = useReduceMotion();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'12' | '24'>('12');
   const [hour, setHour] = useState(() => Number(value.split(':')[0] || 8));
@@ -218,7 +221,7 @@ export function ProtocolTimePicker({
       <Modal
         visible={open}
         transparent
-        animationType="fade"
+        animationType={reduceMotion ? 'none' : 'fade'}
         onRequestClose={() => setOpen(false)}
       >
         <View style={styles.overlay}>

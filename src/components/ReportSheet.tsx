@@ -86,6 +86,7 @@ export function ReportSheet() {
           <View style={styles.row} key={row.label}>
             <Text style={styles.text}>{row.label}</Text>
             <Switch
+              accessibilityLabel={row.label}
               value={row.value}
               disabled={index === 2 && !checkins && !logs}
               onValueChange={row.set}

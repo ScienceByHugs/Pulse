@@ -1,3 +1,7 @@
+import { useWindowDimensions } from 'react-native';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
+import { eligibleManualItems } from '@/domain/manualTracking';
+import { ManualLogSheet } from '@/components/ManualLogSheet';
 import { groupToday, todayEmptyMessage } from '@/domain/todayPresentation';
 import { RetryNotice } from '@/components/RetryNotice';
 import { administrationLabel } from '@/domain/administration';
@@ -56,6 +60,8 @@ import { sitesForRoute } from '@/domain/sites';
 import { calculateSevenDayConsistency } from '@/domain/insights';
 type CardItem = TodayItem & OccurrenceFields;
 export default function TodayScreen() {
+  const { fontScale } = useWindowDimensions();
+  const reduceMotion = useReduceMotion();
   const { session } = useAuth();
   const sync = useSync();
   const router = useRouter();
@@ -72,6 +78,11 @@ export default function TodayScreen() {
   const [busy, setBusy] = useState<string | null>(null);
   const [sites, setSites] = useState<Record<string, string>>({});
   const [openSiteKey, setOpenSiteKey] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({
+    'Logged today': true,
+    'Skipped today': true,
+  });
+  const [manualItem, setManualItem] = useState<TodayItem | null>(null);
   const [feedback, setFeedback] = useState('');
   const [actionError, setActionError] = useState('');
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
@@ -201,15 +212,22 @@ export default function TodayScreen() {
     new Set(pending.keys()),
   );
   const empty = todayEmptyMessage(allItems, tracked, paused);
+  useEffect(() => {
+    if (params.occurrence || params.item)
+      setCollapsed({ 'Logged today': false, 'Skipped today': false });
+  }, [params.occurrence, params.item]);
   const sections = [
     { title: 'Still to record', items: groups.remaining },
     { title: 'Waiting to sync', items: groups.waiting },
     { title: 'Logged today', items: groups.logged },
     { title: 'Skipped today', items: groups.skipped },
   ];
-  const ordered = sections.flatMap((section) => section.items);
+  const visibleSections = sections.filter(
+    (section) => !collapsed[section.title],
+  );
+  const ordered = visibleSections.flatMap((section) => section.items);
   const headings = new Map(
-    sections
+    visibleSections
       .filter((section) => section.items.length)
       .map((section) => [
         trackingId(section.items[0]!),
@@ -301,7 +319,12 @@ export default function TodayScreen() {
       <OrbitalBackground />
       <ScrollView
         ref={scroll}
-        contentContainerStyle={styles.page}
+        contentContainerStyle={[
+          styles.page,
+          {
+            paddingBottom: layout.pageBottom + Math.max(0, fontScale - 1) * 24,
+          },
+        ]}
         refreshControl={
           <RefreshControl
             refreshing={loading}
@@ -448,7 +471,7 @@ export default function TodayScreen() {
                   requestAnimationFrame(() =>
                     scroll.current?.scrollTo({
                       y: Math.max(0, y - 16),
-                      animated: true,
+                      animated: !reduceMotion,
                     }),
                   );
                 }
@@ -457,9 +480,29 @@ export default function TodayScreen() {
               style={styles.entryGroup}
             >
               {headings.has(key) && (
-                <Text accessibilityRole="header" style={styles.sectionTitle}>
-                  {headings.get(key)}
-                </Text>
+                <Pressable
+                  accessibilityRole={resolved && !q ? 'button' : undefined}
+                  accessibilityState={{
+                    expanded: resolved && !q ? true : undefined,
+                  }}
+                  disabled={!(resolved && !q)}
+                  onPress={() => {
+                    const section = sections.find(
+                      (s) => s.items[0] && trackingId(s.items[0]) === key,
+                    );
+                    if (
+                      section &&
+                      ['Logged today', 'Skipped today'].includes(section.title)
+                    )
+                      setCollapsed((c) => ({ ...c, [section.title]: true }));
+                  }}
+                  style={{ minHeight: 44, justifyContent: 'center' }}
+                >
+                  <Text accessibilityRole="header" style={styles.sectionTitle}>
+                    {headings.get(key)}
+                    {resolved && !q ? ' ▴' : ''}
+                  </Text>
+                </Pressable>
               )}
               <View style={[styles.card, highlight && styles.highlight]}>
                 <View style={styles.row}>
@@ -596,6 +639,56 @@ export default function TodayScreen() {
             </View>
           );
         })}
+        {sections
+          .filter((s) => collapsed[s.title] && s.items.length)
+          .map((section) => (
+            <Pressable
+              key={section.title}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: false }}
+              style={styles.secondary}
+              onPress={() =>
+                setCollapsed((c) => ({ ...c, [section.title]: false }))
+              }
+            >
+              <Text style={styles.actionText}>
+                {section.title} · {section.items.length} ▾
+              </Text>
+            </Pressable>
+          ))}
+        {eligibleManualItems(allItems).length > 0 && (
+          <View style={styles.card}>
+            <Text accessibilityRole="header" style={styles.cardTitle}>
+              As-needed substances
+            </Text>
+            <Text style={styles.detail}>
+              No automatic due time. Record only activity that actually
+              happened.
+            </Text>
+            {eligibleManualItems(allItems).map((item) => (
+              <Pressable
+                key={item.id}
+                accessibilityRole="button"
+                style={styles.secondary}
+                onPress={() => setManualItem(item)}
+              >
+                <Text style={styles.actionText}>Record {item.name}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+        {manualItem && (
+          <ManualLogSheet
+            item={manualItem}
+            onClose={() => setManualItem(null)}
+            onSaved={() => {
+              void sync.refresh().then(load);
+              setFeedback(
+                'Manual entry saved on this device. Check Sync status for confirmation.',
+              );
+            }}
+          />
+        )}
         <CheckInCard />
         <View style={styles.card}>
           <Text style={styles.cardTitle}>7-day record</Text>

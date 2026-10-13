@@ -1,6 +1,6 @@
 # Device Storage & Cookies Notice
 
-**Draft for operator and legal review — not yet published.**
+Draft — not yet effective.
 
 ## Scope
 
@@ -8,7 +8,7 @@ This draft describes storage in the reviewed Pulse app and its standalone policy
 
 ## Native app
 
-Pulse uses platform secure storage for authentication sessions, cached records and pending tracking events. Local app preferences support notification privacy, biometric lock and related settings. Device/OS settings may also affect backups and storage. Temporary generated PDF files are removed after sharing completes; copies you save remain in your selected destination. Optional substance photos are stored per account/substance on this device, not uploaded to Pulse or an image-generation provider.
+Pulse uses platform secure storage for authentication sessions, cached records and pending tracking events. Local app preferences support notification privacy, biometric lock and related settings. Device/OS settings may also affect backups and storage. Temporary generated PDF files are removed after sharing completes; copies you save remain in your selected destination. Optional substance photos are stored per account/substance on this device, not uploaded to Pulse or an image-generation provider. Unconfirmed creation requests retain their identifiers and original input in private device storage so interrupted saves can be retried without duplicating records. Successful requests are cleared; remaining requests can be included in an account export from that device.
 
 ## Web app
 
@@ -20,4 +20,4 @@ The generated standalone policy pages do not set cookies, load analytics, embed 
 
 ## Controls
 
-You can manage permissions in device settings, clear browser storage and use the app’s privacy controls. Revoking calendar permission does not necessarily delete existing events. Remove Pulse-created calendar entries before disconnecting or deleting the account if you want those copies removed. DRAFT: add verified privacy contact and hosting details before publication.
+You can manage permissions in device settings, clear browser storage and use the app’s privacy controls. Revoking calendar permission does not necessarily delete existing events. Remove Pulse-created calendar entries before disconnecting or deleting the account if you want those copies removed. Privacy/legal: legal@sciencebyhugs.com. DRAFT: verify hosting details before publication.

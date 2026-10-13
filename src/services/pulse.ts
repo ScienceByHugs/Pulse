@@ -1,3 +1,4 @@
+import { withCreation, stableCreationValue } from '@/lib/creationRequests';
 import { randomUUID } from 'expo-crypto';
 import {
   deviceTimeZone,
@@ -245,19 +246,47 @@ export async function updateProtocolItemSchedule(
     );
 }
 
-export async function createProtocol(name: string) {
-  const userId = await currentUserId();
-  const cleanName = name.trim();
-  if (!cleanName || cleanName.length > 100)
-    throw new Error('Use a protocol name of 1–100 characters.');
+async function insertCreation(
+  table: string,
+  userId: string,
+  id: string,
+  body: Record<string, unknown>,
+  mutable: string[] = [],
+) {
   const { data, error } = await supabase
-    .from('protocols')
-    .insert({ user_id: userId, name: cleanName })
+    .from(table)
+    .insert({ ...body, user_id: userId, id })
     .select()
     .single();
-
-  if (error) throw error;
-  return data;
+  if (!error) return data;
+  if (error.code !== '23505' && !isNetworkError(error)) throw error;
+  const existing = await supabase
+    .from(table)
+    .select('*')
+    .eq('id', id)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (existing.error || !existing.data) throw error;
+  if (
+    Object.entries(body).some(
+      ([key, value]) =>
+        !mutable.includes(key) &&
+        stableCreationValue(existing.data[key]) !== stableCreationValue(value),
+    )
+  )
+    throw new Error(
+      'This earlier creation has changed. Refresh your records before creating another one.',
+    );
+  return existing.data;
+}
+export async function createProtocol(name: string) {
+  const userId = await currentUserId();
+  const body = { name: name.trim(), status: 'active' };
+  if (!body.name || body.name.length > 100)
+    throw new Error('Enter a protocol name of 1–100 characters.');
+  return withCreation(userId, 'protocol', body, (request) =>
+    insertCreation('protocols', userId, request.id, body, ['status']),
+  );
 }
 
 export async function listProtocolItems(protocolId?: string) {
@@ -311,41 +340,60 @@ type CreateItemInput = {
 
 export async function createProtocolItem(input: CreateItemInput) {
   const userId = await currentUserId();
-  const { data: item, error } = await supabase
-    .from('protocol_items')
-    .insert({
-      user_id: userId,
-      protocol_id: input.protocolId,
-      name: input.name.trim(),
-      category: input.category?.trim() || null,
-      route: input.route,
-      dose_amount: input.doseAmount,
-      dose_unit: input.doseUnit.trim(),
-      schedule: validateTrackedSchedule(input.schedule),
-      site_rotation_enabled:
-        input.route === 'subcutaneous' || input.route === 'intramuscular',
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-
-  if (input.inventoryAmount && input.inventoryAmount > 0) {
-    const { error: inventoryError } = await supabase
-      .from('inventory_containers')
-      .insert({
-        user_id: userId,
-        protocol_item_id: item.id,
-        total_amount: input.inventoryAmount,
-        remaining_amount: input.inventoryAmount,
-        unit: input.doseUnit.trim(),
-        low_threshold: Math.max(input.lowThreshold ?? input.doseAmount * 3, 0),
-        is_active: true,
-      });
-    if (inventoryError) throw inventoryError;
-  }
-
-  return item;
+  const body = {
+    protocol_id: input.protocolId,
+    name: input.name.trim(),
+    category: input.category?.trim() || null,
+    route: input.route,
+    dose_amount: input.doseAmount,
+    dose_unit: input.doseUnit.trim(),
+    schedule: validateTrackedSchedule(input.schedule),
+    site_rotation_enabled:
+      input.route === 'subcutaneous' || input.route === 'intramuscular',
+  };
+  if (
+    !body.name ||
+    body.name.length > 100 ||
+    !Number.isFinite(input.doseAmount) ||
+    input.doseAmount <= 0 ||
+    !body.dose_unit
+  )
+    throw new Error('Enter a name, positive amount and unit.');
+  const inventory = input.inventoryAmount ?? 0;
+  if (!Number.isFinite(inventory) || inventory < 0)
+    throw new Error('Container total must be zero or higher.');
+  const threshold = Math.max(input.lowThreshold ?? input.doseAmount * 3, 0);
+  if (!Number.isFinite(threshold))
+    throw new Error('Enter a valid low-stock threshold.');
+  return withCreation(
+    userId,
+    'substance',
+    { body, inventory, threshold },
+    async (request) => {
+      const item = await insertCreation(
+        'protocol_items',
+        userId,
+        request.id,
+        body,
+      );
+      if (inventory > 0)
+        await insertCreation(
+          'inventory_containers',
+          userId,
+          request.containerId,
+          {
+            protocol_item_id: item.id,
+            total_amount: inventory,
+            remaining_amount: inventory,
+            unit: body.dose_unit,
+            low_threshold: threshold,
+            is_active: true,
+          },
+          ['remaining_amount', 'is_active'],
+        );
+      return item;
+    },
+  );
 }
 
 const clientEventId = randomUUID;
@@ -631,16 +679,20 @@ export async function addInventoryContainer(
     throw new Error(
       'Container unit must match the substance unit. Convert quantities before adding.',
     );
-  const { error } = await supabase.from('inventory_containers').insert({
-    user_id: userId,
+  const body = {
     protocol_item_id: itemId,
     total_amount: amount,
     remaining_amount: amount,
     unit: unit.trim(),
     low_threshold: lowThreshold,
     is_active: true,
-  });
-  if (error) throw error;
+  };
+  return withCreation(userId, 'container', body, (request) =>
+    insertCreation('inventory_containers', userId, request.id, body, [
+      'remaining_amount',
+      'is_active',
+    ]),
+  );
 }
 
 export async function correctInventoryRemaining(
