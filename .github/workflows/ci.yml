@@ -51,8 +51,8 @@ jobs:
       - run: npm ci --legacy-peer-deps --ignore-scripts
       - name: Compile bundles without EAS Build or submission
         run: npx --no-install expo export --platform all --output-dir ci-export
-      - name: Compile standalone admin portal with public dummy values
-        run: npm run admin:web:build -- ci-admin
+      - name: Compile admin portal and direct hosting artifact with public dummy values
+        run: npm run admin:host:build
       - name: Record verification scope
         run: |
           echo '### Pulse bundle compilation' >> "$GITHUB_STEP_SUMMARY"

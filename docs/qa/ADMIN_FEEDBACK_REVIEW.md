@@ -4,7 +4,7 @@ Implemented separate Pulse Admin and owner-scoped Help & feedback. Migration 202
 
 ## Automated checks
 
-87 tests cover existing tracking/account behavior plus feedback ownership and export/delete integration, immutable durable retries, offline failures, consent-derived reply email, quota/idempotency, UTC count boundaries, composite inbox pagination, status compare-and-set and audit, approved membership/live session/TOTP gates, forged metadata, removed factor/session/membership, direct-table and anonymous denials, DTO projection and production bundle exclusion of server secrets and preview fixtures. TypeScript includes the admin portal. GitHub CI compiles native JavaScript/web bundles and the standalone admin portal with dummy public backend values; no signed builds or submissions.
+88 tests cover existing tracking/account behavior plus feedback ownership and export/delete integration, immutable durable retries, offline failures, consent-derived reply email, quota/idempotency, UTC count boundaries, composite inbox pagination, status compare-and-set and audit, approved membership/live session/TOTP gates, forged metadata, removed factor/session/membership, direct-table and anonymous denials, DTO projection and production bundle exclusion of server secrets and preview fixtures. TypeScript includes the admin portal. GitHub CI compiles native JavaScript/web bundles and the standalone admin portal with dummy public backend values; no signed builds or submissions.
 
 ## Live backend
 
@@ -21,5 +21,5 @@ Local untracked screenshots: output/ui/admin-overview-preview.png, admin-feedbac
 ## Remaining gates
 
 - Confirm the admin mailbox works; Anthony creates/verifies the dedicated login, operator approves it, Anthony enrolls/verifies TOTP. End-to-end real owner login is blocked until those user-controlled steps.
-- Publish and verify the isolated portal on a compatible HTTPS host; do not publish draft policies.
+- Hosting completed at https://pulse-sbh-admin.sciencebyhugs-pulse.workers.dev. Live200/login page, CSP frame-ancestors none, X-Frame-Options DENY, cache no-store, production JS hash equality and draft policy404 verified. Static host tests reject unknown/prototype-named routes and POST, and validate HEAD/headers. No Git integration or native cloud build.
 - Next authorized local native build: verify iOS/Android feedback sheet keyboard, focus, text scaling, submit/status and offline/relaunch flows. Automated SQL/service tests cover server round trips; no fabricated live ticket was sent to the operator.

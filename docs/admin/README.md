@@ -5,7 +5,7 @@ Pulse Admin is a standalone responsive web portal. It shows aggregate account/si
 ## Operator setup
 
 1. Confirm admin@sciencebyhugs.com is a working mailbox controlled by Anthony.
-2. Open the hosted portal and select **Set up the new admin login**. Anthony chooses and enters a unique password of at least 12 characters himself. Existing Pulse accounts can instead sign in directly.
+2. Open https://pulse-sbh-admin.sciencebyhugs-pulse.workers.dev and select **Set up the new admin login**. Anthony chooses and enters a unique password of at least 12 characters himself. Existing Pulse accounts can instead sign in directly.
 3. Verify the email using the existing Pulse auth callback, then return to the portal. The account has no administrator access yet.
 4. The backend operator runs `scripts/activate-pulse-admin.sql` in the Pulse project SQL Editor. It resolves exactly one verified matching Auth account and refuses a conflicting pre-existing administrator. Never approve the shared Apple review account or grant a role through user-editable metadata.
 5. Anthony signs in, enrolls an authenticator himself, stores its setup key privately, and verifies a current code. The backend will only return counts/tickets with approved membership, an actual unexpired Auth session, an aal2 token and a verified TOTP factor.
@@ -28,6 +28,8 @@ Feedback is linked to its owner for My feedback, export and deletion. No anonymo
 ## Build and hosting
 
 `npm run admin:web:build` outputs only portal.js, portal.css, index.html and _headers to ignored dist/admin. Public Supabase URL/publishable key are bundled; no server keys. The build rejects secret/service-role credentials. HTTPS is required in production. CSP limits scripts to self and connections to the configured backend. Serve _headers on a compatible host such as Cloudflare Pages, including frame-ancestors none, no-store and nosniff. GitHub Pages does not implement this header file. Publish only dist/admin, never public/legal, source fixtures or output/admin-preview. Policies remain drafts awaiting the existing release gates.
+
+The initial portal is deployed as the small static-only Cloudflare Worker pulse-sbh-admin because the Pages Git installation failed. `npm run admin:host:build` packages exactly index.html, portal.js and portal.css into dist/admin-worker/worker.mjs. The host accepts GET/HEAD for those fixed paths, rejects POST/unknown paths, and sets restrictive headers on every response. It has no backend/service-role keys, proxy, DB/Storage bindings, API/data handlers or user-record persistence. CSP and X-Frame-Options prevent framing; cache is no-store. Cloudflare runtime logs are enabled without invocation logs or traces and with query strings redacted; the handler logs nothing and never reads request bodies. Provider infrastructure request processing remains subject to its policies. The small compiled artifact is uploaded through the connected Cloudflare API; no Git integration, native build or cloud compilation is needed. Account workers.dev subdomain is sciencebyhugs-pulse; version previews are disabled. The deployed JS hash matches the local production artifact, and draft policy paths return404. A future switch to the native static-assets service can replace the embedded small asset map as the portal grows.
 
 A web portal deploy does not create a signed iOS build or consume an Expo native cloud build. Native Pulse builds remain local and require Anthony's instruction. Build 14 does not contain the feedback screen or subsequent typography changes.
 
