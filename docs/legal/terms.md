@@ -4,7 +4,7 @@ Draft — not yet effective.
 
 ## Agreement and operator
 
-These draft terms govern Pulse by SBH, a personal routine tracker by Science By Hugs. The operator is Anthony Charles Hugershoff, a sole proprietor operating under the registered Science By Hugs DBA/trade name. The effective date will be set on publication. Version: 2026-10-12. Provide meaningful access to these terms before signup and implement versioned acceptance before relying on them as an agreement.
+These draft terms govern Pulse by SBH, a personal routine tracker by Science By Hugs. The operator is Anthony Charles Hugershoff, a sole proprietor operating under the registered Science By Hugs DBA/trade name. The effective date will be set on publication. Version: 2026-10-13. Provide meaningful access to these terms before signup and implement versioned acceptance before relying on them as an agreement.
 
 ## What Pulse provides
 
@@ -44,4 +44,4 @@ Mandatory consumer and privacy rights remain unaffected. To the extent permitted
 
 ## Contact
 
-Operator: Anthony Charles Hugershoff, sole proprietor. Support: support@sciencebyhugs.com. Privacy/legal: legal@sciencebyhugs.com. Counsel should finalize eligibility, enforceable liability provisions, governing law and dispute handling before publication.
+Operator: Anthony Charles Hugershoff, sole proprietor. Support: support@sciencebyhugs.com. Privacy/legal: legal@sciencebyhugs.com. Counsel should finalize eligibility, enforceable liability provisions, governing law and dispute handling before publication. Business mailing address: Science By Hugs, 1527 W Craig Rd, STE 1B, Box 147, North Las Vegas, NV 89032-0228.

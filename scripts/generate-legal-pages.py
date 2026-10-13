@@ -12,7 +12,7 @@ outputs={}
 for policy in policies:
  title=html.escape(policy['title'])
  body=''.join('<section><h2>'+html.escape(s['heading'])+'</h2><p>'+html.escape(s['body'])+'</p></section>' for s in policy['sections'])
- page=f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>{title} | Pulse by SBH</title><style>{css}</style></head><body><main><a href="index.html">All policies</a><h1>{title}</h1><p class="draft">Draft — not yet effective. Public mailing address, verified retention and attorney review remain pending.</p>{body}<p><a href="mailto:legal@sciencebyhugs.com">Privacy and legal requests</a> · <a href="mailto:support@sciencebyhugs.com">Support</a></p></main></body></html>\n'
+ page=f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>{title} | Pulse by SBH</title><style>{css}</style></head><body><main><a href="index.html">All policies</a><h1>{title}</h1><p class="draft">Draft — not yet effective. Verified retention and attorney review remain pending.</p>{body}<p><a href="mailto:legal@sciencebyhugs.com">Privacy and legal requests</a> · <a href="mailto:support@sciencebyhugs.com">Support</a></p></main></body></html>\n'
  outputs[root/'public/legal'/f"{policy['slug']}.html"]=page
  md=f"# {policy['title']}\n\nDraft — not yet effective.\n"+''.join(f"\n## {s['heading']}\n\n{s['body']}\n" for s in policy['sections'])
  outputs[root/'docs/legal'/f"{policy['slug']}.md"]=md

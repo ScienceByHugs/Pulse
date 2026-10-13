@@ -2,7 +2,7 @@
 
 ## Confirmed business instructions
 
-Anthony Charles Hugershoff is the sole proprietor, operating under the registered Science By Hugs DBA/trade name. He monitors support@sciencebyhugs.com and legal@sciencebyhugs.com. A public PO Box is pending; the residential address must not appear in public drafts.
+Anthony Charles Hugershoff is the sole proprietor, operating under the registered Science By Hugs DBA/trade name. He monitors support@sciencebyhugs.com and legal@sciencebyhugs.com. He confirmed the UPS business mailing address on October 13, 2026: 1527 W Craig Rd, STE 1B, Box 147, North Las Vegas, NV 89032-0228. The residential address must not appear in public drafts.
 
 Launch is free and limited to United States residents age 18+, including beta and web users. No marketplace, substance purchase links, affiliate links or sponsored recommendations are planned. No clinician/business access is planned beyond users independently sharing their own exports. Only Anthony has business-side backend access; service providers still process data as described separately.
 

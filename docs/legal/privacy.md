@@ -4,7 +4,7 @@ Draft — not yet effective.
 
 ## About this policy
 
-Pulse by SBH, also called Pulse, is a personal routine tracker by Science By Hugs, operated as a sole proprietorship under the registered Science By Hugs DBA/trade name. This draft describes the current app for United States residents age 18 or older. The proprietor is Anthony Charles Hugershoff. The public business mailing address is pending. Privacy and legal requests: legal@sciencebyhugs.com. Version: 2026-10-12. Effective date: to be set on publication.
+Pulse by SBH, also called Pulse, is a personal routine tracker by Science By Hugs, operated as a sole proprietorship under the registered Science By Hugs DBA/trade name. This draft describes the current app for United States residents age 18 or older. The proprietor is Anthony Charles Hugershoff. Business mailing address: Science By Hugs, 1527 W Craig Rd, STE 1B, Box 147, North Las Vegas, NV 89032-0228. Privacy and legal requests: legal@sciencebyhugs.com. Version: 2026-10-13. Effective date: to be set on publication.
 
 ## Information you provide
 
@@ -56,4 +56,4 @@ Pulse is intended for United States residents age 18 or older, including beta te
 
 ## Contact
 
-Privacy/legal: legal@sciencebyhugs.com. Support: support@sciencebyhugs.com. Operator: Anthony Charles Hugershoff, sole proprietor. DRAFT: add the public business mailing address. Do not use placeholder details in store submissions.
+Privacy/legal: legal@sciencebyhugs.com. Support: support@sciencebyhugs.com. Operator: Anthony Charles Hugershoff, sole proprietor. Business mailing address: Science By Hugs, 1527 W Craig Rd, STE 1B, Box 147, North Las Vegas, NV 89032-0228.

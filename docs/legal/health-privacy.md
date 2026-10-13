@@ -4,7 +4,7 @@ Draft — not yet effective.
 
 ## Scope
 
-This separate draft covers health-related data processed by Pulse by SBH. It supplements the Privacy Policy. Applicable state requirements and final wording must be reviewed for the confirmed operator and launch locations. Version: 2026-10-12; effective date pending publication.
+This separate draft covers health-related data processed by Pulse by SBH. It supplements the Privacy Policy. Applicable state requirements and final wording must be reviewed for the confirmed operator and launch locations. Version: 2026-10-13; effective date pending publication.
 
 ## Categories and sources
 
@@ -28,4 +28,4 @@ Use Account & Privacy to export records or delete the account. For additional he
 
 ## Policy link and contact
 
-Publish this document through a distinct, conspicuous Consumer Health Privacy link on the public homepage and inside Legal & Privacy. Privacy/legal: legal@sciencebyhugs.com. Operator: Anthony Charles Hugershoff, sole proprietor. DRAFT: add the public mailing address.
+Publish this document through a distinct, conspicuous Consumer Health Privacy link on the public homepage and inside Legal & Privacy. Privacy/legal: legal@sciencebyhugs.com. Operator: Anthony Charles Hugershoff, sole proprietor. Business mailing address: Science By Hugs, 1527 W Craig Rd, STE 1B, Box 147, North Las Vegas, NV 89032-0228.

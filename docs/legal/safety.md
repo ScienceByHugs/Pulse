@@ -21,3 +21,7 @@ Pulse is not monitored for emergencies. If you suspect an emergency, contact you
 ## Reports
 
 Reports reproduce selected user-entered information. They may omit unavailable historical details and are not verified clinical assessments. Review them before sharing.
+
+## Contact
+
+Support: support@sciencebyhugs.com. Privacy/legal: legal@sciencebyhugs.com. Business mailing address: Science By Hugs, 1527 W Craig Rd, STE 1B, Box 147, North Las Vegas, NV 89032-0228.

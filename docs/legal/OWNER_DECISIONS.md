@@ -1,4 +1,4 @@
-# Confirmed owner decisions — October 12, 2026
+# Confirmed owner decisions — updated October 13, 2026
 
 - Operator: Anthony Charles Hugershoff, sole proprietor; Science By Hugs is a registered DBA/trade name.
 - Support and legal inboxes work and are monitored personally by the owner.
@@ -11,7 +11,7 @@
 - US-only, 18+ applies to beta and web as well as public mobile launch.
 - Apple standard app license plus Pulse service terms approved for drafting; no mandatory arbitration or class-action waiver.
 - Owner has an attorney for final review.
-- PO Box pending this week; exclude residential address.
+- Owner confirmed the UPS business mailing address on October 13, 2026: 1527 W Craig Rd, STE 1B, Box 147, North Las Vegas, NV 89032-0228. Use this address in policy drafts; exclude the residential address.
 
 ## Remaining work
 

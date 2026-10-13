@@ -1,6 +1,6 @@
 # Apple and Google policy release worksheet
 
-Prepared October 12, 2026. Draft policies reflect reviewed repository behavior, not a completed legal or vendor audit. Do not submit placeholder pages or claim approval/compliance from these documents alone.
+Updated October 13, 2026. Draft policies reflect reviewed repository behavior, not a completed legal or vendor audit. Do not submit placeholder pages or claim approval/compliance from these documents alone.
 
 ## Documents
 
@@ -13,7 +13,7 @@ Prepared October 12, 2026. Draft policies reflect reviewed repository behavior, 
 
 ## Required operator decisions before publication
 
-1. Confirmed operator: Anthony Charles Hugershoff, sole proprietor operating under the registered Science By Hugs DBA/trade name. Support: support@sciencebyhugs.com; privacy/legal: legal@sciencebyhugs.com. Public business mailing address pending; do not publish the residential address.
+1. Confirmed operator: Anthony Charles Hugershoff, sole proprietor operating under the registered Science By Hugs DBA/trade name. Support: support@sciencebyhugs.com; privacy/legal: legal@sciencebyhugs.com. Confirmed UPS business mailing address: 1527 W Craig Rd, STE 1B, Box 147, North Las Vegas, NV 89032-0228. Do not publish the residential address.
 2. Confirmed launch intent: United States only, minimum age 18, including beta testers and web users. Normal signup now requires age/residency self-attestation. This is not verified identity or geolocation; configure matching store territories and review any additional consent requirements before release.
 3. Supabase primary database region verified as us-east-2 on 2026-10-12. Confirm configured backup/log retention, email-delivery provider, processor contracts, staff access and any external monitoring. Replace retention draft language with specific verified periods/criteria and justified exceptions.
 4. Owner monitors both confirmed inboxes and handles privacy requests/appeals. Target acknowledgment: three business days. Prepared procedure: PRIVACY_REQUEST_PROCEDURE.md; verify and adopt it with counsel, including ownership verification, legally appropriate deadlines and propagation to processors. Do not require reinstalling for web deletion requests. Avoid collecting health content in the initial request.

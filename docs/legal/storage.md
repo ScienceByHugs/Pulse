@@ -4,7 +4,7 @@ Draft — not yet effective.
 
 ## Scope
 
-This draft describes storage in the reviewed Pulse app and its standalone policy pages. A separate marketing website or future SDKs must be audited independently. Version: 2026-10-12; effective date pending publication.
+This draft describes storage in the reviewed Pulse app and its standalone policy pages. A separate marketing website or future SDKs must be audited independently. Version: 2026-10-13; effective date pending publication.
 
 ## Native app
 
@@ -20,7 +20,7 @@ The generated standalone policy pages do not set cookies, load analytics, embed 
 
 ## Controls
 
-You can manage permissions in device settings, clear browser storage and use the app’s privacy controls. Revoking calendar permission does not necessarily delete existing events. Remove Pulse-created calendar entries before disconnecting or deleting the account if you want those copies removed. Privacy/legal: legal@sciencebyhugs.com. DRAFT: verify hosting details before publication.
+You can manage permissions in device settings, clear browser storage and use the app’s privacy controls. Revoking calendar permission does not necessarily delete existing events. Remove Pulse-created calendar entries before disconnecting or deleting the account if you want those copies removed. Privacy/legal: legal@sciencebyhugs.com. DRAFT: verify hosting details before publication. Business mailing address: Science By Hugs, 1527 W Craig Rd, STE 1B, Box 147, North Las Vegas, NV 89032-0228.
 
 ## Interrupted feedback submissions
 
