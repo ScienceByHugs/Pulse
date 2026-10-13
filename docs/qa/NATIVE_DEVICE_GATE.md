@@ -1,6 +1,6 @@
 # Native device release gate
 
-Status: PENDING — these are not claimed as completed device tests. The Mac currently lists a shutdown simulator and no paired physical iPhone. PR 90 has browser/logic checks; its new code is not yet in an installed native build. Do not build or submit until Anthony instructs us to do so.
+Status: PENDING — these are not claimed as completed device tests. The Mac currently lists a shutdown simulator and no paired physical iPhone. PR 90 has browser/logic checks. At Anthony’s instruction, Pulse 2.0.0 (15) was built locally from ed557c9 and uploaded directly to Apple on 2026-10-13; installation and the device checks below remain pending. Future builds/submissions still require Anthony’s instruction.
 
 Use a clearly fictional tester account. Record device/OS, build number, result and screenshot for each case. Do not use real health records in bug reports.
 
@@ -14,7 +14,8 @@ Use a clearly fictional tester account. Record device/OS, build number, result a
 | Pending Undo | Undo resolves once after reconnection; no duplicate or accidental amount used | Pending |
 | Forms / keyboard | Fixed Close reachable; numeric keyboard dismissed; Android back respects saving state | Pending |
 | Large text / screen reader | Labels and buttons readable at largest text; VoiceOver/TalkBack traversal makes sense | Pending |
+| Help & feedback | Send one ticket, confirm My feedback/status and contact consent off by default; test interrupted send/relaunch without duplicates | Pending |
 | Reduced motion | OS setting removes form/date/time transitions and notification-jump scrolling | Pending |
 | Notifications / calendar | Read status without permission prompt; test alert visible; denied permissions explained; calendar copies remain user-controlled | Pending |
 
-Test TestFlight build 13 only for existing behavior, not PR 90's new UI. A new local native build is required to verify the new code.
+Use TestFlight build 15 for the new typography, feedback and PMB-address changes once Apple processing completes. Builds 13/14 do not contain all of these additions. See BUILD_15_RELEASE.md for verification scope.
