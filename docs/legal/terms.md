@@ -44,4 +44,10 @@ Mandatory consumer and privacy rights remain unaffected. To the extent permitted
 
 ## Contact
 
-Operator: Anthony Charles Hugershoff, sole proprietor. Support: support@sciencebyhugs.com. Privacy/legal: legal@sciencebyhugs.com. Counsel should finalize eligibility, enforceable liability provisions, governing law and dispute handling before publication. Business mailing address: Science By Hugs, 1527 W Craig Rd, STE 1B, Box 147, North Las Vegas, NV 89032-0228.
+Operator: Anthony Charles Hugershoff, sole proprietor. Support: support@sciencebyhugs.com. Privacy/legal: legal@sciencebyhugs.com. Counsel should finalize eligibility, enforceable liability provisions, governing law and dispute handling before publication. Business mailing address:\
+Science by hugs\
+PMB 147\
+1527 W Craig Rd\
+Ste 1B\
+North Las Vegas, NV\
+89032-0228

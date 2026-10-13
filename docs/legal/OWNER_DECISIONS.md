@@ -11,7 +11,14 @@
 - US-only, 18+ applies to beta and web as well as public mobile launch.
 - Apple standard app license plus Pulse service terms approved for drafting; no mandatory arbitration or class-action waiver.
 - Owner has an attorney for final review.
-- Owner confirmed the UPS business mailing address on October 13, 2026: 1527 W Craig Rd, STE 1B, Box 147, North Las Vegas, NV 89032-0228. Use this address in policy drafts; exclude the residential address.
+- Owner confirmed the UPS business mailing address on October 13, 2026, and corrected its addressee, PMB wording and line order. Use this address in policy drafts; exclude the residential address.
+
+Science by hugs\
+PMB 147\
+1527 W Craig Rd\
+Ste 1B\
+North Las Vegas, NV\
+89032-0228
 
 ## Remaining work
 

@@ -24,4 +24,10 @@ Reports reproduce selected user-entered information. They may omit unavailable h
 
 ## Contact
 
-Support: support@sciencebyhugs.com. Privacy/legal: legal@sciencebyhugs.com. Business mailing address: Science By Hugs, 1527 W Craig Rd, STE 1B, Box 147, North Las Vegas, NV 89032-0228.
+Support: support@sciencebyhugs.com. Privacy/legal: legal@sciencebyhugs.com. Business mailing address:\
+Science by hugs\
+PMB 147\
+1527 W Craig Rd\
+Ste 1B\
+North Las Vegas, NV\
+89032-0228

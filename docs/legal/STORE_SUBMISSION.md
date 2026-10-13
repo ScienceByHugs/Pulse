@@ -13,13 +13,22 @@ Updated October 13, 2026. Draft policies reflect reviewed repository behavior, n
 
 ## Required operator decisions before publication
 
-1. Confirmed operator: Anthony Charles Hugershoff, sole proprietor operating under the registered Science By Hugs DBA/trade name. Support: support@sciencebyhugs.com; privacy/legal: legal@sciencebyhugs.com. Confirmed UPS business mailing address: 1527 W Craig Rd, STE 1B, Box 147, North Las Vegas, NV 89032-0228. Do not publish the residential address.
+1. Confirmed operator: Anthony Charles Hugershoff, sole proprietor operating under the registered Science By Hugs DBA/trade name. Support: support@sciencebyhugs.com; privacy/legal: legal@sciencebyhugs.com. Confirmed UPS business mailing address is shown below, using the owner-provided addressee, PMB wording and line order. Do not publish the residential address.
 2. Confirmed launch intent: United States only, minimum age 18, including beta testers and web users. Normal signup now requires age/residency self-attestation. This is not verified identity or geolocation; configure matching store territories and review any additional consent requirements before release.
 3. Supabase primary database region verified as us-east-2 on 2026-10-12. Confirm configured backup/log retention, email-delivery provider, processor contracts, staff access and any external monitoring. Replace retention draft language with specific verified periods/criteria and justified exceptions.
 4. Owner monitors both confirmed inboxes and handles privacy requests/appeals. Target acknowledgment: three business days. Prepared procedure: PRIVACY_REQUEST_PROCEDURE.md; verify and adopt it with counsel, including ownership verification, legally appropriate deadlines and propagation to processors. Do not require reinstalling for web deletion requests. Avoid collecting health content in the initial request.
 5. Assess Washington/Nevada and other consumer health privacy laws, FTC Health Breach Notification Rule and any international obligations for actual markets. Required consent must be specific, recorded, revocable and implemented before covered collection/sharing. Privacy notices are not consent.
 6. Confirm actual data sale/advertising/AI practices including vendors; ensure future changes cannot silently invalidate policy statements.
 7. Have appropriate counsel review final terms, operator identity, age, regulatory/intended-use claims, health-data notice, liability and dispute provisions. No arbitration, class-action waiver, invented liability cap or assumed governing state is inserted here.
+
+## Confirmed business mailing address
+
+Science by hugs\
+PMB 147\
+1527 W Craig Rd\
+Ste 1B\
+North Las Vegas, NV\
+89032-0228
 
 ## Publishing
 

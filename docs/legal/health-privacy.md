@@ -28,4 +28,10 @@ Use Account & Privacy to export records or delete the account. For additional he
 
 ## Policy link and contact
 
-Publish this document through a distinct, conspicuous Consumer Health Privacy link on the public homepage and inside Legal & Privacy. Privacy/legal: legal@sciencebyhugs.com. Operator: Anthony Charles Hugershoff, sole proprietor. Business mailing address: Science By Hugs, 1527 W Craig Rd, STE 1B, Box 147, North Las Vegas, NV 89032-0228.
+Publish this document through a distinct, conspicuous Consumer Health Privacy link on the public homepage and inside Legal & Privacy. Privacy/legal: legal@sciencebyhugs.com. Operator: Anthony Charles Hugershoff, sole proprietor. Business mailing address:\
+Science by hugs\
+PMB 147\
+1527 W Craig Rd\
+Ste 1B\
+North Las Vegas, NV\
+89032-0228
