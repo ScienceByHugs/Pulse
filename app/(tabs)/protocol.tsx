@@ -40,6 +40,8 @@ import {
   correctInventoryRemaining,
   createProtocol,
   createProtocolItem,
+  pendingProtocolItemCreation,
+  prepareProtocolItemCreation,
   listProtocolItems,
   listProtocols,
   setProtocolItemActive,
@@ -48,6 +50,7 @@ import {
   updateProtocolItemSchedule,
   updateProtocolDetails,
   updateProtocolStatus,
+  type CreateItemInput,
   type TodayItem,
 } from '@/services/pulse';
 import { formatSchedule, localDateKey, scheduleTime } from '@/domain/schedule';
@@ -157,6 +160,9 @@ export default function ProtocolScreen() {
   const [reservoirThreshold, setReservoirThreshold] = useState('0');
   const [reservoirReason, setReservoirReason] = useState('');
   const [showBuilder, setShowBuilder] = useState(false);
+  const [heldCreation, setHeldCreation] = useState<CreateItemInput | null>(
+    null,
+  );
   const [showMapDetails, setShowMapDetails] = useState(false);
   const [builderStep, setBuilderStep] = useState<1 | 2 | 3>(1);
 
@@ -600,7 +606,63 @@ export default function ProtocolScreen() {
     };
   }
 
+  async function beginSubstance() {
+    if (busy) return;
+    setBusy(true);
+    setSaveError(null);
+    try {
+      const original = await pendingProtocolItemCreation();
+      setHeldCreation(original);
+      setBuilderStep(1);
+      setShowBuilder(!original);
+    } catch (error) {
+      Alert.alert(
+        'Could not check the earlier save',
+        error instanceof Error
+          ? error.message
+          : 'Check your connection and retry.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function finishItemCreation(input: CreateItemInput) {
+    setItemName('');
+    setShowSubstanceChoices(false);
+    setDose('');
+    setRoute(null);
+    setInventory('');
+    setShowBuilder(false);
+    setBuilderStep(1);
+    setHeldCreation(null);
+    setSaveError(null);
+    setSelectedProtocolId(input.protocolId);
+    await load();
+  }
+
+  async function resumeItemCreation() {
+    if (!heldCreation || busy) return;
+    setBusy(true);
+    setSaveError(null);
+    try {
+      await createProtocolItem(heldCreation);
+      await finishItemCreation(heldCreation);
+    } catch (error) {
+      setSaveError({
+        key: 'creation',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Check your connection and retry the original save.',
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function addItem() {
+    if (busy) return;
     const numericDose = Number(dose);
     const numericInventory = inventory ? Number(inventory) : undefined;
     if (
@@ -628,9 +690,9 @@ export default function ProtocolScreen() {
       return Alert.alert('Choose at least one day');
     }
 
+    let original: CreateItemInput;
     try {
-      setBusy(true);
-      await createProtocolItem({
+      original = prepareProtocolItemCreation({
         protocolId: activeProtocol.id,
         name: itemName,
         category,
@@ -643,19 +705,55 @@ export default function ProtocolScreen() {
             ? numericInventory
             : undefined,
       });
-      setItemName('');
-      setShowSubstanceChoices(false);
-      setDose('');
-      setRoute(null);
-      setInventory('');
-      setShowBuilder(false);
-      setBuilderStep(1);
-      await load();
     } catch (error) {
-      Alert.alert(
-        'Could not add item',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+      setSaveError({
+        key: 'substance',
+        message:
+          error instanceof Error ? error.message : 'Check your item details.',
+      });
+      return;
+    }
+    setBusy(true);
+    setSaveError(null);
+    try {
+      await createProtocolItem(original);
+      await finishItemCreation(original);
+    } catch (error) {
+      // A failed durable creation may already have saved its parent. Preserve
+      // its exact details, including any date anchor, rather than reopening an
+      // editable form that would allocate a second parent ID.
+      try {
+        const pending = await pendingProtocolItemCreation();
+        if (pending) {
+          setHeldCreation(pending);
+          setShowBuilder(false);
+          setSaveError({
+            key: 'creation',
+            message:
+              error instanceof Error
+                ? error.message
+                : 'The original save still needs confirmation.',
+          });
+        } else {
+          setSaveError({
+            key: 'substance',
+            message:
+              error instanceof Error
+                ? error.message
+                : 'Could not save. Your details are still in this form.',
+          });
+        }
+      } catch {
+        setHeldCreation(original);
+        setShowBuilder(false);
+        setSaveError({
+          key: 'creation',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Could not confirm this save. Retry its original details.',
+        });
+      }
     } finally {
       setBusy(false);
     }
@@ -724,10 +822,7 @@ export default function ProtocolScreen() {
             <Pressable
               accessibilityRole="button"
               style={styles.launchButton}
-              onPress={() => {
-                setBuilderStep(1);
-                setShowBuilder(true);
-              }}
+              onPress={() => void beginSubstance()}
             >
               <Text style={styles.launchText}>+ Add substance</Text>
             </Pressable>
@@ -764,6 +859,61 @@ export default function ProtocolScreen() {
           </View>
         </FormSheet>
 
+        {heldCreation && (
+          <FormSheet
+            label="Resume substance save"
+            busy={busy}
+            onClose={() => setHeldCreation(null)}
+          >
+            <Text style={styles.builderTitle}>Confirm your earlier save</Text>
+            <Text style={styles.cardDetail}>
+              Part of this substance may already be saved. Resume the original
+              details to finish safely, then edit the saved substance if needed.
+              Closing this sheet keeps the recovery available in Add substance.
+            </Text>
+            <View style={styles.reviewBox}>
+              <Text style={styles.reviewName}>{heldCreation.name}</Text>
+              <Text style={styles.cardDetail}>
+                {protocols.find((p) => p.id === heldCreation.protocolId)
+                  ?.name ?? 'Original protocol'}
+              </Text>
+              <Text style={styles.cardDetail}>
+                {heldCreation.doseAmount} {heldCreation.doseUnit} ·{' '}
+                {administrationLabel(heldCreation.route)}
+              </Text>
+              <Text style={styles.scheduleText}>
+                {formatSchedule(heldCreation.schedule)}
+              </Text>
+              {typeof heldCreation.schedule.startDate === 'string' && (
+                <Text style={styles.cardDetail}>
+                  Schedule anchor: {heldCreation.schedule.startDate}
+                </Text>
+              )}
+              <Text style={styles.cardDetail}>
+                {heldCreation.inventoryAmount
+                  ? `Original container: ${heldCreation.inventoryAmount} ${heldCreation.doseUnit}`
+                  : 'No initial container'}
+              </Text>
+            </View>
+            {saveError?.key === 'creation' && (
+              <RetryNotice
+                title="Save still needs confirmation"
+                message={saveError.message}
+              />
+            )}
+            <Pressable
+              accessibilityRole="button"
+              disabled={busy}
+              style={[styles.primary, busy && styles.disabled]}
+              onPress={() => void resumeItemCreation()}
+            >
+              <Text style={styles.primaryText}>
+                {busy ? 'Confirming…' : 'Resume original save'}
+              </Text>
+            </Pressable>
+          </FormSheet>
+        )}
+
         {activeProtocol && visibleItems.length === 0 && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Next: add your first substance</Text>
@@ -774,10 +924,7 @@ export default function ProtocolScreen() {
             <Pressable
               accessibilityRole="button"
               style={styles.primary}
-              onPress={() => {
-                setBuilderStep(1);
-                setShowBuilder(true);
-              }}
+              onPress={() => void beginSubstance()}
             >
               <Text style={styles.primaryText}>Add first substance</Text>
             </Pressable>
@@ -1123,10 +1270,7 @@ export default function ProtocolScreen() {
               <Pressable
                 accessibilityRole="button"
                 style={styles.addItemLaunch}
-                onPress={() => {
-                  setBuilderStep(1);
-                  setShowBuilder(true);
-                }}
+                onPress={() => void beginSubstance()}
               >
                 <View style={styles.addIcon}>
                   <Text style={styles.addIconText}>＋</Text>
@@ -1491,12 +1635,19 @@ export default function ProtocolScreen() {
                       <TextInput
                         style={styles.input}
                         accessibilityLabel="Total quantity in one container"
+                        editable={!busy}
                         placeholder={`Total container quantity in ${unit || 'same unit'}`}
                         placeholderTextColor={colors.muted}
                         keyboardType="decimal-pad"
                         value={inventory}
                         onChangeText={setInventory}
                       />
+                      {saveError?.key === 'substance' && (
+                        <RetryNotice
+                          title="Check this substance"
+                          message={saveError.message}
+                        />
+                      )}
                       <Text style={styles.scheduleHint}>
                         This creates one container. For example, a 20 mg vial
                         belongs here; it does not set the amount you log.
@@ -1507,6 +1658,7 @@ export default function ProtocolScreen() {
                         <Pressable
                           accessibilityRole="button"
                           style={styles.backButton}
+                          disabled={busy}
                           onPress={() => setBuilderStep(2)}
                         >
                           <Text style={styles.backText}>Back</Text>

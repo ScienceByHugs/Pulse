@@ -20,4 +20,4 @@ You can choose Export data in Account & Privacy before deletion. Store the expor
 
 ## Request tracking and contact
 
-DRAFT: insert the verified contact and documented request/response procedure. This page must be publicly hosted without login and linked in Google Play’s account-deletion URL field.
+Send account deletion requests to support@sciencebyhugs.com and other privacy requests or appeals to legal@sciencebyhugs.com. Anthony Charles Hugershoff monitors both inboxes and aims to acknowledge requests within three business days. We verify account ownership before disclosure or deletion and apply the legally required response periods. DRAFT: validate the request procedure and retention schedule with counsel before launch. This page must be publicly hosted without login and linked in Google Play’s account-deletion URL field.

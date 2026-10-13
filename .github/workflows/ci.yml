@@ -29,6 +29,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: node scripts/check-app-assets.cjs
+      - name: Verify bundled and public policy drafts match
+        run: python3 scripts/generate-legal-pages.py --check
 
   bundles:
     name: iOS, Android and web bundle compilation

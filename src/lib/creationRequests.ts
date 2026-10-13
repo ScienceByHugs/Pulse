@@ -11,14 +11,16 @@ export function stableCreationValue(value: unknown): string {
       .join(',')}}`;
   return JSON.stringify(value) ?? 'null';
 }
-type Request = {
+export type CreationRequest = {
   kind: string;
   signature: string;
   id: string;
   containerId: string;
 };
 const key = (userId: string) => `pulse.creations.${userId}`;
-export async function pendingCreations(userId: string): Promise<Request[]> {
+export async function pendingCreations(
+  userId: string,
+): Promise<CreationRequest[]> {
   const raw = await privateStorage.getItem(key(userId));
   if (!raw) return [];
   const value = JSON.parse(raw);
@@ -28,6 +30,11 @@ export async function pendingCreations(userId: string): Promise<Request[]> {
     );
   return value;
 }
+export function creationPayload(request: CreationRequest): unknown {
+  // The canonical signature also retains the original validated input. Older
+  // ledgers can therefore resume without a storage migration or extra copies.
+  return JSON.parse(request.signature);
+}
 export const clearCreations = (userId: string) =>
   privateStorage.removeItem(key(userId));
 let serial: Promise<unknown> = Promise.resolve();
@@ -36,7 +43,7 @@ export function withCreation<T>(
   userId: string,
   kind: string,
   payload: unknown,
-  work: (request: Request) => Promise<T>,
+  work: (request: CreationRequest) => Promise<T>,
 ): Promise<T> {
   const signature = stableCreationValue(payload);
   const activeKey = `${userId}:${kind}:${signature}`;
@@ -48,6 +55,10 @@ export function withCreation<T>(
       (r) => r.kind === kind && r.signature === signature,
     );
     if (!request) {
+      if (kind === 'substance' && requests.some((r) => r.kind === kind))
+        throw new Error(
+          'An earlier substance save still needs confirmation. Open Add substance to resume its original details before starting another.',
+        );
       if (requests.length >= 50)
         throw new Error(
           'Several creations are still unconfirmed. Refresh your records and contact support before adding more.',

@@ -1,4 +1,9 @@
-import { withCreation, stableCreationValue } from '@/lib/creationRequests';
+import {
+  withCreation,
+  stableCreationValue,
+  pendingCreations,
+  creationPayload,
+} from '@/lib/creationRequests';
 import { randomUUID } from 'expo-crypto';
 import {
   deviceTimeZone,
@@ -326,7 +331,7 @@ export async function listTodayItems() {
   }) as unknown as TodayItem[];
 }
 
-type CreateItemInput = {
+export type CreateItemInput = {
   protocolId: string;
   name: string;
   category?: string;
@@ -338,8 +343,7 @@ type CreateItemInput = {
   lowThreshold?: number;
 };
 
-export async function createProtocolItem(input: CreateItemInput) {
-  const userId = await currentUserId();
+function validatedItemCreation(input: CreateItemInput) {
   const body = {
     protocol_id: input.protocolId,
     name: input.name.trim(),
@@ -347,7 +351,9 @@ export async function createProtocolItem(input: CreateItemInput) {
     route: input.route,
     dose_amount: input.doseAmount,
     dose_unit: input.doseUnit.trim(),
-    schedule: validateTrackedSchedule(input.schedule),
+    schedule: JSON.parse(
+      JSON.stringify(validateTrackedSchedule(input.schedule)),
+    ) as Record<string, unknown>,
     site_rotation_enabled:
       input.route === 'subcutaneous' || input.route === 'intramuscular',
   };
@@ -356,15 +362,76 @@ export async function createProtocolItem(input: CreateItemInput) {
     body.name.length > 100 ||
     !Number.isFinite(input.doseAmount) ||
     input.doseAmount <= 0 ||
-    !body.dose_unit
+    !body.dose_unit ||
+    body.dose_unit.length > 30 ||
+    !['subcutaneous', 'intramuscular', 'oral', 'topical', 'other'].includes(
+      body.route,
+    ) ||
+    !body.protocol_id
   )
-    throw new Error('Enter a name, positive amount and unit.');
+    throw new Error(
+      'Enter a name, positive amount, valid unit and administration type.',
+    );
   const inventory = input.inventoryAmount ?? 0;
   if (!Number.isFinite(inventory) || inventory < 0)
     throw new Error('Container total must be zero or higher.');
   const threshold = Math.max(input.lowThreshold ?? input.doseAmount * 3, 0);
   if (!Number.isFinite(threshold))
     throw new Error('Enter a valid low-stock threshold.');
+  return { body, inventory, threshold };
+}
+export function prepareProtocolItemCreation(
+  input: CreateItemInput,
+): CreateItemInput {
+  const { body, inventory, threshold } = validatedItemCreation(input);
+  return {
+    protocolId: body.protocol_id,
+    name: body.name,
+    category: body.category ?? undefined,
+    route: body.route,
+    doseAmount: body.dose_amount,
+    doseUnit: body.dose_unit,
+    schedule: body.schedule,
+    inventoryAmount: inventory,
+    lowThreshold: threshold,
+  };
+}
+export async function pendingProtocolItemCreation(): Promise<CreateItemInput | null> {
+  const userId = await currentUserId();
+  const request = (await pendingCreations(userId)).find(
+    (r) => r.kind === 'substance',
+  );
+  if (!request) return null;
+  const payload = creationPayload(request) as {
+    body: {
+      protocol_id: string;
+      name: string;
+      category: string | null;
+      route: CreateItemInput['route'];
+      dose_amount: number;
+      dose_unit: string;
+      schedule: Record<string, unknown>;
+    };
+    inventory: number;
+    threshold: number;
+  };
+  return prepareProtocolItemCreation({
+    protocolId: payload.body.protocol_id,
+    name: payload.body.name,
+    category: payload.body.category ?? undefined,
+    route: payload.body.route,
+    doseAmount: payload.body.dose_amount,
+    doseUnit: payload.body.dose_unit,
+    schedule: payload.body.schedule,
+    inventoryAmount: payload.inventory,
+    lowThreshold: payload.threshold,
+  });
+}
+export async function createProtocolItem(input: CreateItemInput) {
+  // Validation happens before durable IDs exist, so rejected input remains
+  // editable and never leaves a creation request that blocks a later save.
+  const { body, inventory, threshold } = validatedItemCreation(input);
+  const userId = await currentUserId();
   return withCreation(
     userId,
     'substance',

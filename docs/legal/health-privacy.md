@@ -28,4 +28,4 @@ Use Account & Privacy to export records or delete the account. For additional he
 
 ## Policy link and contact
 
-Publish this document through a distinct, conspicuous Consumer Health Privacy link on the public homepage and inside Legal & Privacy. Privacy/legal: legal@sciencebyhugs.com. DRAFT: confirm the legal operator and public mailing address.
+Publish this document through a distinct, conspicuous Consumer Health Privacy link on the public homepage and inside Legal & Privacy. Privacy/legal: legal@sciencebyhugs.com. Operator: Anthony Charles Hugershoff, sole proprietor. DRAFT: add the public mailing address.

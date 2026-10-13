@@ -4,7 +4,7 @@ Draft — not yet effective.
 
 ## About this policy
 
-Pulse by SBH, also called Pulse, is a personal routine tracker by Science By Hugs, operated as a sole proprietorship. This draft describes the current app for United States residents age 18 or older. The proprietor’s full legal name and public mailing address remain pending confirmation. Privacy and legal requests: legal@sciencebyhugs.com. Version: 2026-10-12. Effective date: to be set on publication.
+Pulse by SBH, also called Pulse, is a personal routine tracker by Science By Hugs, operated as a sole proprietorship under the registered Science By Hugs DBA/trade name. This draft describes the current app for United States residents age 18 or older. The proprietor is Anthony Charles Hugershoff. The public business mailing address is pending. Privacy and legal requests: legal@sciencebyhugs.com. Version: 2026-10-12. Effective date: to be set on publication.
 
 ## Information you provide
 
@@ -17,6 +17,10 @@ We create account and record identifiers, timestamps, local dates, time-zone inf
 ## How we use information
 
 We use information to authenticate accounts, save and synchronize your records, display your history, manage inventory, provide user-configured reminders and calendar entries, generate requested exports, support you, and secure and maintain the service. Check-in summaries describe your entries; they do not establish medical causation. Optional profile photos and check-ins are not required for basic tracking.
+
+## Promotional email plans
+
+The operator plans to offer promotional emails separately from necessary account, security and support messages. DRAFT: implement a separate optional marketing signup and an unsubscribe mechanism before sending promotions. Health records will not be used to target promotions. Marketing providers and their processing must be verified before this feature launches.
 
 ## Providers and disclosures
 
@@ -44,8 +48,8 @@ Account ownership restrictions and other safeguards limit access to records. No 
 
 ## Children and changes
 
-Pulse is intended for United States residents age 18 or older. The normal signup flow asks users to confirm that eligibility; it does not independently verify age or location, and does not collect a birth date or GPS location for this purpose. Signup confirmation and its date are saved with the account. We will update this policy when practices change and identify the effective version. Business transitions require continued protection of information and legally required notice or consent.
+Pulse is intended for United States residents age 18 or older, including beta testers and web users. The normal signup flow asks users to confirm that eligibility; it does not independently verify age or location, and does not collect a birth date or GPS location for this purpose. Signup confirmation and its date are saved with the account. We will update this policy when practices change and identify the effective version. Business transitions require continued protection of information and legally required notice or consent.
 
 ## Contact
 
-Privacy/legal: legal@sciencebyhugs.com. Support: support@sciencebyhugs.com. DRAFT: confirm the legal operator and public business mailing address. Do not use placeholder details in store submissions.
+Privacy/legal: legal@sciencebyhugs.com. Support: support@sciencebyhugs.com. Operator: Anthony Charles Hugershoff, sole proprietor. DRAFT: add the public business mailing address. Do not use placeholder details in store submissions.

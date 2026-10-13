@@ -681,10 +681,15 @@ export default function TodayScreen() {
           <ManualLogSheet
             item={manualItem}
             onClose={() => setManualItem(null)}
-            onSaved={() => {
-              void sync.refresh().then(load);
+            onSaved={(queued) => {
+              void sync
+                .refresh()
+                .then(load)
+                .catch(() => undefined);
               setFeedback(
-                'Manual entry saved on this device. Check Sync status for confirmation.',
+                queued
+                  ? 'Manual entry saved on your phone · waiting to sync'
+                  : 'Manual entry saved',
               );
             }}
           />

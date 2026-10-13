@@ -32,8 +32,8 @@ export default function LegalScreen() {
         </Pressable>
         <Text style={styles.title}>{selected?.title ?? 'Legal & Privacy'}</Text>
         <Text style={styles.notice}>
-          Draft for review. Business details and legal review are pending; these
-          documents are not yet effective.
+          Draft for review. Mailing address, verified retention and attorney
+          review are pending; these documents are not yet effective.
         </Text>
         <Pressable
           accessibilityRole="button"
@@ -43,13 +43,13 @@ export default function LegalScreen() {
               'mailto:legal@sciencebyhugs.com?subject=Pulse%20privacy%20request',
             ).catch(() =>
               Alert.alert(
-                'Contact support',
+                'Privacy and legal contact',
                 'Email legal@sciencebyhugs.com from your email app. Never send passwords or health records.',
               ),
             )
           }
         >
-          <Text style={styles.heading}>Contact support about your data</Text>
+          <Text style={styles.heading}>Contact us about your privacy</Text>
           <Text style={styles.body}>
             Opens your email app. Include your account email and request type.
             Never send passwords or health records. Nothing is sent

@@ -54,7 +54,11 @@ import {
 import { listTodayItems } from '@/services/pulse';
 import { clearLowStockAlertState, notifyLowStock } from '@/lib/lowStock';
 import { requestReminderPermission } from '@/lib/reminders';
-import { deletePulseAccount, exportPulseData } from '@/services/account';
+import {
+  AccountDeviceCleanupError,
+  deletePulseAccount,
+  exportPulseData,
+} from '@/services/account';
 
 export default function YouScreen() {
   const { fontScale } = useWindowDimensions();
@@ -485,7 +489,9 @@ export default function YouScreen() {
                 await deletePulseAccount();
               } catch (error) {
                 Alert.alert(
-                  'Could not delete account',
+                  error instanceof AccountDeviceCleanupError
+                    ? 'Account deleted · device cleanup incomplete'
+                    : 'Could not delete account',
                   error instanceof Error ? error.message : 'Unknown error',
                 );
               } finally {

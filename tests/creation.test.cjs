@@ -109,7 +109,7 @@ test('creation stops before sending anything if durable recovery storage fails',
   );
   assert.equal(sent, false);
 });
-test('substance creation recovers a committed parent/container after a lost response without resetting consumed stock', async () => {
+test('substance creation freezes original stock and date anchor across changed input, relaunch and lost responses', async () => {
   const rows = new Map(),
     storage = new Map();
   let lost = false,
@@ -169,7 +169,7 @@ test('substance creation recovers a committed parent/container after a lost resp
       };
     },
   };
-  const api = loader({
+  const mocks = {
     'expo-crypto': { randomUUID },
     '@/lib/supabase': { supabase },
     '@/lib/outbox': {},
@@ -180,24 +180,63 @@ test('substance creation recovers a committed parent/container after a lost resp
         removeItem: async (k) => storage.delete(k),
       },
     },
-  })('src/services/pulse.ts');
+  };
+  const api = loader(mocks)('src/services/pulse.ts');
   const input = {
     protocolId: 'protocol',
     name: 'Fictional',
     route: 'other',
     doseAmount: 2,
     doseUnit: 'mg',
-    schedule: { type: 'as_needed' },
+    schedule: {
+      type: 'interval',
+      everyDays: 2,
+      startDate: '2026-10-12',
+      time: '09:00',
+    },
     inventoryAmount: 20,
   };
+  await assert.rejects(
+    api.createProtocolItem({ ...input, doseUnit: 'x'.repeat(31) }),
+    /valid unit/,
+  );
+  await assert.rejects(
+    api.createProtocolItem({ ...input, route: 'invalid' }),
+    /administration type/,
+  );
+  assert.equal(
+    storage.size,
+    0,
+    'Rejected input must not leave a recovery lock',
+  );
+  assert.equal(rows.size, 0, 'Rejected input must not send an insert');
   await assert.rejects(api.createProtocolItem(input));
   assert.equal(table('protocol_items').size, 1);
   assert.equal(table('inventory_containers').size, 1);
   const stock = [...table('inventory_containers').values()][0];
   stock.remaining_amount = 18;
+  await assert.rejects(
+    api.createProtocolItem({
+      ...input,
+      inventoryAmount: 21,
+      schedule: { ...input.schedule, startDate: '2026-10-13' },
+    }),
+    /resume its original details/,
+  );
+  assert.equal(
+    table('protocol_items').size,
+    1,
+    'Changed details must not create a second parent',
+  );
+  assert.equal(table('inventory_containers').size, 1);
   lost = false;
-  await api.createProtocolItem(input);
+  const relaunched = loader(mocks)('src/services/pulse.ts');
+  const original = await relaunched.pendingProtocolItemCreation();
+  assert.equal(original.inventoryAmount, 20);
+  assert.equal(original.schedule.startDate, '2026-10-12');
+  await relaunched.createProtocolItem(original);
   assert.equal(table('protocol_items').size, 1);
   assert.equal(table('inventory_containers').size, 1);
   assert.equal(stock.remaining_amount, 18);
+  assert.equal(await relaunched.pendingProtocolItemCreation(), null);
 });

@@ -13,10 +13,10 @@ Prepared October 12, 2026. Draft policies reflect reviewed repository behavior, 
 
 ## Required operator decisions before publication
 
-1. Confirm legal contracting/controller name (individual or registered company), public support/privacy email and business address. Current Apple credentials identify Anthony Hugershoff, but this does not establish the contracting entity.
-2. Confirmed launch intent: United States only, minimum age 18. Normal signup now requires age/residency self-attestation. This is not verified identity or geolocation; configure matching store territories and review any additional consent requirements before release.
+1. Confirmed operator: Anthony Charles Hugershoff, sole proprietor operating under the registered Science By Hugs DBA/trade name. Support: support@sciencebyhugs.com; privacy/legal: legal@sciencebyhugs.com. Public business mailing address pending; do not publish the residential address.
+2. Confirmed launch intent: United States only, minimum age 18, including beta testers and web users. Normal signup now requires age/residency self-attestation. This is not verified identity or geolocation; configure matching store territories and review any additional consent requirements before release.
 3. Supabase primary database region verified as us-east-2 on 2026-10-12. Confirm configured backup/log retention, email-delivery provider, processor contracts, staff access and any external monitoring. Replace retention draft language with specific verified periods/criteria and justified exceptions.
-4. Establish a monitored access/deletion/withdrawal/appeal procedure, ownership verification, legally appropriate deadlines and propagation to processors. Do not require reinstalling for web deletion requests. Avoid collecting health content in the initial request.
+4. Owner monitors both confirmed inboxes and handles privacy requests/appeals. Target acknowledgment: three business days. Prepared procedure: PRIVACY_REQUEST_PROCEDURE.md; verify and adopt it with counsel, including ownership verification, legally appropriate deadlines and propagation to processors. Do not require reinstalling for web deletion requests. Avoid collecting health content in the initial request.
 5. Assess Washington/Nevada and other consumer health privacy laws, FTC Health Breach Notification Rule and any international obligations for actual markets. Required consent must be specific, recorded, revocable and implemented before covered collection/sharing. Privacy notices are not consent.
 6. Confirm actual data sale/advertising/AI practices including vendors; ensure future changes cannot silently invalidate policy statements.
 7. Have appropriate counsel review final terms, operator identity, age, regulatory/intended-use claims, health-data notice, liability and dispute provisions. No arbitration, class-action waiver, invented liability cap or assumed governing state is inserted here.
@@ -35,7 +35,7 @@ Host public/legal as accessible static pages, with no login, geoblocking or brok
 - Current purposes: App Functionality; assess diagnostics/security processing actually retained by providers. No configured ad tracking is identified, but verify vendor SDK behavior before answering No to tracking.
 - Account deletion exists in-app; test the final deployed flow on a disposable account, including photo and associated records.
 - Review intended-use and health claims against guidelines 1.4 and 5.1. Keep unsupported clinical claims/calculators excluded. App label/disclaimer is not a regulatory determination.
-- Confirm standard Apple EULA selection; a custom EULA must meet Apple's minimum terms.
+- Owner selected Apple standard EULA plus Pulse service terms. Verify the App Store Connect setting; do not add arbitration/class-action waivers.
 
 ## Google Play Console
 

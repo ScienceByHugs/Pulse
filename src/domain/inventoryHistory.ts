@@ -25,6 +25,42 @@ type StockLog = {
   status: string;
   logged_at: string;
 };
+function stockLogEvent(log: StockLog): InventoryHistoryEvent {
+  const amount = `${log.amount} ${log.unit}`;
+  const event = { id: `log:${log.id}`, at: log.logged_at };
+  switch (log.status) {
+    case 'completed':
+      return {
+        ...event,
+        title: 'Recorded use (current amount)',
+        detail: amount,
+      };
+    case 'voided':
+      return {
+        ...event,
+        title: 'Entry undone (current status)',
+        detail: `${amount} · stock restored where tracked`,
+      };
+    case 'skipped':
+      return {
+        ...event,
+        title: 'Entry skipped (current status)',
+        detail: `${amount} · no stock consumed by this entry`,
+      };
+    case 'missed':
+      return {
+        ...event,
+        title: 'Entry not recorded (current status)',
+        detail: `${amount} · no stock consumed by this entry`,
+      };
+    default:
+      return {
+        ...event,
+        title: 'Tracking entry (current status)',
+        detail: `${amount} · ${log.status}`,
+      };
+  }
+}
 export function inventoryHistoryEvents(
   containers: Container[],
   adjustments: Adjustment[],
@@ -44,14 +80,6 @@ export function inventoryHistoryEvents(
       title: 'Stock corrected',
       detail: `${a.old_remaining_amount} → ${a.new_remaining_amount} ${units.get(a.inventory_container_id) ?? ''} · ${a.reason}`,
     })),
-    ...logs.map((l) => ({
-      id: `log:${l.id}`,
-      at: l.logged_at,
-      title:
-        l.status === 'undone'
-          ? 'Entry undone (current status)'
-          : 'Recorded use (current amount)',
-      detail: `${l.amount} ${l.unit}${l.status === 'undone' ? ' · stock restored where tracked' : ''}`,
-    })),
+    ...logs.map(stockLogEvent),
   ].sort((a, b) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id));
 }

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { FormSheet } from './FormSheet';
 import { RetryNotice } from './RetryNotice';
 import { quickLog, type TodayItem } from '@/services/pulse';
 import { useAuth } from '@/providers/AuthProvider';
 import { readOutbox } from '@/lib/outbox';
 import { administrationLabel } from '@/domain/administration';
+import { sitesForRoute } from '@/domain/sites';
 import { colors, radius } from '@/theme';
 export function ManualLogSheet({
   item,
@@ -14,13 +15,15 @@ export function ManualLogSheet({
 }: {
   item: TodayItem;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (queued: boolean) => void;
 }) {
   const { session } = useAuth();
   const [amount, setAmount] = useState(String(item.dose_amount));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [held, setHeld] = useState(false);
+  const [site, setSite] = useState('');
+  const [showSites, setShowSites] = useState(false);
   async function save() {
     if (busy || held || !session) return;
     const actual = Number(amount);
@@ -36,8 +39,11 @@ export function ManualLogSheet({
         throw new Error(
           'Resolve the earlier pending entry in Sync status before recording another.',
         );
-      await quickLog({ ...item, dose_amount: actual });
-      onSaved();
+      const result = await quickLog(
+        { ...item, dose_amount: actual },
+        site || undefined,
+      );
+      onSaved(result.queued);
       onClose();
     } catch (e) {
       setHeld(true);
@@ -70,6 +76,44 @@ export function ManualLogSheet({
       <Text style={styles.detail}>
         {administrationLabel(item.route)} · Your saved administration type
       </Text>
+      {sitesForRoute(item.route).length > 0 && (
+        <View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Injection site: ${site || 'Not recorded'}`}
+            accessibilityState={{ expanded: showSites, disabled: busy || held }}
+            disabled={busy || held}
+            onPress={() => setShowSites((value) => !value)}
+            style={styles.siteOption}
+          >
+            <Text style={styles.detail}>
+              {site || 'Select site (optional)'} {showSites ? '▴' : '▾'}
+            </Text>
+          </Pressable>
+          {showSites &&
+            ['', ...sitesForRoute(item.route)].map((value) => (
+              <Pressable
+                key={value || 'none'}
+                accessibilityRole="button"
+                accessibilityState={{
+                  selected: site === value,
+                  disabled: busy || held,
+                }}
+                disabled={busy || held}
+                onPress={() => {
+                  setSite(value);
+                  setShowSites(false);
+                }}
+                style={styles.siteOption}
+              >
+                <Text style={styles.detail}>
+                  {value || 'No site recorded'}
+                  {site === value ? ' ✓' : ''}
+                </Text>
+              </Pressable>
+            ))}
+        </View>
+      )}
       {!!error && <RetryNotice title="Review this entry" message={error} />}
       <Pressable
         accessibilityRole="button"
@@ -104,4 +148,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   action: { color: colors.bg, fontWeight: '700' },
+  siteOption: {
+    minHeight: 44,
+    padding: 12,
+    justifyContent: 'center',
+    backgroundColor: colors.panel2,
+    borderRadius: radius.md,
+  },
 });

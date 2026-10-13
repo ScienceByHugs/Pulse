@@ -61,9 +61,9 @@ export function InventoryHistoryButton({ item }: { item: TodayItem }) {
       >
         <Text style={{ color: colors.muted, lineHeight: 22 }}>
           Latest 100 saved records. Tracking entries show their current
-          corrected amount/status; their displayed date is the original entry
-          date. See each container for its current balance. Full stored records
-          are available in your account export.
+          corrected amount/status and current recorded date. See each container
+          for its current balance. Full stored records are available in your
+          account export.
         </Text>
         {loading && <ActivityIndicator color={colors.accent} />}
         {!!error && (

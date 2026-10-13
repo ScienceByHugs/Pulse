@@ -4,7 +4,7 @@ Draft — not yet effective.
 
 ## Agreement and operator
 
-These draft terms govern Pulse by SBH, a personal routine tracker by Science By Hugs. The contracting legal operator and effective date must be confirmed before publication. Version: 2026-10-12. Provide meaningful access to these terms before signup and implement versioned acceptance before relying on them as an agreement.
+These draft terms govern Pulse by SBH, a personal routine tracker by Science By Hugs. The operator is Anthony Charles Hugershoff, a sole proprietor operating under the registered Science By Hugs DBA/trade name. The effective date will be set on publication. Version: 2026-10-12. Provide meaningful access to these terms before signup and implement versioned acceptance before relying on them as an agreement.
 
 ## What Pulse provides
 
@@ -12,7 +12,7 @@ Pulse records the routines and quantities you enter, schedules reminders, tracks
 
 ## Eligibility and account responsibilities
 
-Pulse is intended for United States residents who are at least 18 years old and legally able to enter an agreement. Signup asks you to confirm that eligibility; it is self-attestation rather than verified identity or location. Provide accurate account information, protect credentials and report suspected unauthorized access. Check your own entries and follow qualified medical advice. Never share account passwords with support.
+Pulse is intended for United States residents who are at least 18 years old and legally able to enter an agreement, including beta testers and web users. Signup asks you to confirm that eligibility; it is self-attestation rather than verified identity or location. Provide accurate account information, protect credentials and report suspected unauthorized access. Check your own entries and follow qualified medical advice. Never share account passwords with support.
 
 ## Acceptable use
 
@@ -28,11 +28,11 @@ Reminders can be delayed or blocked by device settings, permissions, connection 
 
 ## Beta availability and payments
 
-Beta features can change and may contain errors. The reviewed beta has no implemented subscription/payment feature. If paid services are introduced, pricing, renewal, cancellation and refund terms will be disclosed before purchase and applicable platform rules will apply.
+Beta features can change and may contain errors. Pulse is free at launch, with no subscriptions or in-app purchases. Any future paid services require updated pricing, renewal, cancellation and refund information before purchase.
 
 ## App license and platform terms
 
-Subject to applicable terms, you may use the app for personal tracking. App intellectual property remains with its owners; third-party components retain their licenses. Apple/Google platform terms continue to apply. These service terms do not replace the applicable App Store EULA. Confirm whether Apple’s standard EULA or a compliant custom license is used before submission.
+Subject to applicable terms, you may use the app for personal tracking. App intellectual property remains with its owners; third-party components retain their licenses. Apple/Google platform terms continue to apply. These service terms do not replace the applicable App Store EULA. The owner has selected Apple’s standard EULA for the iOS app license, alongside these service terms. The matching App Store Connect selection must be verified before submission.
 
 ## Suspension, termination and changes
 
@@ -44,4 +44,4 @@ Mandatory consumer and privacy rights remain unaffected. To the extent permitted
 
 ## Contact
 
-DRAFT: insert confirmed contracting entity and support contact. Counsel should finalize eligibility, enforceable liability provisions, governing law and dispute handling before publication.
+Operator: Anthony Charles Hugershoff, sole proprietor. Support: support@sciencebyhugs.com. Privacy/legal: legal@sciencebyhugs.com. Counsel should finalize eligibility, enforceable liability provisions, governing law and dispute handling before publication.

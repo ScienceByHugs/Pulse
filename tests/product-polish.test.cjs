@@ -67,7 +67,7 @@ test('stock history distinguishes starting supply, balance corrections and undon
         logged_at: '2026-10-11',
         amount: 2,
         unit: 'mg',
-        status: 'undone',
+        status: 'voided',
       },
     ],
   );
@@ -77,6 +77,34 @@ test('stock history distinguishes starting supply, balance corrections and undon
   );
   assert.match(rows[0].detail, /18 → 17 mg/);
   assert.match(rows[1].detail, /restored where tracked/);
+});
+test('stock history reports real persisted log statuses without calling skipped or missed entries consumption', () => {
+  // A completed entry corrected to skipped keeps its container relationship,
+  // while the correction restores the inventory it originally consumed.
+  const rows = inventoryHistoryEvents(
+    [],
+    [],
+    ['completed', 'skipped', 'missed', 'voided'].map((status, index) => ({
+      id: status,
+      amount: 2,
+      unit: 'mg',
+      status,
+      logged_at: `2026-10-${10 + index}`,
+    })),
+  );
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  assert.equal(
+    byId.get('log:completed').title,
+    'Recorded use (current amount)',
+  );
+  assert.match(byId.get('log:skipped').title, /skipped/);
+  assert.match(byId.get('log:missed').title, /not recorded/);
+  for (const status of ['skipped', 'missed']) {
+    assert.match(byId.get(`log:${status}`).detail, /no stock consumed/);
+    assert.doesNotMatch(byId.get(`log:${status}`).title, /Recorded use/);
+  }
+  assert.match(byId.get('log:voided').title, /undone/);
+  assert.match(byId.get('log:voided').detail, /restored where tracked/);
 });
 test('reminder health distinguishes web, disabled, denied and scheduled states', () => {
   const allowed = { granted: true, canAskAgain: true },

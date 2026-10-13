@@ -5,7 +5,7 @@
     "sections": [
       {
         "heading": "About this policy",
-        "body": "Pulse by SBH, also called Pulse, is a personal routine tracker by Science By Hugs, operated as a sole proprietorship. This draft describes the current app for United States residents age 18 or older. The proprietor’s full legal name and public mailing address remain pending confirmation. Privacy and legal requests: legal@sciencebyhugs.com. Version: 2026-10-12. Effective date: to be set on publication."
+        "body": "Pulse by SBH, also called Pulse, is a personal routine tracker by Science By Hugs, operated as a sole proprietorship under the registered Science By Hugs DBA/trade name. This draft describes the current app for United States residents age 18 or older. The proprietor is Anthony Charles Hugershoff. The public business mailing address is pending. Privacy and legal requests: legal@sciencebyhugs.com. Version: 2026-10-12. Effective date: to be set on publication."
       },
       {
         "heading": "Information you provide",
@@ -18,6 +18,10 @@
       {
         "heading": "How we use information",
         "body": "We use information to authenticate accounts, save and synchronize your records, display your history, manage inventory, provide user-configured reminders and calendar entries, generate requested exports, support you, and secure and maintain the service. Check-in summaries describe your entries; they do not establish medical causation. Optional profile photos and check-ins are not required for basic tracking."
+      },
+      {
+        "heading": "Promotional email plans",
+        "body": "The operator plans to offer promotional emails separately from necessary account, security and support messages. DRAFT: implement a separate optional marketing signup and an unsubscribe mechanism before sending promotions. Health records will not be used to target promotions. Marketing providers and their processing must be verified before this feature launches."
       },
       {
         "heading": "Providers and disclosures",
@@ -45,11 +49,11 @@
       },
       {
         "heading": "Children and changes",
-        "body": "Pulse is intended for United States residents age 18 or older. The normal signup flow asks users to confirm that eligibility; it does not independently verify age or location, and does not collect a birth date or GPS location for this purpose. Signup confirmation and its date are saved with the account. We will update this policy when practices change and identify the effective version. Business transitions require continued protection of information and legally required notice or consent."
+        "body": "Pulse is intended for United States residents age 18 or older, including beta testers and web users. The normal signup flow asks users to confirm that eligibility; it does not independently verify age or location, and does not collect a birth date or GPS location for this purpose. Signup confirmation and its date are saved with the account. We will update this policy when practices change and identify the effective version. Business transitions require continued protection of information and legally required notice or consent."
       },
       {
         "heading": "Contact",
-        "body": "Privacy/legal: legal@sciencebyhugs.com. Support: support@sciencebyhugs.com. DRAFT: confirm the legal operator and public business mailing address. Do not use placeholder details in store submissions."
+        "body": "Privacy/legal: legal@sciencebyhugs.com. Support: support@sciencebyhugs.com. Operator: Anthony Charles Hugershoff, sole proprietor. DRAFT: add the public business mailing address. Do not use placeholder details in store submissions."
       }
     ]
   },
@@ -83,7 +87,7 @@
       },
       {
         "heading": "Policy link and contact",
-        "body": "Publish this document through a distinct, conspicuous Consumer Health Privacy link on the public homepage and inside Legal & Privacy. Privacy/legal: legal@sciencebyhugs.com. DRAFT: confirm the legal operator and public mailing address."
+        "body": "Publish this document through a distinct, conspicuous Consumer Health Privacy link on the public homepage and inside Legal & Privacy. Privacy/legal: legal@sciencebyhugs.com. Operator: Anthony Charles Hugershoff, sole proprietor. DRAFT: add the public mailing address."
       }
     ]
   },
@@ -93,7 +97,7 @@
     "sections": [
       {
         "heading": "Agreement and operator",
-        "body": "These draft terms govern Pulse by SBH, a personal routine tracker by Science By Hugs. The contracting legal operator and effective date must be confirmed before publication. Version: 2026-10-12. Provide meaningful access to these terms before signup and implement versioned acceptance before relying on them as an agreement."
+        "body": "These draft terms govern Pulse by SBH, a personal routine tracker by Science By Hugs. The operator is Anthony Charles Hugershoff, a sole proprietor operating under the registered Science By Hugs DBA/trade name. The effective date will be set on publication. Version: 2026-10-12. Provide meaningful access to these terms before signup and implement versioned acceptance before relying on them as an agreement."
       },
       {
         "heading": "What Pulse provides",
@@ -101,7 +105,7 @@
       },
       {
         "heading": "Eligibility and account responsibilities",
-        "body": "Pulse is intended for United States residents who are at least 18 years old and legally able to enter an agreement. Signup asks you to confirm that eligibility; it is self-attestation rather than verified identity or location. Provide accurate account information, protect credentials and report suspected unauthorized access. Check your own entries and follow qualified medical advice. Never share account passwords with support."
+        "body": "Pulse is intended for United States residents who are at least 18 years old and legally able to enter an agreement, including beta testers and web users. Signup asks you to confirm that eligibility; it is self-attestation rather than verified identity or location. Provide accurate account information, protect credentials and report suspected unauthorized access. Check your own entries and follow qualified medical advice. Never share account passwords with support."
       },
       {
         "heading": "Acceptable use",
@@ -117,11 +121,11 @@
       },
       {
         "heading": "Beta availability and payments",
-        "body": "Beta features can change and may contain errors. The reviewed beta has no implemented subscription/payment feature. If paid services are introduced, pricing, renewal, cancellation and refund terms will be disclosed before purchase and applicable platform rules will apply."
+        "body": "Beta features can change and may contain errors. Pulse is free at launch, with no subscriptions or in-app purchases. Any future paid services require updated pricing, renewal, cancellation and refund information before purchase."
       },
       {
         "heading": "App license and platform terms",
-        "body": "Subject to applicable terms, you may use the app for personal tracking. App intellectual property remains with its owners; third-party components retain their licenses. Apple/Google platform terms continue to apply. These service terms do not replace the applicable App Store EULA. Confirm whether Apple’s standard EULA or a compliant custom license is used before submission."
+        "body": "Subject to applicable terms, you may use the app for personal tracking. App intellectual property remains with its owners; third-party components retain their licenses. Apple/Google platform terms continue to apply. These service terms do not replace the applicable App Store EULA. The owner has selected Apple’s standard EULA for the iOS app license, alongside these service terms. The matching App Store Connect selection must be verified before submission."
       },
       {
         "heading": "Suspension, termination and changes",
@@ -133,7 +137,7 @@
       },
       {
         "heading": "Contact",
-        "body": "DRAFT: insert confirmed contracting entity and support contact. Counsel should finalize eligibility, enforceable liability provisions, governing law and dispute handling before publication."
+        "body": "Operator: Anthony Charles Hugershoff, sole proprietor. Support: support@sciencebyhugs.com. Privacy/legal: legal@sciencebyhugs.com. Counsel should finalize eligibility, enforceable liability provisions, governing law and dispute handling before publication."
       }
     ]
   },
@@ -211,7 +215,7 @@
       },
       {
         "heading": "Request tracking and contact",
-        "body": "DRAFT: insert the verified contact and documented request/response procedure. This page must be publicly hosted without login and linked in Google Play’s account-deletion URL field."
+        "body": "Send account deletion requests to support@sciencebyhugs.com and other privacy requests or appeals to legal@sciencebyhugs.com. Anthony Charles Hugershoff monitors both inboxes and aims to acknowledge requests within three business days. We verify account ownership before disclosure or deletion and apply the legally required response periods. DRAFT: validate the request procedure and retention schedule with counsel before launch. This page must be publicly hosted without login and linked in Google Play’s account-deletion URL field."
       }
     ]
   }
