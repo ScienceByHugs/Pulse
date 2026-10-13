@@ -7,7 +7,7 @@ import { PulseBrand } from '@/components/PulseBrand';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { colors, layout, radius, spacing, type } from '@/theme';
@@ -30,6 +30,7 @@ import { requestReminderPermission } from '@/lib/reminders';
 import { deletePulseAccount, exportPulseData } from '@/services/account';
 
 export default function YouScreen() {
+  const router = useRouter();
   const { session } = useAuth();
   const [biometricLock, setBiometricLock] = useState(false);
   const [privateNotifications, setPrivateNotificationsState] = useState(true);
@@ -333,6 +334,7 @@ export default function YouScreen() {
           {!!photoError && <Text accessibilityLiveRegion="polite" style={styles.detail}>{photoError}</Text>}
         </View>
 
+        <Pressable accessibilityRole="button" style={styles.dataButton} onPress={() => router.push('/legal')}><Text style={{ color: colors.accent }}>Legal & Privacy →</Text></Pressable>
         <Text style={styles.sectionLabel}>Privacy & reminders</Text>
         <View style={styles.card}>
           <SettingRow

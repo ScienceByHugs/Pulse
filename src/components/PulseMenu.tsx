@@ -24,6 +24,7 @@ const sections = [
     title: 'Account',
     links: [
       { label: 'Account & Privacy', caption: 'Profile, security and your data', route: '/(tabs)/you', path: '/you' },
+      { label: 'Legal & Privacy', caption: 'Policies and your data rights', route: '/legal', path: '/legal' },
       { label: 'About & Safety', caption: 'Tracking boundaries and privacy controls', route: '/about', path: '/about' }
     ]
   }

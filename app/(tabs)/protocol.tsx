@@ -1,3 +1,5 @@
+import { matchingSubstances } from '@/domain/substanceCatalog';
+import { administrationLabel } from '@/domain/administration';
 import {
   ScheduleExtras,
   DuplicateProtocolSheet,
@@ -121,6 +123,7 @@ export default function ProtocolScreen() {
     Record<string, unknown>
   >({});
   const [itemName, setItemName] = useState('');
+  const [showSubstanceChoices, setShowSubstanceChoices] = useState(false);
   const [category, setCategory] = useState<string>('Peptide');
   const [showNewProtocol, setShowNewProtocol] = useState(false);
   const [dose, setDose] = useState('');
@@ -573,6 +576,7 @@ export default function ProtocolScreen() {
   async function addItem() {
     const numericDose = Number(dose);
     const numericInventory = inventory ? Number(inventory) : undefined;
+    if (inventory && (!Number.isFinite(numericInventory) || Number(numericInventory) <= 0)) return Alert.alert('Check container quantity', 'Enter a positive total quantity, or leave it blank.');
     if (!activeProtocol) return Alert.alert('Create a protocol first');
     if (!itemName.trim() || !numericDose || numericDose <= 0 || !unit.trim()) {
       return Alert.alert(
@@ -600,6 +604,7 @@ export default function ProtocolScreen() {
             : undefined,
       });
       setItemName('');
+      setShowSubstanceChoices(false);
       setDose('');
       setInventory('');
       setShowBuilder(false);
@@ -1127,12 +1132,20 @@ export default function ProtocolScreen() {
                               placeholder="Item name"
                               placeholderTextColor={colors.muted}
                               value={itemName}
-                              onChangeText={setItemName}
+                              onChangeText={value => { setItemName(value); setShowSubstanceChoices(true); }}
                             />
+                            <Pressable accessibilityRole="button" onPress={() => setShowSubstanceChoices(value => !value)} style={styles.backButton}><Text style={styles.backText}>{showSubstanceChoices ? 'Close substance list' : 'Choose from substance list ▾'}</Text></Pressable>
+                            {showSubstanceChoices && <View style={styles.editCard}>
+                              <Text style={styles.scheduleHint}>Names for identifying what you already track. No amounts, routes or routines are recommended.</Text>
+                              {matchingSubstances(itemName).map(entry => <Pressable key={entry.name} accessibilityRole="button" style={styles.backButton} onPress={() => { setItemName(entry.name); setCategory(entry.category); setShowSubstanceChoices(false); }}><Text style={styles.backText}>{entry.name}</Text></Pressable>)}
+                              <Pressable accessibilityRole="button" style={styles.backButton} onPress={() => setShowSubstanceChoices(false)}><Text style={styles.backText}>{itemName.trim() ? `Use custom name: ${itemName.trim()}` : 'Type my own substance name above'}</Text></Pressable>
+                            </View>}
+                            <Text style={styles.smallLabel}>Amount per logged entry</Text>
+                            <Text style={styles.scheduleHint}>Separate from the total amount in your vial. Enter your own amount and administration type.</Text>
                             <View style={styles.twoCol}>
                               <TextInput
                                 style={[styles.input, styles.flex]}
-                                placeholder="Dose"
+                                placeholder="Amount per entry"
                                 placeholderTextColor={colors.muted}
                                 keyboardType="decimal-pad"
                                 value={dose}
@@ -1170,11 +1183,15 @@ export default function ProtocolScreen() {
                                 </Pressable>
                               ))}
                             </View>
-                            <Text style={styles.smallLabel}>Route</Text>
+                            <Text style={styles.smallLabel}>Administration type</Text>
+                            <Text style={styles.scheduleHint}>Saved for this substance and used for future logs. Choose the method in your clinician’s instructions.</Text>
                             <View style={styles.chips}>
                               {ROUTES.map((value) => (
                                 <Pressable
-                                  key={value}
+                                  key={administrationLabel(value)}
+                                  accessibilityRole="button"
+                                  accessibilityLabel={administrationLabel(value)}
+                                  accessibilityState={{ selected: route === value }}
                                   onPress={() => setRoute(value)}
                                   style={[
                                     styles.chip,
@@ -1187,7 +1204,7 @@ export default function ProtocolScreen() {
                                       route === value && styles.chipTextActive,
                                     ]}
                                   >
-                                    {value}
+                                    {administrationLabel(value)}
                                   </Text>
                                 </Pressable>
                               ))}
@@ -1220,7 +1237,7 @@ export default function ProtocolScreen() {
                                 {itemName}
                               </Text>
                               <Text style={styles.cardDetail}>
-                                {dose} {unit} · {route}
+                                {dose} {unit} · {administrationLabel(route)}
                               </Text>
                             </View>
 
@@ -1347,23 +1364,26 @@ export default function ProtocolScreen() {
                             <View style={styles.reviewBox}>
                               <Text style={styles.reviewName}>{itemName}</Text>
                               <Text style={styles.cardDetail}>
-                                {dose} {unit} · {route}
+                                {dose} {unit} · {administrationLabel(route)}
                               </Text>
                               <Text style={styles.scheduleText}>
                                 {formatSchedule(buildSchedule())}
                               </Text>
                             </View>
                             <Text style={styles.smallLabel}>
-                              Inventory · optional
+                              Total in one vial/container · optional
                             </Text>
                             <TextInput
                               style={styles.input}
-                              placeholder={`Starting inventory in ${unit || 'same unit'}`}
+                              accessibilityLabel="Total quantity in one container"
+                              placeholder={`Total container quantity in ${unit || 'same unit'}`}
+
                               placeholderTextColor={colors.muted}
                               keyboardType="decimal-pad"
                               value={inventory}
                               onChangeText={setInventory}
                             />
+                            <Text style={styles.scheduleHint}>This creates one container. For example, a 20 mg vial belongs here; it does not set the amount you log. Artwork uses this original container total, not remaining stock.</Text>
                             <View style={styles.builderNav}>
                               <Pressable
                                 style={styles.backButton}
@@ -1446,6 +1466,10 @@ export default function ProtocolScreen() {
                       <View style={styles.signatureTop}>
                         <SubstanceArtwork
                           category={item.category}
+                          route={item.route}
+                          name={item.name}
+                          itemId={item.id}
+                          vialQuantity={inventoryItem ? `${inventoryItem.total_amount} ${inventoryItem.unit}` : undefined}
                           inactive={item.active === false}
                         />
                         <View style={styles.signatureHeaderText}>
@@ -1455,7 +1479,7 @@ export default function ProtocolScreen() {
                           </Text>
                           <Text style={styles.signatureName}>{item.name}</Text>
                           <Text style={styles.signatureAmount}>
-                            {item.dose_amount} {item.dose_unit} · {item.route}
+                            {item.dose_amount} {item.dose_unit} · {administrationLabel(item.route)}
                           </Text>
                         </View>
                       </View>
@@ -1927,12 +1951,14 @@ export default function ProtocolScreen() {
                               onChangeText={setEditUnit}
                             />
                           </View>
-                          <Text style={styles.smallLabel}>Route</Text>
+                          <Text style={styles.smallLabel}>Administration type</Text>
+                            <Text style={styles.scheduleHint}>Saved for this substance and used for future logs. Choose the method in your clinician’s instructions.</Text>
                           <View style={styles.chips}>
                             {ROUTES.map((kind) => (
                               <Pressable
                                 key={kind}
                                 accessibilityRole="button"
+                                accessibilityLabel={administrationLabel(kind)}
                                 accessibilityState={{
                                   selected: editRoute === kind,
                                 }}
@@ -1948,7 +1974,7 @@ export default function ProtocolScreen() {
                                     editRoute === kind && styles.chipTextActive,
                                   ]}
                                 >
-                                  {kind}
+                                  {administrationLabel(kind)}
                                 </Text>
                               </Pressable>
                             ))}

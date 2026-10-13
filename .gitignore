@@ -8,3 +8,10 @@ web-build/
 *.log
 coverage/
 supabase/.temp/
+
+# Local native build artifacts
+local-builds/
+*.ipa
+*.xcarchive/
+*.dSYM/
+*.dSYM.zip

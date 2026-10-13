@@ -45,6 +45,7 @@ function VerifiedRoutes() {
     >
       <Stack.Screen name="index" />
       <Stack.Screen name="sign-in" />
+      <Stack.Screen name="legal" />
       <Stack.Screen name="auth/callback" />
       <Stack.Screen name="auth/reset-password" />
       <Stack.Protected guard={Boolean(session)} redirectTo="/sign-in">

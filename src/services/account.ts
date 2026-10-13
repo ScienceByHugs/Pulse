@@ -1,3 +1,4 @@
+import { getSubstancePhoto, removeSubstancePhoto } from '@/services/substancePhoto';
 import { privateStorage } from '@/lib/privateStorage';
 import { Share } from 'react-native';
 import { supabase } from '@/lib/supabase';
@@ -52,7 +53,9 @@ export async function exportPulseData() {
     allRows('tracking_event_cancellations', user.id, 'event_id'),
   ]);
 
+  const substancePhotos = await Promise.all(items.map(async item => ({ protocol_item_id: item.id, image: await getSubstancePhoto(user.id, String(item.id)) })));
   const payload = {
+    device_substance_photos: substancePhotos.filter(photo => photo.image),
     exported_at: new Date().toISOString(),
     format: 'pulse-2-export-v1',
     account_profile: {
@@ -85,6 +88,7 @@ export async function deletePulseAccount() {
   const {
     data: { session },
   } = await supabase.auth.getSession();
+  const itemsToClear = session ? await allRows('protocol_items', session.user.id, 'id') : [];
   const { data, error } = await supabase.functions.invoke('delete-account', {
     method: 'POST',
     body: {},
@@ -96,6 +100,7 @@ export async function deletePulseAccount() {
 
   try {
     if (session) {
+      await Promise.all(itemsToClear.map(item => removeSubstancePhoto(session.user.id, String(item.id))));
       await clearOutbox(session.user.id);
       await privateStorage.removeItem(`pulse.today-cache.${session.user.id}`);
     }

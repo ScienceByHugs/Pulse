@@ -1,3 +1,4 @@
+import { administrationLabel } from '@/domain/administration';
 import {
   useCallback,
   useMemo,
@@ -68,6 +69,7 @@ export default function TodayScreen() {
   const [offline, setOffline] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [sites, setSites] = useState<Record<string, string>>({});
+  const [openSiteKey, setOpenSiteKey] = useState<string | null>(null);
   const [feedback, setFeedback] = useState('');
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const shownTarget = useRef('');
@@ -378,7 +380,7 @@ export default function TodayScreen() {
                   </Text>
                   <Text style={styles.cardTitle}>{item.name}</Text>
                   <Text style={styles.detail}>
-                    {item.dose_amount} {item.dose_unit} · {item.route}
+                    {item.dose_amount} {item.dose_unit} · {administrationLabel(item.route)}
                   </Text>
                 </View>
                 <Text style={styles.time}>{item.slotTime ?? 'Any time'}</Text>
@@ -411,25 +413,41 @@ export default function TodayScreen() {
                   {inventory.unit} · {estimate.entries} entries in usable stock
                 </Text>
               )}
-              {!resolved && !q && item.site_rotation_enabled && (
-                <Pressable
-                  accessibilityRole="button"
-                  style={styles.secondary}
-                  onPress={() => {
-                    const options = sitesForRoute(item.route);
-                    const index = options.indexOf(sites[key] ?? '');
-                    setSites((s) => ({
-                      ...s,
-                      [key]: options[(index + 1) % options.length] ?? '',
-                    }));
-                  }}
-                >
-                  <Text style={styles.actionText}>
-                    {sites[key]
-                      ? `Site: ${sites[key]} · Change`
-                      : 'Add site (optional)'}
-                  </Text>
-                </Pressable>
+              {!resolved && !q && sitesForRoute(item.route).length > 0 && (
+                <View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Injection site for ${item.name}: ${sites[key] || 'Not recorded'}`}
+                    accessibilityState={{ expanded: openSiteKey === key }}
+                    accessibilityHint="Opens the optional site choices"
+                    disabled={!!busy}
+                    style={styles.secondary}
+                    onPress={() => setOpenSiteKey(current => current === key ? null : key)}
+                  >
+                    <Text style={styles.actionText}>
+                      {sites[key] ? `Site: ${sites[key]}` : 'Select site (optional)'} {openSiteKey === key ? '▴' : '▾'}
+                    </Text>
+                  </Pressable>
+                  {openSiteKey === key && (
+                    <View style={styles.siteDropdown}>
+                      {['', ...sitesForRoute(item.route)].map(site => (
+                        <Pressable
+                          key={site || 'none'}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: (sites[key] ?? '') === site }}
+                          disabled={!!busy}
+                          style={[styles.siteOption, (sites[key] ?? '') === site && styles.siteOptionSelected]}
+                          onPress={() => {
+                            setSites(current => ({ ...current, [key]: site }));
+                            setOpenSiteKey(null);
+                          }}
+                        >
+                          <Text style={styles.actionText}>{site || 'No site recorded'}{(sites[key] ?? '') === site ? ' ✓' : ''}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
+                </View>
               )}
               {!resolved && !q ? (
                 <View style={styles.actions}>
@@ -484,6 +502,9 @@ export default function TodayScreen() {
   );
 }
 const styles = StyleSheet.create({
+  siteDropdown: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, overflow: 'hidden', marginTop: 6 },
+  siteOption: { minHeight: 48, paddingHorizontal: 14, paddingVertical: 12, justifyContent: 'center' },
+  siteOptionSelected: { backgroundColor: colors.accentSoft },
   safe: { flex: 1, backgroundColor: colors.bg },
   page: {
     padding: layout.pageInset,
