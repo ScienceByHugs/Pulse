@@ -48,4 +48,3 @@ Reviewed references:
 - [Google Play user data and deletion](https://support.google.com/googleplay/android-developer/answer/10144311)
 - [Washington consumer health privacy](https://www.atg.wa.gov/protecting-washingtonians-personal-health-data-and-privacy)
 - [Supabase residency and retention](https://supabase.com/legal/privacy-resources/data-residency-and-transfers-faq)
-

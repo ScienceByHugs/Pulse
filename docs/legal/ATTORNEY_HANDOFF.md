@@ -31,4 +31,3 @@ The approved 30-day unconfirmed-account cleanup is prepared as an owner-operated
 Six policy drafts live in docs/legal and src/content/legal.json: privacy, consumer health privacy, terms, health/safety, storage and deletion. The shared JSON generates the app text and public static drafts. They remain visibly non-effective. No public policy site was published or native app submitted by this work.
 
 Related documents: OWNER_DECISIONS.md, PROVIDER_RETENTION_AUDIT.md, PRIVACY_REQUEST_PROCEDURE.md, UNCONFIRMED_ACCOUNT_CLEANUP.md and STORE_SUBMISSION.md. Complete missing facts and operational tests, get attorney approval, then set the effective date, publish verified public links and implement any required versioned terms/health consent before collecting covered data.
-
