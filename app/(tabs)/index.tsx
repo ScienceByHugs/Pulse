@@ -1,3 +1,5 @@
+import { groupToday, todayEmptyMessage } from '@/domain/todayPresentation';
+import { RetryNotice } from '@/components/RetryNotice';
 import { administrationLabel } from '@/domain/administration';
 import {
   useCallback,
@@ -11,7 +13,6 @@ import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
 import {
   AccessibilityInfo,
   ActivityIndicator,
-  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -20,7 +21,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, layout, radius, spacing } from '@/theme';
+import { colors, layout, radius } from '@/theme';
 import { PulseMenu } from '@/components/PulseMenu';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { SyncStatus } from '@/components/SyncStatus';
@@ -67,10 +68,12 @@ export default function TodayScreen() {
   const [paused, setPaused] = useState(0);
   const [loading, setLoading] = useState(true);
   const [offline, setOffline] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [sites, setSites] = useState<Record<string, string>>({});
   const [openSiteKey, setOpenSiteKey] = useState<string | null>(null);
   const [feedback, setFeedback] = useState('');
+  const [actionError, setActionError] = useState('');
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const shownTarget = useRef('');
   useEffect(() => {
@@ -78,6 +81,7 @@ export default function TodayScreen() {
   }, [params.item, params.occurrence]);
   const uid = session?.user.id;
   const load = useCallback(async () => {
+    setLoadError('');
     try {
       const [items, history, all, protocols, nextVersions] = await Promise.all([
         listTodayItems(),
@@ -94,10 +98,19 @@ export default function TodayScreen() {
         historyItems: all,
         logs: history,
         versions: nextVersions,
-        tracked: all.filter((i) => !i.archived_at).length,
+        tracked: all.filter(
+          (i) =>
+            !i.archived_at &&
+            protocols.some(
+              (p) => p.id === i.protocol_id && p.status !== 'archived',
+            ),
+        ).length,
         paused: all.filter(
           (i) =>
             !i.archived_at &&
+            protocols.some(
+              (p) => p.id === i.protocol_id && p.status !== 'archived',
+            ) &&
             (i.active === false || pausedProtocols.has(i.protocol_id)),
         ).length,
       };
@@ -123,14 +136,14 @@ export default function TodayScreen() {
         setTracked(cached.tracked);
         setPaused(cached.paused);
         setOffline(true);
-      } else if (!isNetworkError(error))
-        Alert.alert(
-          'Could not load Today',
-          error instanceof Error
-            ? error.message
-            : ((error as { message?: string })?.message ?? 'Try again.'),
+      } else {
+        setOffline(isNetworkError(error));
+        setLoadError(
+          isNetworkError(error)
+            ? 'Your routine could not be loaded. Check your connection and retry. Previously loaded records stay visible.'
+            : 'Today could not refresh. Your saved records have not been changed. Retry or contact support if this continues.',
         );
-      else setOffline(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -181,19 +194,33 @@ export default function TodayScreen() {
       ),
     [allItems, logs, sync.pending],
   );
-  const ordered = [...items].sort(
-    (a, b) =>
-      Number(
-        state.resolvedIds.has(trackingId(a)) || pending.has(trackingId(a)),
-      ) -
-      Number(
-        state.resolvedIds.has(trackingId(b)) || pending.has(trackingId(b)),
-      ),
+  const groups = groupToday(
+    items,
+    state.completedIds,
+    state.skippedIds,
+    new Set(pending.keys()),
+  );
+  const empty = todayEmptyMessage(allItems, tracked, paused);
+  const sections = [
+    { title: 'Still to record', items: groups.remaining },
+    { title: 'Waiting to sync', items: groups.waiting },
+    { title: 'Logged today', items: groups.logged },
+    { title: 'Skipped today', items: groups.skipped },
+  ];
+  const ordered = sections.flatMap((section) => section.items);
+  const headings = new Map(
+    sections
+      .filter((section) => section.items.length)
+      .map((section) => [
+        trackingId(section.items[0]!),
+        `${section.title} · ${section.items.length}`,
+      ]),
   );
   async function record(item: CardItem, skip = false) {
     if (busy) return;
     const key = trackingId(item);
     setBusy(key);
+    setActionError('');
     try {
       const result = skip
         ? await skipDose(item)
@@ -210,11 +237,8 @@ export default function TodayScreen() {
       AccessibilityInfo.announceForAccessibility(message);
     } catch (e) {
       await sync.refresh().catch(() => undefined);
-      Alert.alert(
-        'Could not save entry',
-        e instanceof Error
-          ? e.message
-          : ((e as { message?: string })?.message ?? 'Try again.'),
+      setActionError(
+        'This entry could not be confirmed. Retry sync and refresh before recording again, so an existing pending entry is not duplicated.',
       );
     } finally {
       setBusy(null);
@@ -224,6 +248,7 @@ export default function TodayScreen() {
     if (busy || !uid) return;
     const key = trackingId(item);
     setBusy(key);
+    setActionError('');
     try {
       const queued = pending.get(key);
       if (queued)
@@ -253,9 +278,8 @@ export default function TodayScreen() {
           : 'Entry undone · stock restored where tracked',
       );
     } catch (e) {
-      Alert.alert(
-        'Could not undo',
-        e instanceof Error ? e.message : 'Try again.',
+      setActionError(
+        'Undo could not be confirmed. Retry sync and refresh to check the saved status before trying again.',
       );
     } finally {
       setBusy(null);
@@ -300,11 +324,72 @@ export default function TodayScreen() {
         </Text>
         <View style={styles.summary}>
           <Text style={styles.summaryText}>
-            {items.length} scheduled · {state.completed} logged ·{' '}
-            {state.skipped} skipped
+            {groups.remaining.length} remaining · {groups.logged.length} logged
+            · {groups.skipped.length} skipped
+            {groups.waiting.length ? ` · ${groups.waiting.length} pending` : ''}
           </Text>
         </View>
         <SyncStatus />
+        {!!actionError && (
+          <RetryNotice
+            title="Check your entry status"
+            message={actionError}
+            busy={sync.syncing || !!busy}
+            onRetry={() => {
+              void sync
+                .refresh(true)
+                .then(load)
+                .then(() => setActionError(''))
+                .catch(() =>
+                  setActionError(
+                    'Still unable to sync. Your pending records remain on this device. Check your connection and retry.',
+                  ),
+                );
+            }}
+          />
+        )}
+        {!!loadError && (
+          <RetryNotice
+            title="Could not refresh Today"
+            message={loadError}
+            onRetry={() => {
+              setLoading(true);
+              void load();
+            }}
+            busy={loading}
+          />
+        )}
+        {!loading && items.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.eyebrow}>
+              {groups.next
+                ? 'NEXT SCHEDULED'
+                : groups.remaining.length
+                  ? 'STILL TO RECORD'
+                  : groups.waiting.length
+                    ? 'SAVED ON YOUR PHONE'
+                    : 'TODAY’S RECORD'}
+            </Text>
+            <Text style={styles.cardTitle}>
+              {groups.next
+                ? `${groups.next.name} · ${new Date(groups.next.scheduledFor!).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+                : groups.remaining.length
+                  ? `${groups.remaining.length} ${groups.remaining.length === 1 ? 'entry' : 'entries'} remaining`
+                  : groups.waiting.length
+                    ? 'Waiting for sync confirmation'
+                    : 'Today’s entries are recorded'}
+            </Text>
+            <Text style={styles.detail}>
+              {groups.earlier
+                ? `${groups.earlier} earlier scheduled ${groups.earlier === 1 ? 'entry has' : 'entries have'} no record yet. Log only what you actually did.`
+                : groups.next
+                  ? 'Shown in your device’s current time zone. Record your actual activity below.'
+                  : groups.waiting.length
+                    ? 'Pending entries stay on this device until the server confirms them.'
+                    : 'Logged and skipped entries are shown separately below.'}
+            </Text>
+          </View>
+        )}
         {offline && (
           <Text style={styles.warning}>
             {allItems.length
@@ -320,24 +405,22 @@ export default function TodayScreen() {
         {loading && !items.length && (
           <ActivityIndicator color={colors.accent} />
         )}
-        {!loading && !items.length && (
+        {!loading && !loadError && !items.length && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Nothing scheduled today.</Text>
-            <Text style={styles.detail}>
-              {tracked
-                ? 'Enjoy the space in your day. Your routine is in Protocol.'
-                : 'Create your first protocol to start tracking.'}
-            </Text>
+            <Text style={styles.cardTitle}>{empty.title}</Text>
+            <Text style={styles.detail}>{empty.body}</Text>
             <Pressable
+              accessibilityRole="button"
               style={styles.secondary}
               onPress={() => router.push('/(tabs)/protocol')}
             >
-              <Text style={styles.actionText}>Open Protocol</Text>
+              <Text style={styles.actionText}>{empty.action}</Text>
             </Pressable>
           </View>
         )}
         {paused > 0 && (
           <Pressable
+            accessibilityRole="button"
             style={styles.secondary}
             onPress={() => router.push('/(tabs)/protocol')}
           >
@@ -371,117 +454,145 @@ export default function TodayScreen() {
                 }
               }}
               key={key}
-              style={[styles.card, highlight && styles.highlight]}
+              style={styles.entryGroup}
             >
-              <View style={styles.row}>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={styles.eyebrow}>
-                    {item.category ?? 'Tracked substance'}
-                  </Text>
-                  <Text style={styles.cardTitle}>{item.name}</Text>
-                  <Text style={styles.detail}>
-                    {item.dose_amount} {item.dose_unit} · {administrationLabel(item.route)}
-                  </Text>
+              {headings.has(key) && (
+                <Text accessibilityRole="header" style={styles.sectionTitle}>
+                  {headings.get(key)}
+                </Text>
+              )}
+              <View style={[styles.card, highlight && styles.highlight]}>
+                <View style={styles.row}>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={styles.eyebrow}>
+                      {item.category ?? 'Tracked substance'}
+                    </Text>
+                    <Text style={styles.cardTitle}>{item.name}</Text>
+                    <Text style={styles.detail}>
+                      {item.dose_amount} {item.dose_unit} ·{' '}
+                      {administrationLabel(item.route)}
+                    </Text>
+                  </View>
+                  <Text style={styles.time}>{item.slotTime ?? 'Any time'}</Text>
                 </View>
-                <Text style={styles.time}>{item.slotTime ?? 'Any time'}</Text>
+                <Text style={styles.detail}>
+                  {item.schedule.timeZone && item.schedule.timeZone !== 'local'
+                    ? `Home time · ${item.timeZone}`
+                    : 'Local time · follows your device'}
+                </Text>
+                {q ? (
+                  <Text style={q.needsReview ? styles.warning : styles.saved}>
+                    {q.undoRequested
+                      ? 'Undo waiting to sync'
+                      : q.needsReview
+                        ? 'Pending entry needs review'
+                        : q.status === 'skipped'
+                          ? 'Skip waiting to sync'
+                          : 'Logged on your phone · waiting to sync'}
+                  </Text>
+                ) : resolved ? (
+                  <Text style={styles.saved}>
+                    {state.skippedIds.has(key)
+                      ? 'Skipped · no stock used'
+                      : 'Logged'}
+                  </Text>
+                ) : null}
+                {inventory && (
+                  <Text style={estimate.low ? styles.warning : styles.detail}>
+                    Active container: {inventory.remaining_amount}{' '}
+                    {inventory.unit} · {estimate.entries} entries in usable
+                    stock
+                  </Text>
+                )}
+                {!resolved && !q && sitesForRoute(item.route).length > 0 && (
+                  <View>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Injection site for ${item.name}: ${sites[key] || 'Not recorded'}`}
+                      accessibilityState={{ expanded: openSiteKey === key }}
+                      accessibilityHint="Opens the optional site choices"
+                      disabled={!!busy}
+                      style={styles.secondary}
+                      onPress={() =>
+                        setOpenSiteKey((current) =>
+                          current === key ? null : key,
+                        )
+                      }
+                    >
+                      <Text style={styles.actionText}>
+                        {sites[key]
+                          ? `Site: ${sites[key]}`
+                          : 'Select site (optional)'}{' '}
+                        {openSiteKey === key ? '▴' : '▾'}
+                      </Text>
+                    </Pressable>
+                    {openSiteKey === key && (
+                      <View style={styles.siteDropdown}>
+                        {['', ...sitesForRoute(item.route)].map((site) => (
+                          <Pressable
+                            key={site || 'none'}
+                            accessibilityRole="button"
+                            accessibilityState={{
+                              selected: (sites[key] ?? '') === site,
+                            }}
+                            disabled={!!busy}
+                            style={[
+                              styles.siteOption,
+                              (sites[key] ?? '') === site &&
+                                styles.siteOptionSelected,
+                            ]}
+                            onPress={() => {
+                              setSites((current) => ({
+                                ...current,
+                                [key]: site,
+                              }));
+                              setOpenSiteKey(null);
+                            }}
+                          >
+                            <Text style={styles.actionText}>
+                              {site || 'No site recorded'}
+                              {(sites[key] ?? '') === site ? ' ✓' : ''}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                )}
+                {!resolved && !q ? (
+                  <View style={styles.actions}>
+                    <Pressable
+                      accessibilityRole="button"
+                      style={[styles.primary, { flex: 1 }]}
+                      disabled={!!busy}
+                      onPress={() => void record(item)}
+                    >
+                      <Text style={styles.primaryText}>
+                        {busy === key
+                          ? 'Saving…'
+                          : `Log ${item.dose_amount} ${item.dose_unit}`}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      style={styles.secondary}
+                      disabled={!!busy}
+                      onPress={() => void record(item, true)}
+                    >
+                      <Text style={styles.actionText}>Skip</Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <Pressable
+                    accessibilityRole="button"
+                    style={styles.secondary}
+                    disabled={!!busy || q?.undoRequested}
+                    onPress={() => void undo(item)}
+                  >
+                    <Text style={styles.actionText}>Undo this entry</Text>
+                  </Pressable>
+                )}
               </View>
-              <Text style={styles.detail}>
-                {item.schedule.timeZone && item.schedule.timeZone !== 'local'
-                  ? `Home time · ${item.timeZone}`
-                  : 'Local time · follows your device'}
-              </Text>
-              {q ? (
-                <Text style={q.needsReview ? styles.warning : styles.saved}>
-                  {q.undoRequested
-                    ? 'Undo waiting to sync'
-                    : q.needsReview
-                      ? 'Pending entry needs review'
-                      : q.status === 'skipped'
-                        ? 'Skip waiting to sync'
-                        : 'Logged on your phone · waiting to sync'}
-                </Text>
-              ) : resolved ? (
-                <Text style={styles.saved}>
-                  {state.skippedIds.has(key)
-                    ? 'Skipped · no stock used'
-                    : 'Logged'}
-                </Text>
-              ) : null}
-              {inventory && (
-                <Text style={estimate.low ? styles.warning : styles.detail}>
-                  Active container: {inventory.remaining_amount}{' '}
-                  {inventory.unit} · {estimate.entries} entries in usable stock
-                </Text>
-              )}
-              {!resolved && !q && sitesForRoute(item.route).length > 0 && (
-                <View>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Injection site for ${item.name}: ${sites[key] || 'Not recorded'}`}
-                    accessibilityState={{ expanded: openSiteKey === key }}
-                    accessibilityHint="Opens the optional site choices"
-                    disabled={!!busy}
-                    style={styles.secondary}
-                    onPress={() => setOpenSiteKey(current => current === key ? null : key)}
-                  >
-                    <Text style={styles.actionText}>
-                      {sites[key] ? `Site: ${sites[key]}` : 'Select site (optional)'} {openSiteKey === key ? '▴' : '▾'}
-                    </Text>
-                  </Pressable>
-                  {openSiteKey === key && (
-                    <View style={styles.siteDropdown}>
-                      {['', ...sitesForRoute(item.route)].map(site => (
-                        <Pressable
-                          key={site || 'none'}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: (sites[key] ?? '') === site }}
-                          disabled={!!busy}
-                          style={[styles.siteOption, (sites[key] ?? '') === site && styles.siteOptionSelected]}
-                          onPress={() => {
-                            setSites(current => ({ ...current, [key]: site }));
-                            setOpenSiteKey(null);
-                          }}
-                        >
-                          <Text style={styles.actionText}>{site || 'No site recorded'}{(sites[key] ?? '') === site ? ' ✓' : ''}</Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  )}
-                </View>
-              )}
-              {!resolved && !q ? (
-                <View style={styles.actions}>
-                  <Pressable
-                    accessibilityRole="button"
-                    style={[styles.primary, { flex: 1 }]}
-                    disabled={!!busy}
-                    onPress={() => void record(item)}
-                  >
-                    <Text style={styles.primaryText}>
-                      {busy === key
-                        ? 'Saving…'
-                        : `Log ${item.dose_amount} ${item.dose_unit}`}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="button"
-                    style={styles.secondary}
-                    disabled={!!busy}
-                    onPress={() => void record(item, true)}
-                  >
-                    <Text style={styles.actionText}>Skip</Text>
-                  </Pressable>
-                </View>
-              ) : (
-                <Pressable
-                  accessibilityRole="button"
-                  style={styles.secondary}
-                  disabled={!!busy || q?.undoRequested}
-                  onPress={() => void undo(item)}
-                >
-                  <Text style={styles.actionText}>Undo this entry</Text>
-                </Pressable>
-              )}
             </View>
           );
         })}
@@ -502,8 +613,26 @@ export default function TodayScreen() {
   );
 }
 const styles = StyleSheet.create({
-  siteDropdown: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, overflow: 'hidden', marginTop: 6 },
-  siteOption: { minHeight: 48, paddingHorizontal: 14, paddingVertical: 12, justifyContent: 'center' },
+  entryGroup: { gap: 10 },
+  sectionTitle: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 16,
+  },
+  siteDropdown: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 6,
+  },
+  siteOption: {
+    minHeight: 48,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    justifyContent: 'center',
+  },
   siteOptionSelected: { backgroundColor: colors.accentSoft },
   safe: { flex: 1, backgroundColor: colors.bg },
   page: {

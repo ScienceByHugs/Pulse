@@ -1,17 +1,9 @@
+import { RetryNotice } from './RetryNotice';
+import { FormSheet } from './FormSheet';
 import { useState } from 'react';
-import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+
 import { ProtocolDatePicker } from './ProtocolPickers';
-import { SheetHeader } from './SheetHeader';
 import { shareTrackingReport } from '@/services/reports';
 import { localDateKey } from '@/domain/schedule';
 import { colors, layout, radius } from '@/theme';
@@ -25,7 +17,10 @@ export function ReportSheet() {
   const [checkins, setCheckins] = useState(false);
   const [notes, setNotes] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [saveError, setSaveError] = useState('');
   async function share() {
+    if (busy) return;
+    setSaveError('');
     setBusy(true);
     try {
       await shareTrackingReport({
@@ -37,11 +32,8 @@ export function ReportSheet() {
       });
       setOpen(false);
     } catch (e) {
-      Alert.alert(
-        'Could not create report',
-        e instanceof Error
-          ? e.message
-          : ((e as { message?: string })?.message ?? 'Try again.'),
+      setSaveError(
+        e instanceof Error ? e.message : 'Check your connection and try again.',
       );
     } finally {
       setBusy(false);
@@ -52,67 +44,65 @@ export function ReportSheet() {
       <Pressable
         accessibilityRole="button"
         style={styles.button}
-        onPress={() => setOpen(true)}
+        onPress={() => {
+          setSaveError('');
+          setOpen(true);
+        }}
       >
         <Text style={styles.action}>Create a shareable report</Text>
       </Pressable>
-      <Modal
+      <FormSheet
+        label={'Your report'}
         visible={open}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => {
-          if (!busy) setOpen(false);
-        }}
+        onClose={() => setOpen(false)}
+        busy={busy}
       >
-        <SafeAreaView style={styles.safe}>
-          <ScrollView contentContainerStyle={styles.page}>
-            <SheetHeader
-              label="Your report"
-              disabled={busy}
-              onClose={() => setOpen(false)}
+        {!!saveError && (
+          <RetryNotice
+            title="Could not create report"
+            message={saveError}
+            busy={busy}
+            onRetry={() => void share()}
+          />
+        )}
+
+        <Text style={styles.title}>Choose what to share</Text>
+        <Text style={styles.detail}>
+          A readable PDF, created on your device. Select the dates and
+          observations you want to include. Sharing only happens when you choose
+          a destination.
+        </Text>
+        <ProtocolDatePicker label="From" value={start} onChange={setStart} />
+        <ProtocolDatePicker label="Through" value={end} onChange={setEnd} />
+        {[
+          { label: 'Tracking logs', value: logs, set: setLogs },
+          {
+            label: 'Sleep, energy & mood',
+            value: checkins,
+            set: setCheckins,
+          },
+          { label: 'Recorded notes', value: notes, set: setNotes },
+        ].map((row, index) => (
+          <View style={styles.row} key={row.label}>
+            <Text style={styles.text}>{row.label}</Text>
+            <Switch
+              value={row.value}
+              disabled={index === 2 && !checkins && !logs}
+              onValueChange={row.set}
             />
-            <Text style={styles.title}>Choose what to share</Text>
-            <Text style={styles.detail}>
-              A readable PDF, created on your device. Select the dates and
-              observations you want to include. Sharing only happens when you
-              choose a destination.
-            </Text>
-            <ProtocolDatePicker
-              label="From"
-              value={start}
-              onChange={setStart}
-            />
-            <ProtocolDatePicker label="Through" value={end} onChange={setEnd} />
-            {[
-              { label: 'Tracking logs', value: logs, set: setLogs },
-              {
-                label: 'Sleep, energy & mood',
-                value: checkins,
-                set: setCheckins,
-              },
-              { label: 'Recorded notes', value: notes, set: setNotes },
-            ].map((row, index) => (
-              <View style={styles.row} key={row.label}>
-                <Text style={styles.text}>{row.label}</Text>
-                <Switch
-                  value={row.value}
-                  disabled={index === 2 && !checkins && !logs}
-                  onValueChange={row.set}
-                />
-              </View>
-            ))}
-            <Pressable
-              style={styles.button}
-              disabled={busy}
-              onPress={() => void share()}
-            >
-              <Text style={styles.action}>
-                {busy ? 'Creating PDF…' : 'Create & share PDF'}
-              </Text>
-            </Pressable>
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
+          </View>
+        ))}
+        <Pressable
+          accessibilityRole="button"
+          style={styles.button}
+          disabled={busy}
+          onPress={() => void share()}
+        >
+          <Text style={styles.action}>
+            {busy ? 'Creating PDF…' : 'Create & share PDF'}
+          </Text>
+        </Pressable>
+      </FormSheet>
     </>
   );
 }

@@ -1,19 +1,16 @@
+import { RetryNotice } from './RetryNotice';
+import { FormSheet } from './FormSheet';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
   Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { SheetHeader } from './SheetHeader';
+
 import { ProtocolDatePicker } from './ProtocolPickers';
 import {
   listCheckIns,
@@ -31,6 +28,7 @@ export function CheckInCard() {
   const [mood, setMood] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [rows, setRows] = useState<CheckIn[]>([]);
   const load = useCallback(async () => {
     try {
@@ -45,6 +43,7 @@ export function CheckInCard() {
     }, [load]),
   );
   function edit(day = localDateKey()) {
+    setSaveError('');
     const entry = rows.find((r) => r.local_date === day);
     setDate(day);
     setSleep(
@@ -57,6 +56,8 @@ export function CheckInCard() {
     setNotes(entry?.notes ?? '');
   }
   async function save() {
+    if (busy) return;
+    setSaveError('');
     setBusy(true);
     try {
       await saveCheckIn({
@@ -69,11 +70,8 @@ export function CheckInCard() {
       await load();
       setOpen(false);
     } catch (e) {
-      Alert.alert(
-        'Could not save check-in',
-        e instanceof Error
-          ? e.message
-          : ((e as { message?: string })?.message ?? 'Try again.'),
+      setSaveError(
+        e instanceof Error ? e.message : 'Check your connection and try again.',
       );
     } finally {
       setBusy(false);
@@ -103,139 +101,126 @@ export function CheckInCard() {
           </Text>
         </Pressable>
       </View>
-      <Modal
+      <FormSheet
+        label={'Daily check-in'}
         visible={open}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => {
-          if (!busy) setOpen(false);
-        }}
+        onClose={() => setOpen(false)}
+        busy={busy}
       >
-        <SafeAreaView style={styles.safe}>
-          <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          >
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.page}
-            >
-              <SheetHeader
-                label="Daily check-in"
-                disabled={busy}
-                onClose={() => setOpen(false)}
-              />
-              <Text style={styles.detail}>
-                Everything is optional. These are personal observations, not
-                clinical scores.
-              </Text>
-              <ProtocolDatePicker
-                label="Check-in date"
-                value={date}
-                onChange={edit}
-              />
-              <Text style={styles.label}>Sleep (hours)</Text>
-              <TextInput
-                accessibilityLabel="Hours slept, optional"
-                keyboardType="decimal-pad"
-                value={sleep}
-                onChangeText={setSleep}
-                placeholder="Leave blank if you prefer"
-                placeholderTextColor={colors.muted}
-                style={styles.input}
-              />
-              {(['energy', 'mood'] as const).map((kind) => (
-                <View key={kind}>
-                  <Text style={styles.label}>
-                    {kind === 'energy' ? 'Energy' : 'Mood'} · 1 very low, 5 very
-                    high
-                  </Text>
-                  <View style={styles.row}>
-                    {[1, 2, 3, 4, 5].map((score) => (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`${kind} ${score}`}
-                        accessibilityState={{
-                          selected:
-                            (kind === 'energy' ? energy : mood) === score,
-                        }}
-                        key={score}
-                        style={[
-                          styles.score,
-                          (kind === 'energy' ? energy : mood) === score &&
-                            styles.selected,
-                        ]}
-                        onPress={() =>
-                          kind === 'energy'
-                            ? setEnergy(energy === score ? null : score)
-                            : setMood(mood === score ? null : score)
-                        }
-                      >
-                        <Text style={styles.action}>{score}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-              ))}
-              <Text style={styles.label}>Notes (optional)</Text>
-              <TextInput
-                accessibilityLabel="Check-in notes, optional"
-                multiline
-                maxLength={2000}
-                value={notes}
-                onChangeText={setNotes}
-                style={[
-                  styles.input,
-                  { minHeight: 100, textAlignVertical: 'top' },
-                ]}
-              />
-              <Pressable
-                style={styles.button}
-                disabled={busy}
-                onPress={() => void save()}
-              >
-                <Text style={styles.action}>
-                  {busy ? 'Saving…' : 'Save check-in'}
-                </Text>
-              </Pressable>
-              {existing && (
+        {!!saveError && (
+          <RetryNotice
+            title="Could not save check-in"
+            message={saveError}
+            busy={busy}
+            onRetry={() => void save()}
+          />
+        )}
+
+        <Text style={styles.detail}>
+          Everything is optional. These are personal observations, not clinical
+          scores.
+        </Text>
+        <ProtocolDatePicker
+          label="Check-in date"
+          value={date}
+          onChange={edit}
+        />
+        <Text style={styles.label}>Sleep (hours)</Text>
+        <TextInput
+          accessibilityLabel="Hours slept, optional"
+          keyboardType="decimal-pad"
+          value={sleep}
+          onChangeText={setSleep}
+          placeholder="Leave blank if you prefer"
+          placeholderTextColor={colors.muted}
+          style={styles.input}
+        />
+        {(['energy', 'mood'] as const).map((kind) => (
+          <View key={kind}>
+            <Text style={styles.label}>
+              {kind === 'energy' ? 'Energy' : 'Mood'} · 1 very low, 5 very high
+            </Text>
+            <View style={styles.row}>
+              {[1, 2, 3, 4, 5].map((score) => (
                 <Pressable
-                  style={styles.button}
-                  disabled={busy}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${kind} ${score}`}
+                  accessibilityState={{
+                    selected: (kind === 'energy' ? energy : mood) === score,
+                  }}
+                  key={score}
+                  style={[
+                    styles.score,
+                    (kind === 'energy' ? energy : mood) === score &&
+                      styles.selected,
+                  ]}
                   onPress={() =>
-                    Alert.alert(
-                      'Delete this check-in?',
-                      'This removes only your observations for this date.',
-                      [
-                        { text: 'Cancel', style: 'cancel' },
-                        {
-                          text: 'Delete',
-                          style: 'destructive',
-                          onPress: () => {
-                            setBusy(true);
-                            void deleteCheckIn(existing.id)
-                              .then(load)
-                              .then(() => {
-                                edit(date);
-                                setOpen(false);
-                              })
-                              .catch(() =>
-                                Alert.alert('Could not delete', 'Try again.'),
-                              )
-                              .finally(() => setBusy(false));
-                          },
-                        },
-                      ],
-                    )
+                    kind === 'energy'
+                      ? setEnergy(energy === score ? null : score)
+                      : setMood(mood === score ? null : score)
                   }
                 >
-                  <Text style={styles.action}>Delete check-in</Text>
+                  <Text style={styles.action}>{score}</Text>
                 </Pressable>
-              )}
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </Modal>
+              ))}
+            </View>
+          </View>
+        ))}
+        <Text style={styles.label}>Notes (optional)</Text>
+        <TextInput
+          accessibilityLabel="Check-in notes, optional"
+          multiline
+          maxLength={2000}
+          value={notes}
+          onChangeText={setNotes}
+          style={[styles.input, { minHeight: 100, textAlignVertical: 'top' }]}
+        />
+        <Pressable
+          accessibilityRole="button"
+          style={styles.button}
+          disabled={busy}
+          onPress={() => void save()}
+        >
+          <Text style={styles.action}>
+            {busy ? 'Saving…' : 'Save check-in'}
+          </Text>
+        </Pressable>
+        {existing && (
+          <Pressable
+            accessibilityRole="button"
+            style={styles.button}
+            disabled={busy}
+            onPress={() =>
+              Alert.alert(
+                'Delete this check-in?',
+                'This removes only your observations for this date.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: () => {
+                      setBusy(true);
+                      void deleteCheckIn(existing.id)
+                        .then(load)
+                        .then(() => {
+                          edit(date);
+                          setOpen(false);
+                        })
+                        .catch(() =>
+                          Alert.alert('Could not delete', 'Try again.'),
+                        )
+                        .finally(() => setBusy(false));
+                    },
+                  },
+                ],
+              )
+            }
+          >
+            <Text style={styles.action}>Delete check-in</Text>
+          </Pressable>
+        )}
+      </FormSheet>
     </>
   );
 }

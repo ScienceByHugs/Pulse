@@ -1,17 +1,15 @@
+import { FormSheet } from './FormSheet';
 import { useState } from 'react';
 import {
   Alert,
-  Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   Switch,
   Text,
   View,
   TextInput,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { SheetHeader } from './SheetHeader';
+
 import { ProtocolDatePicker, ProtocolTimePicker } from './ProtocolPickers';
 import {
   duplicateProtocol,
@@ -59,6 +57,7 @@ export function ScheduleExtras({
       ))}
       {times.length < 7 && (
         <Pressable
+          accessibilityRole="button"
           style={styles.button}
           onPress={() => onTimes([...times, '12:00'])}
         >
@@ -128,72 +127,62 @@ export function DuplicateProtocolSheet({
     }
   }
   return (
-    <Modal
+    <FormSheet
+      label={'Duplicate protocol'}
       visible={Boolean(source)}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={() => {
-        if (!busy) onClose();
-      }}
+      onClose={onClose}
+      busy={busy}
     >
-      <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.page}>
-          <SheetHeader
-            label="Duplicate protocol"
-            disabled={busy}
-            onClose={onClose}
-          />
-          <Text style={styles.title}>Review your new routine</Text>
-          <Text style={styles.detail}>
-            Copies substances and schedules. Your new protocol starts paused so
-            you can review it before activating. Inventory and past logs stay
-            with the original.
-          </Text>
-          <TextInput
-            accessibilityLabel="Copied protocol name"
-            value={name}
-            onChangeText={setName}
-            maxLength={100}
-            style={styles.input}
-            placeholder={source ? `${source.name} copy` : 'Protocol name'}
-            placeholderTextColor={colors.muted}
-          />
-          <ProtocolDatePicker
-            label="New start date"
-            value={start}
-            onChange={setStart}
-          />
-          <ProtocolDatePicker
-            label="New end date (optional)"
-            value={end}
-            onChange={setEnd}
-          />
-          {items
-            .filter((i) => !i.archived_at && i.protocol_id === source?.id)
-            .map((i) => (
-              <View key={i.id} style={styles.card}>
-                <Text style={styles.text}>
-                  {i.name} · {i.dose_amount} {i.dose_unit}
-                </Text>
-                <Text style={styles.detail}>{formatSchedule(i.schedule)}</Text>
-              </View>
-            ))}
-          <Text style={styles.detail}>
-            Interval and cycle anchors reset to the new start date. Temporary
-            overrides are cleared.
-          </Text>
-          <Pressable
-            disabled={busy}
-            style={styles.button}
-            onPress={() => void save()}
-          >
-            <Text style={styles.action}>
-              {busy ? 'Creating…' : 'Create paused copy'}
+      <Text style={styles.title}>Review your new routine</Text>
+      <Text style={styles.detail}>
+        Copies substances and schedules. Your new protocol starts paused so you
+        can review it before activating. Inventory and past logs stay with the
+        original.
+      </Text>
+      <TextInput
+        accessibilityLabel="Copied protocol name"
+        value={name}
+        onChangeText={setName}
+        maxLength={100}
+        style={styles.input}
+        placeholder={source ? `${source.name} copy` : 'Protocol name'}
+        placeholderTextColor={colors.muted}
+      />
+      <ProtocolDatePicker
+        label="New start date"
+        value={start}
+        onChange={setStart}
+      />
+      <ProtocolDatePicker
+        label="New end date (optional)"
+        value={end}
+        onChange={setEnd}
+      />
+      {items
+        .filter((i) => !i.archived_at && i.protocol_id === source?.id)
+        .map((i) => (
+          <View key={i.id} style={styles.card}>
+            <Text style={styles.text}>
+              {i.name} · {i.dose_amount} {i.dose_unit}
             </Text>
-          </Pressable>
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
+            <Text style={styles.detail}>{formatSchedule(i.schedule)}</Text>
+          </View>
+        ))}
+      <Text style={styles.detail}>
+        Interval and cycle anchors reset to the new start date. Temporary
+        overrides are cleared.
+      </Text>
+      <Pressable
+        accessibilityRole="button"
+        disabled={busy}
+        style={styles.button}
+        onPress={() => void save()}
+      >
+        <Text style={styles.action}>
+          {busy ? 'Creating…' : 'Create paused copy'}
+        </Text>
+      </Pressable>
+    </FormSheet>
   );
 }
 export function InventoryDetails({
@@ -279,66 +268,56 @@ export function InventoryDetails({
       >
         <Text style={styles.action}>Dates & container details</Text>
       </Pressable>
-      <Modal
+      <FormSheet
+        label={'Container details'}
         visible={open}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => {
-          if (!busy) setOpen(false);
-        }}
+        onClose={() => setOpen(false)}
+        busy={busy}
       >
-        <SafeAreaView style={styles.safe}>
-          <ScrollView contentContainerStyle={styles.page}>
-            <SheetHeader
-              label="Container details"
-              disabled={busy}
-              onClose={() => setOpen(false)}
-            />
-            <Text style={styles.title}>{item.name}</Text>
-            <Text style={styles.detail}>
-              Enter dates from your own records or packaging. Pulse does not
-              calculate product stability or recommend a use-by date.
-            </Text>
-            <ProtocolDatePicker
-              label="Opened date (optional)"
-              value={opened}
-              onChange={setOpened}
-            />
-            <ProtocolDatePicker
-              label="Expiry date (optional)"
-              value={expires}
-              onChange={setExpires}
-            />
-            <ProtocolDatePicker
-              label="Your recorded use-by date (optional)"
-              value={useBy}
-              onChange={setUseBy}
-            />
-            <TextInput
-              accessibilityLabel="Lot number, optional"
-              value={lot}
-              onChangeText={setLot}
-              maxLength={100}
-              style={styles.input}
-              placeholder="Lot number (optional)"
-              placeholderTextColor={colors.muted}
-            />
-            <View style={styles.row}>
-              <Text style={styles.text}>Use this container for logging</Text>
-              <Switch value={active} onValueChange={setActive} />
-            </View>
-            <Pressable
-              disabled={busy}
-              style={styles.button}
-              onPress={() => void save()}
-            >
-              <Text style={styles.action}>
-                {busy ? 'Saving…' : 'Save container details'}
-              </Text>
-            </Pressable>
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
+        <Text style={styles.title}>{item.name}</Text>
+        <Text style={styles.detail}>
+          Enter dates from your own records or packaging. Pulse does not
+          calculate product stability or recommend a use-by date.
+        </Text>
+        <ProtocolDatePicker
+          label="Opened date (optional)"
+          value={opened}
+          onChange={setOpened}
+        />
+        <ProtocolDatePicker
+          label="Expiry date (optional)"
+          value={expires}
+          onChange={setExpires}
+        />
+        <ProtocolDatePicker
+          label="Your recorded use-by date (optional)"
+          value={useBy}
+          onChange={setUseBy}
+        />
+        <TextInput
+          accessibilityLabel="Lot number, optional"
+          value={lot}
+          onChangeText={setLot}
+          maxLength={100}
+          style={styles.input}
+          placeholder="Lot number (optional)"
+          placeholderTextColor={colors.muted}
+        />
+        <View style={styles.row}>
+          <Text style={styles.text}>Use this container for logging</Text>
+          <Switch value={active} onValueChange={setActive} />
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          disabled={busy}
+          style={styles.button}
+          onPress={() => void save()}
+        >
+          <Text style={styles.action}>
+            {busy ? 'Saving…' : 'Save container details'}
+          </Text>
+        </Pressable>
+      </FormSheet>
     </>
   );
 }
