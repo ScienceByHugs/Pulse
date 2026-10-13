@@ -690,6 +690,9 @@ export default function YouScreen() {
             Legal & Privacy →
           </Text>
         </Pressable>
+        <Pressable accessibilityRole="button" style={styles.dataButton} onPress={() => router.push('/feedback')}>
+          <Text style={styles.dataButtonText}>Help & feedback →</Text>
+        </Pressable>
         <Text style={styles.sectionLabel}>Privacy & reminders</Text>
         <View style={styles.card}>
           <SettingRow

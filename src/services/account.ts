@@ -1,4 +1,5 @@
 import { clearCreations, pendingCreations } from '@/lib/creationRequests';
+import { clearFeedbackDraft } from '@/lib/feedbackDrafts';
 import {
   getSubstancePhoto,
   removeSubstancePhoto,
@@ -54,6 +55,7 @@ export async function exportPulseData() {
     checkins,
     itemVersions,
     cancellations,
+    feedback,
   ] = await Promise.all([
     allRows('profiles', user.id, 'user_id'),
     allRows('protocols', user.id, 'id'),
@@ -66,6 +68,7 @@ export async function exportPulseData() {
     allRows('daily_checkins', user.id, 'id'),
     allRows('protocol_item_versions', user.id, 'id'),
     allRows('tracking_event_cancellations', user.id, 'event_id'),
+    allRows('feedback_submissions', user.id, 'id'),
   ]);
 
   const substancePhotos = await Promise.all(
@@ -96,6 +99,10 @@ export async function exportPulseData() {
     daily_checkins: checkins,
     protocol_item_versions: itemVersions,
     tracking_event_cancellations: cancellations,
+    feedback_submissions: feedback,
+    pending_feedback_draft: await privateStorage.getItem(
+      `pulse.feedback-draft.${user.id}`,
+    ),
   };
 
   const { data: currentAuth, error: currentAuthError } =
@@ -154,6 +161,12 @@ export async function deletePulseAccount() {
     })),
     { step: 'pending logs', run: () => clearOutbox(userId) },
     { step: 'pending creations', run: () => clearCreations(userId) },
+    {
+      step: 'feedback draft',
+      run: async () => {
+        await clearFeedbackDraft(userId);
+      },
+    },
     {
       step: 'Today cache',
       run: () => privateStorage.removeItem(`pulse.today-cache.${userId}`),

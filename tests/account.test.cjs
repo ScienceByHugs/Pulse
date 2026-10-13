@@ -145,7 +145,13 @@ function harness(options = {}) {
     },
     '@/lib/privateStorage': {
       privateStorage: {
+        getItem: async (key) => {
+          assert.equal(key, `pulse.feedback-draft.${owner}`);
+          return options.feedbackDraft ?? null;
+        },
         removeItem: (key) => {
+          if (key === `pulse.feedback-draft.${owner}`)
+            return cleanup('feedback draft');
           assert.equal(key, `pulse.today-cache.${owner}`);
           return cleanup('Today cache');
         },
@@ -187,15 +193,19 @@ test('confirmed deletion attempts all independent device cleanup and sign-out de
     assert.equal(error.failures.length, 3);
     return true;
   });
-  assert.deepEqual(h.events, [
-    'delete server account',
-    'photo item-1',
-    'photo item-2',
-    'pending logs',
-    'pending creations',
-    'Today cache',
-    'sign out',
-  ]);
+  assert.equal(h.events[0], 'delete server account');
+  assert.equal(h.events.at(-1), 'sign out');
+  assert.deepEqual(
+    new Set(h.events.slice(1, -1)),
+    new Set([
+      'photo item-1',
+      'photo item-2',
+      'pending logs',
+      'pending creations',
+      'feedback draft',
+      'Today cache',
+    ]),
+  );
 });
 
 test('returned and thrown local sign-out errors are reported as confirmed deletion with incomplete device cleanup', async () => {
@@ -305,4 +315,30 @@ test('export rejects unexpected unowned rows rather than sharing them', async ()
   });
   await assert.rejects(h.api.exportPulseData(), /verify the owner/);
   assert.equal(h.shares.length, 0);
+});
+
+test('feedback is exported only for the captured owner and feedback-draft cleanup failure does not prevent sign-out', async () => {
+  const owner = 'owner-a';
+  const h = harness({
+    feedbackDraft: 'original private feedback',
+    rows: {
+      feedback_submissions: [
+        { id: 'own-ticket', user_id: owner, message: 'My idea' },
+        { id: 'foreign-ticket', user_id: 'owner-b', message: 'Other idea' },
+      ],
+    },
+  });
+  const payload = await h.api.exportPulseData();
+  assert.equal(payload.feedback_submissions.length, 1);
+  assert.equal(payload.feedback_submissions[0].id, 'own-ticket');
+  assert.equal(payload.pending_feedback_draft, 'original private feedback');
+  const failure = harness({ fail: ['feedback draft'] });
+  await assert.rejects(failure.api.deletePulseAccount(), (error) => {
+    assert.deepEqual(
+      error.failures.map((f) => f.step),
+      ['feedback draft'],
+    );
+    return true;
+  });
+  assert.equal(failure.events.at(-1), 'sign out');
 });

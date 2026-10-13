@@ -52,6 +52,7 @@ function VerifiedRoutes() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="calendar" />
         <Stack.Screen name="about" />
+        <Stack.Screen name="feedback" />
       </Stack.Protected>
     </Stack>
   );

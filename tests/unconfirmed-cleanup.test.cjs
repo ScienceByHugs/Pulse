@@ -344,6 +344,7 @@ test('read-only SQL audit excludes passwordless, signed-in, storage-owning and d
       'daily_checkins',
       'protocol_item_versions',
       'tracking_event_cancellations',
+      'feedback_submissions',
     ])
       await db.exec(`create table public.${table}(user_id uuid)`);
     const valid = randomUUID(),
@@ -351,6 +352,7 @@ test('read-only SQL audit excludes passwordless, signed-in, storage-owning and d
       signedIn = randomUUID(),
       photo = randomUUID(),
       health = randomUUID(),
+      feedback = randomUUID(),
       oauth = randomUUID(),
       young = randomUUID();
     for (const id of [
@@ -359,6 +361,7 @@ test('read-only SQL audit excludes passwordless, signed-in, storage-owning and d
       signedIn,
       photo,
       health,
+      feedback,
       oauth,
       young,
     ]) {
@@ -385,6 +388,10 @@ test('read-only SQL audit excludes passwordless, signed-in, storage-owning and d
       "update auth.users set created_at=now()-interval '29 days' where id=$1",
       [young],
     );
+    await db.query(
+      'insert into public.feedback_submissions(user_id) values($1)',
+      [feedback],
+    );
     const sql = fs.readFileSync(
       'scripts/unconfirmed-account-audit.sql',
       'utf8',
@@ -400,7 +407,7 @@ test('read-only SQL audit excludes passwordless, signed-in, storage-owning and d
     ]);
     assert.equal(
       (await db.query('select count(*) from auth.users')).rows[0].count,
-      7,
+      8,
     );
   } finally {
     await db.close();

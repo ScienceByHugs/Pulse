@@ -21,3 +21,7 @@ The generated standalone policy pages do not set cookies, load analytics, embed 
 ## Controls
 
 You can manage permissions in device settings, clear browser storage and use the app’s privacy controls. Revoking calendar permission does not necessarily delete existing events. Remove Pulse-created calendar entries before disconnecting or deleting the account if you want those copies removed. Privacy/legal: legal@sciencebyhugs.com. DRAFT: verify hosting details before publication.
+
+## Interrupted feedback submissions
+
+If a feedback submission is interrupted, its original message, category, consent choice, version/build, platform and request identifier remain in private storage on this device so the same ticket can be retried without duplication. This draft is scoped to the signed-in account and is removed after confirmation or account deletion. A message that has never been sent remains only in the open form and is discarded if you choose to close it.

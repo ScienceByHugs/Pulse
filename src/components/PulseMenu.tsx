@@ -57,6 +57,12 @@ const sections = [
     title: 'Account',
     links: [
       {
+        label: 'Help & feedback',
+        caption: 'Send an idea and follow its progress',
+        route: '/feedback',
+        path: '/feedback',
+      },
+      {
         label: 'Account & Privacy',
         caption: 'Profile, security and your data',
         route: '/(tabs)/you',

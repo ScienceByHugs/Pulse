@@ -29,6 +29,7 @@ with candidates as (
     and not exists (select 1 from auth.mfa_factors f where f.user_id = u.id)
     -- Storage ownership blocks Auth deletion; do not delete/reassign files here.
     and not exists (select 1 from storage.objects o where o.owner_id = u.id::text)
+    and not exists (select 1 from public.feedback_submissions p where p.user_id = u.id)
     -- Skip accounts with any tracking data, even if their auth history is unusual.
     and not exists (select 1 from public.protocols p where p.user_id = u.id)
     and not exists (select 1 from public.protocol_items p where p.user_id = u.id)
