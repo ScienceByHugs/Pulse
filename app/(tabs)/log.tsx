@@ -13,6 +13,7 @@ import { ReportSheet } from '@/components/ReportSheet';
 import { SyncStatus } from '@/components/SyncStatus';
 import { FormSheet } from '@/components/FormSheet';
 import { PageHeader } from '@/components/PageHeader';
+import { PeriodHeading } from '@/components/PeriodHeading';
 import { LogEditor } from '@/components/LogEditor';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,7 +28,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { colors, layout, radius, spacing, type } from '@/theme';
+import { colors, layout, radius, spacing, typography } from '@/theme';
 import { PulseMenu } from '@/components/PulseMenu';
 import { localDateKey } from '@/domain/schedule';
 import {
@@ -56,7 +57,8 @@ function dayKey(value: string) {
 }
 
 export default function LogScreen() {
-  const { fontScale } = useWindowDimensions();
+  const { fontScale, width } = useWindowDimensions();
+  const wrapRangeButtons = width < 360 || fontScale > 1.15;
   const [search, setSearch] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
@@ -425,96 +427,102 @@ export default function LogScreen() {
           />
         )}
         <ReportSheet />
-        <Text
-          style={{ color: colors.text, fontWeight: '600', marginBottom: 8 }}
-        >
-          Search substance or protocol
-        </Text>
-        <TextInput
-          accessibilityLabel="Search Timeline"
-          placeholder="Search substance or protocol"
-          placeholderTextColor={colors.muted}
-          value={search}
-          onChangeText={(value) => {
-            setSearch(value);
-            setViewMode('all');
-          }}
-          style={{
-            color: colors.text,
-            fontSize: 16,
-            padding: 14,
-            borderRadius: radius.md,
-            backgroundColor: colors.panel2,
-          }}
-        />
-        <View
-          style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 8,
-            marginTop: 8,
-          }}
-        >
+        <View style={styles.searchSection}>
           <Text
-            accessibilityLiveRegion="polite"
-            style={{ color: colors.muted }}
+            style={{
+              ...typography.label,
+              color: colors.text,
+              fontWeight: '600',
+              marginBottom: 8,
+            }}
           >
-            {loading && !loaded ? (
-              'Loading your history…'
-            ) : (
-              <>
-                {filteredEntries.length} matching{' '}
-                {filteredEntries.length === 1 ? 'entry' : 'entries'}
-                {historyTruncated ? ' in loaded history' : ''}
-              </>
-            )}
+            Search substance or protocol
           </Text>
-          {!!search && (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => setSearch('')}
-              style={{
-                minHeight: 44,
-                justifyContent: 'center',
-                paddingHorizontal: 12,
-              }}
-            >
-              <Text style={{ color: colors.accent }}>Clear search</Text>
-            </Pressable>
+          <TextInput
+            accessibilityLabel="Search Timeline"
+            placeholder="Search substance or protocol"
+            placeholderTextColor={colors.muted}
+            value={search}
+            onChangeText={(value) => {
+              setSearch(value);
+              setViewMode('all');
+            }}
+            style={styles.searchInput}
+          />
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+            }}
+          >
+            <Text accessibilityLiveRegion="polite" style={styles.searchCount}>
+              {loading && !loaded ? (
+                'Loading your history…'
+              ) : (
+                <>
+                  {filteredEntries.length} matching{' '}
+                  {filteredEntries.length === 1 ? 'entry' : 'entries'}
+                  {historyTruncated ? ' in loaded history' : ''}
+                </>
+              )}
+            </Text>
+            {!!search && (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setSearch('')}
+                style={{
+                  minHeight: 44,
+                  justifyContent: 'center',
+                  paddingHorizontal: 12,
+                }}
+              >
+                <Text style={{ ...typography.body, color: colors.accent }}>
+                  Clear search
+                </Text>
+              </Pressable>
+            )}
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Timeline filters, ${filterCount} active`}
+            onPress={() => setFiltersOpen(true)}
+            style={{
+              minHeight: 48,
+              paddingHorizontal: 14,
+              paddingVertical: 12,
+              borderRadius: radius.md,
+              backgroundColor: colors.panel2,
+            }}
+          >
+            <Text style={{ ...typography.body, color: colors.accent }}>
+              Filters{filterCount ? ` · ${filterCount} active` : ''} ▾
+            </Text>
+          </Pressable>
+          {invalidDateRange && (
+            <Text style={{ ...typography.body, color: colors.warning }}>
+              Check the date range in Filters.
+            </Text>
           )}
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Timeline filters, ${filterCount} active`}
-          onPress={() => setFiltersOpen(true)}
-          style={{
-            minHeight: 44,
-            padding: 12,
-            borderRadius: radius.md,
-            backgroundColor: colors.panel2,
-          }}
-        >
-          <Text style={{ color: colors.accent }}>
-            Filters{filterCount ? ` · ${filterCount} active` : ''} ▾
-          </Text>
-        </Pressable>
-        {invalidDateRange && (
-          <Text style={{ color: colors.warning }}>
-            Check the date range in Filters.
-          </Text>
-        )}
         <FormSheet
           label="Timeline filters"
           visible={filtersOpen}
           onClose={() => setFiltersOpen(false)}
         >
-          <Text style={{ color: colors.muted, lineHeight: 22 }}>
+          <Text style={{ ...typography.body, color: colors.muted }}>
             Choose the records you want to review. Changes apply as you select
             them.
           </Text>
-          <Text style={{ color: colors.text, fontWeight: '600' }}>
+          <Text
+            style={{
+              ...typography.label,
+              color: colors.text,
+              fontWeight: '600',
+            }}
+          >
             Entry status
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -535,7 +543,7 @@ export default function LogScreen() {
                     statusFilter === status ? colors.accentSoft : colors.panel,
                 }}
               >
-                <Text style={{ color: colors.accent }}>
+                <Text style={{ ...typography.body, color: colors.accent }}>
                   {status === 'completed'
                     ? 'Recorded'
                     : status === 'skipped'
@@ -572,7 +580,9 @@ export default function LogScreen() {
                         : colors.panel,
                   }}
                 >
-                  <Text style={{ color: colors.accent }}>{item.name}</Text>
+                  <Text style={{ ...typography.body, color: colors.accent }}>
+                    {item.name}
+                  </Text>
                 </Pressable>
               ),
             )}
@@ -604,7 +614,9 @@ export default function LogScreen() {
                         : colors.panel,
                   }}
                 >
-                  <Text style={{ color: colors.accent }}>{protocol.name}</Text>
+                  <Text style={{ ...typography.body, color: colors.accent }}>
+                    {protocol.name}
+                  </Text>
                 </Pressable>
               ),
             )}
@@ -630,7 +642,7 @@ export default function LogScreen() {
           {invalidDateRange && (
             <Text
               accessibilityLiveRegion="polite"
-              style={{ color: colors.warning }}
+              style={{ ...typography.body, color: colors.warning }}
             >
               Through date must be on or after From date.
             </Text>
@@ -655,7 +667,7 @@ export default function LogScreen() {
                 setThroughDate('');
               }}
             >
-              <Text style={{ color: colors.accent }}>
+              <Text style={{ ...typography.body, color: colors.accent }}>
                 Clear filters and search
               </Text>
             </Pressable>
@@ -682,6 +694,7 @@ export default function LogScreen() {
                 key={mode}
                 style={[
                   styles.modeButton,
+                  { flexBasis: wrapRangeButtons ? '30%' : '14%' },
                   viewMode === mode && styles.modeButtonActive,
                 ]}
                 onPress={() => {
@@ -705,37 +718,21 @@ export default function LogScreen() {
         </View>
         {viewMode === 'year' ? (
           <View style={styles.yearAtlasCard}>
-            <View style={styles.calendarHeader}>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={styles.signalEyebrow}>Recorded activity</Text>
-                <Text style={styles.yearAtlasHeading}>{yearValue}</Text>
-                <Text style={styles.yearAtlasSubheading}>
-                  A month-by-month view of your recorded history.
-                </Text>
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Previous year"
-                style={styles.monthNav}
-                onPress={() => {
-                  setYearOffset((value) => value - 1);
-                  setSelectedYearMonth(null);
-                }}
-              >
-                <Text style={styles.monthNavText}>‹</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Next year"
-                style={styles.monthNav}
-                onPress={() => {
-                  setYearOffset((value) => value + 1);
-                  setSelectedYearMonth(null);
-                }}
-              >
-                <Text style={styles.monthNavText}>›</Text>
-              </Pressable>
-            </View>
+            <PeriodHeading
+              label="Recorded activity"
+              title={String(yearValue)}
+              detail="A month-by-month view of your recorded history."
+              previousLabel="Previous year"
+              nextLabel="Next year"
+              onPrevious={() => {
+                setYearOffset((value) => value - 1);
+                setSelectedYearMonth(null);
+              }}
+              onNext={() => {
+                setYearOffset((value) => value + 1);
+                setSelectedYearMonth(null);
+              }}
+            />
             <View style={styles.yearAtlasGrid}>
               {yearAtlas.map((month) => (
                 <Pressable
@@ -794,35 +791,21 @@ export default function LogScreen() {
         ) : null}
         {viewMode === 'week' ? (
           <View style={styles.weekGridCard}>
-            <View style={styles.calendarHeader}>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={styles.signalEyebrow}>Recorded activity</Text>
-                <Text style={styles.weekGridTitle}>Your week at a glance</Text>
-                <Text style={styles.weekGridRange}>{weekLabel}</Text>
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Previous week"
-                style={styles.monthNav}
-                onPress={() => {
-                  setWeekOffset((value) => value - 1);
-                  setSelectedWeekDay(null);
-                }}
-              >
-                <Text style={styles.monthNavText}>‹</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Next week"
-                style={styles.monthNav}
-                onPress={() => {
-                  setWeekOffset((value) => value + 1);
-                  setSelectedWeekDay(null);
-                }}
-              >
-                <Text style={styles.monthNavText}>›</Text>
-              </Pressable>
-            </View>
+            <PeriodHeading
+              label="Recorded activity"
+              title={'Your week at a glance'}
+              detail={weekLabel}
+              previousLabel="Previous week"
+              nextLabel="Next week"
+              onPrevious={() => {
+                setWeekOffset((value) => value - 1);
+                setSelectedWeekDay(null);
+              }}
+              onNext={() => {
+                setWeekOffset((value) => value + 1);
+                setSelectedWeekDay(null);
+              }}
+            />
             <View style={styles.weekGrid}>
               {weekDays.map((day) => (
                 <Pressable
@@ -886,41 +869,23 @@ export default function LogScreen() {
         ) : null}
         {viewMode === 'month' ? (
           <View style={styles.calendarCard}>
-            <View style={styles.calendarHeader}>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={styles.signalEyebrow}>
-                  MONTHLY ACTIVITY / RECORD
-                </Text>
-                <Text style={styles.calendarMonth}>
-                  {monthDate.toLocaleDateString(undefined, {
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </Text>
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Previous month"
-                style={styles.monthNav}
-                onPress={() => {
-                  setMonthOffset((value) => value - 1);
-                  setSelectedDay(null);
-                }}
-              >
-                <Text style={styles.monthNavText}>‹</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Next month"
-                style={styles.monthNav}
-                onPress={() => {
-                  setMonthOffset((value) => value + 1);
-                  setSelectedDay(null);
-                }}
-              >
-                <Text style={styles.monthNavText}>›</Text>
-              </Pressable>
-            </View>
+            <PeriodHeading
+              label="Recorded activity"
+              title={monthDate.toLocaleDateString(undefined, {
+                month: 'long',
+                year: 'numeric',
+              })}
+              previousLabel="Previous month"
+              nextLabel="Next month"
+              onPrevious={() => {
+                setMonthOffset((value) => value - 1);
+                setSelectedDay(null);
+              }}
+              onNext={() => {
+                setMonthOffset((value) => value + 1);
+                setSelectedDay(null);
+              }}
+            />
             <View style={styles.calendarGrid}>
               {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
                 <View key={index} style={styles.calendarCell}>
@@ -1176,6 +1141,21 @@ export default function LogScreen() {
 }
 
 const styles = StyleSheet.create({
+  searchSection: {
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
+  },
+  searchInput: {
+    ...typography.input,
+    color: colors.text,
+    minHeight: 50,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+    backgroundColor: colors.panel2,
+  },
+  searchCount: { ...typography.detail, color: colors.muted, flexShrink: 1 },
   safe: { flex: 1, backgroundColor: colors.bg },
   page: { padding: layout.pageInset, paddingBottom: layout.pageBottom },
   historyNotice: {
@@ -1187,18 +1167,13 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     gap: 5,
   },
-  historyNoticeTitle: {
-    color: colors.warning,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.9,
-  },
-  historyNoticeBody: { color: colors.muted, fontSize: 12, lineHeight: 18 },
+  historyNoticeTitle: { ...typography.eyebrow, color: colors.warning },
+  historyNoticeBody: { ...typography.detail, color: colors.muted },
   modeStrip: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 5,
-    marginBottom: 14,
+    gap: 8,
+    marginBottom: spacing.lg,
   },
   yearAtlasCard: {
     backgroundColor: 'transparent',
@@ -1209,20 +1184,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-  },
-  yearAtlasHeading: {
-    color: colors.text,
-    fontSize: 30,
-    fontWeight: '700',
-    lineHeight: 36,
-    marginTop: 4,
-    fontVariant: ['tabular-nums'],
-  },
-  yearAtlasSubheading: {
-    color: colors.muted,
-    fontSize: 11,
-    marginTop: 5,
-    lineHeight: 16,
   },
   yearAtlasGrid: {
     flexDirection: 'row',
@@ -1250,12 +1211,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  yearAtlasMonth: {
-    color: colors.muted,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
+  yearAtlasMonth: { ...typography.eyebrow, color: colors.muted },
   yearAtlasSelectedText: { color: colors.accent },
   yearAtlasCount: {
     color: colors.text,
@@ -1274,12 +1230,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: colors.accent,
   },
-  yearAtlasDays: {
-    color: colors.subtle,
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.7,
-  },
+  yearAtlasDays: { ...typography.caption, color: colors.subtle },
   weekGridCard: {
     backgroundColor: 'transparent',
     borderRadius: 0,
@@ -1289,18 +1240,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-  },
-  weekGridTitle: {
-    color: colors.text,
-    fontSize: 21,
-    fontWeight: '700',
-    marginTop: 5,
-  },
-  weekGridRange: {
-    color: colors.muted,
-    fontSize: 11,
-    marginTop: 5,
-    fontVariant: ['tabular-nums'],
   },
   weekGrid: { flexDirection: 'row', gap: 4, justifyContent: 'space-between' },
   weekGridDay: {
@@ -1356,36 +1295,6 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginBottom: spacing.md,
   },
-  calendarHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: spacing.lg,
-  },
-  calendarMonth: {
-    fontSize: 22,
-    lineHeight: 29,
-    color: colors.text,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-    marginTop: 5,
-  },
-  monthNav: {
-    width: 44,
-    height: 44,
-    backgroundColor: colors.accentSoft,
-    borderWidth: 1,
-    borderColor: colors.accentBorder,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  monthNavText: {
-    color: colors.accent,
-    fontSize: 28,
-    lineHeight: 32,
-    fontWeight: '700',
-  },
   calendarGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   calendarCell: {
     width: '14.2857%',
@@ -1425,14 +1334,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   calendarDotActive: { backgroundColor: colors.accent },
-  calendarFoot: {
-    color: colors.muted,
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.4,
-    marginTop: 12,
-    lineHeight: 16,
-  },
+  calendarFoot: { ...typography.caption, color: colors.muted, marginTop: 12 },
   cycleSelector: {
     backgroundColor: colors.panel,
     borderWidth: 1,
@@ -1456,11 +1358,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentSoft,
     borderColor: colors.accent,
   },
-  cyclePillText: { color: colors.muted, fontSize: 12, fontWeight: '800' },
+  cyclePillText: { ...typography.compactButton, color: colors.muted },
   cyclePillTextActive: { color: colors.accent },
-  cycleHint: { color: colors.muted, fontSize: 11, lineHeight: 17 },
+  cycleHint: { ...typography.detail, color: colors.muted },
   modeButton: {
-    flex: 1,
+    flexGrow: 1,
     minWidth: 44,
     minHeight: 44,
     justifyContent: 'center',
@@ -1475,7 +1377,7 @@ const styles = StyleSheet.create({
     borderColor: colors.accentBorder,
     backgroundColor: colors.accentSoft,
   },
-  modeText: { fontSize: 8, fontWeight: '700', color: colors.muted },
+  modeText: { ...typography.compactButton, color: colors.muted },
   modeTextActive: { color: colors.accent },
   signalCard: {
     backgroundColor: 'transparent',
@@ -1492,23 +1394,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  signalEyebrow: {
-    color: colors.accent,
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-  },
-  signalTitle: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: 4,
-  },
+  signalEyebrow: { ...typography.eyebrow, color: colors.accent },
+  signalTitle: { ...typography.sectionTitle, color: colors.text, marginTop: 4 },
   signalTotal: {
+    ...typography.metric,
     color: colors.accent,
-    fontSize: 28,
-    lineHeight: 32,
-    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   signalStrip: {
@@ -1550,10 +1440,8 @@ const styles = StyleSheet.create({
   signalCountActive: { color: colors.text },
   group: { marginBottom: spacing.lg },
   dayLabel: {
+    ...typography.caption,
     color: colors.subtle,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.4,
     marginBottom: spacing.sm,
     marginLeft: 4,
   },
@@ -1580,21 +1468,15 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
-  cardTitle: { color: colors.text, fontSize: 17, fontWeight: '800' },
+  cardTitle: { ...typography.cardTitle, color: colors.text },
   dose: {
+    ...typography.detail,
     color: colors.muted,
     marginTop: 5,
-    lineHeight: 19,
     textTransform: 'capitalize',
   },
-  time: { color: colors.accent, fontWeight: '800', fontSize: 12 },
-  site: {
-    color: colors.subtle,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    marginTop: spacing.sm,
-  },
+  time: { ...typography.label, color: colors.accent },
+  site: { ...typography.caption, color: colors.subtle, marginTop: spacing.sm },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1607,12 +1489,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: colors.success,
   },
-  statusText: {
-    color: colors.subtle,
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
+  statusText: { ...typography.caption, color: colors.subtle },
   emptyCard: {
     backgroundColor: 'transparent',
     borderRadius: 0,
@@ -1630,5 +1507,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     marginBottom: spacing.lg,
   },
-  detail: { color: colors.muted, marginTop: 6, lineHeight: 20 },
+  detail: { ...typography.body, color: colors.muted, marginTop: 6 },
 });

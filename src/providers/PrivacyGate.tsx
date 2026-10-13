@@ -1,9 +1,22 @@
 import { PulseBrand } from '@/components/PulseBrand';
-import { type PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  type PropsWithChildren,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import {
+  AppState,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { getBiometricLockEnabled } from '@/lib/privacy';
-import { colors, radius, spacing } from '@/theme';
+import { colors, radius, spacing, typography } from '@/theme';
 
 export function PrivacyGate({ children }: PropsWithChildren) {
   const [locked, setLocked] = useState(true);
@@ -28,19 +41,24 @@ export function PrivacyGate({ children }: PropsWithChildren) {
       }
       if (mounted.current) setLocked(true);
       const hardware = await LocalAuthentication.hasHardwareAsync();
-      const enrolled = hardware && await LocalAuthentication.isEnrolledAsync();
+      const enrolled =
+        hardware && (await LocalAuthentication.isEnrolledAsync());
       if (!enrolled) {
-        if (mounted.current) setErrorText('Face ID or device biometrics are not available. Check your device settings.');
+        if (mounted.current)
+          setErrorText(
+            'Face ID or device biometrics are not available. Check your device settings.',
+          );
         return;
       }
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Unlock Pulse',
         cancelLabel: 'Cancel',
-        disableDeviceFallback: false
+        disableDeviceFallback: false,
       });
       if (!mounted.current) return;
       setLocked(!result.success);
-      if (!result.success) setErrorText('Pulse remains locked. Try again to unlock.');
+      if (!result.success)
+        setErrorText('Pulse remains locked. Try again to unlock.');
     } catch {
       if (mounted.current) {
         setLocked(true);
@@ -76,10 +94,17 @@ export function PrivacyGate({ children }: PropsWithChildren) {
   return (
     <View style={styles.page}>
       <PulseBrand />
-      <Text style={styles.title}>{checking ? 'Securing Pulse…' : 'Pulse is locked'}</Text>
+      <Text style={styles.title}>
+        {checking ? 'Securing Pulse…' : 'Pulse is locked'}
+      </Text>
       {errorText ? <Text style={styles.explanation}>{errorText}</Text> : null}
       {!checking ? (
-        <Pressable accessibilityRole="button" accessibilityLabel="Unlock Pulse" style={styles.button} onPress={() => void authenticate()}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Unlock Pulse"
+          style={styles.button}
+          onPress={() => void authenticate()}
+        >
           <Text style={styles.buttonText}>UNLOCK</Text>
         </Pressable>
       ) : null}
@@ -88,10 +113,32 @@ export function PrivacyGate({ children }: PropsWithChildren) {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
-  brand: { color: colors.accent, fontSize: 12, fontWeight: '900', letterSpacing: 5 },
-  title: { color: colors.text, fontSize: 24, fontWeight: '800', marginTop: 12 },
-  explanation: { color: colors.muted, fontSize: 14, textAlign: 'center', marginTop: 12, lineHeight: 21 },
-  button: { marginTop: 24, backgroundColor: colors.accent, borderRadius: radius.md, paddingHorizontal: 28, paddingVertical: 14 },
-  buttonText: { color: '#03111f', fontWeight: '900', letterSpacing: 1 }
+  page: {
+    flex: 1,
+    backgroundColor: colors.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.lg,
+  },
+  brand: {
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 5,
+  },
+  title: { ...typography.sectionTitle, color: colors.text, marginTop: 12 },
+  explanation: {
+    ...typography.body,
+    color: colors.muted,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  button: {
+    marginTop: 24,
+    backgroundColor: colors.accent,
+    borderRadius: radius.md,
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+  },
+  buttonText: { ...typography.button, color: '#03111f' },
 });

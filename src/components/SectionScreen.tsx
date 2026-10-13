@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing, type } from '@/theme';
+import { colors, radius, spacing, typography } from '@/theme';
 
 type Props = {
   eyebrow: string;
@@ -32,11 +32,26 @@ export function SectionScreen({ eyebrow, title, body, cards }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   page: { padding: spacing.lg, paddingBottom: 42 },
-  eyebrow: { color: colors.accent, fontSize: 11, fontWeight: '900', letterSpacing: 1.8, marginTop: spacing.md },
-  title: { color: colors.text, fontSize: type.hero, fontWeight: '800', letterSpacing: -1, marginTop: spacing.sm },
-  body: { color: colors.muted, fontSize: 15, lineHeight: 22, marginTop: spacing.sm, marginBottom: spacing.xl },
+  eyebrow: {
+    ...typography.eyebrow,
+    color: colors.accent,
+    marginTop: spacing.md,
+  },
+  title: { ...typography.hero, color: colors.text, marginTop: spacing.sm },
+  body: {
+    ...typography.body,
+    color: colors.muted,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xl,
+  },
   stack: { gap: spacing.sm },
-  card: { backgroundColor: colors.panel, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
-  cardTitle: { color: colors.text, fontSize: 17, fontWeight: '800' },
-  cardDetail: { color: colors.muted, marginTop: 6, lineHeight: 20 }
+  card: {
+    backgroundColor: colors.panel,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cardTitle: { ...typography.cardTitle, color: colors.text },
+  cardDetail: { ...typography.body, color: colors.muted, marginTop: 6 },
 });

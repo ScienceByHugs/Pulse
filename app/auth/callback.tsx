@@ -1,7 +1,12 @@
 import { Redirect } from 'expo-router';
-import { ActivityIndicator, SafeAreaView, StyleSheet, Text } from 'react-native';
+import {
+  ActivityIndicator,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+} from 'react-native';
 import { useAuth } from '@/providers/AuthProvider';
-import { colors, spacing } from '@/theme';
+import { colors, spacing, typography } from '@/theme';
 
 export default function AuthCallbackScreen() {
   const { session, loading } = useAuth();
@@ -18,6 +23,12 @@ export default function AuthCallbackScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg, gap: spacing.md },
-  text: { color: colors.muted, fontSize: 14 }
+  safe: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.bg,
+    gap: spacing.md,
+  },
+  text: { ...typography.body, color: colors.muted },
 });

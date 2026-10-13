@@ -12,7 +12,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { colors, layout, radius, spacing, type } from '@/theme';
+import { colors, layout, radius, spacing, typography } from '@/theme';
 import { PulseMenu } from '@/components/PulseMenu';
 import {
   listProtocolItems,
@@ -430,23 +430,14 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   page: { padding: layout.pageInset, paddingBottom: layout.pageBottom },
   kicker: {
+    ...typography.eyebrow,
     color: colors.accent,
-    fontWeight: '900',
-    letterSpacing: 1.6,
-    fontSize: type.eyebrow,
     marginTop: spacing.md,
   },
-  title: {
-    color: colors.text,
-    fontSize: type.title,
-    fontWeight: '700',
-    letterSpacing: -1,
-    marginTop: spacing.sm,
-  },
+  title: { ...typography.pageTitle, color: colors.text, marginTop: spacing.sm },
   body: {
+    ...typography.body,
     color: colors.muted,
-    fontSize: type.body,
-    lineHeight: 22,
     marginTop: spacing.sm,
     marginBottom: spacing.lg,
   },
@@ -461,14 +452,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  eyebrow: {
-    color: colors.accent,
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1.3,
-  },
-  heading: { color: colors.text, fontSize: 19, fontWeight: '900' },
-  detail: { color: colors.muted, fontSize: 12, lineHeight: 18 },
+  eyebrow: { ...typography.eyebrow, color: colors.accent },
+  heading: { ...typography.cardTitle, color: colors.text },
+  detail: { ...typography.detail, color: colors.muted },
   primary: {
     minHeight: 49,
     alignItems: 'center',
@@ -477,12 +463,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     borderRadius: radius.md,
   },
-  primaryText: {
-    color: colors.bg,
-    fontWeight: '900',
-    letterSpacing: 0.6,
-    fontSize: 12,
-  },
+  primaryText: { ...typography.button, color: colors.bg },
   secondary: {
     minHeight: 48,
     alignItems: 'center',
@@ -492,7 +473,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radius.md,
   },
-  secondaryText: { color: colors.muted, fontWeight: '900', fontSize: 11 },
+  secondaryText: { ...typography.button, color: colors.muted },
   choice: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -500,7 +481,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  choiceText: { color: colors.text, flex: 1, fontWeight: '700', fontSize: 13 },
+  choiceText: { ...typography.label, color: colors.text, flex: 1 },
   choiceArrow: { color: colors.accent, fontSize: 19 },
   options: { flexDirection: 'row', gap: 8 },
   option: {
@@ -517,7 +498,7 @@ const styles = StyleSheet.create({
     borderColor: colors.accentBorder,
     backgroundColor: colors.accentSoft,
   },
-  optionText: { fontSize: 12, fontWeight: '800', color: colors.muted },
+  optionText: { ...typography.label, color: colors.muted },
   selectedText: { color: colors.accent },
   previewRow: {
     flexDirection: 'row',
@@ -533,15 +514,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.accent,
   },
-  previewTitle: { color: colors.text, fontSize: 13, fontWeight: '800' },
-  previewTime: { color: colors.muted, fontSize: 11, marginTop: 3 },
-  moreText: { color: colors.subtle, fontSize: 10, fontWeight: '800' },
-  footnote: { color: colors.muted, fontSize: 11 },
+  previewTitle: { ...typography.label, color: colors.text },
+  previewTime: { ...typography.detail, color: colors.muted, marginTop: 3 },
+  moreText: { ...typography.caption, color: colors.subtle },
+  footnote: { ...typography.detail, color: colors.muted },
   back: { minHeight: 44, justifyContent: 'center', marginTop: 10 },
-  backText: {
-    color: colors.accent,
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
+  backText: { ...typography.button, color: colors.accent },
 });

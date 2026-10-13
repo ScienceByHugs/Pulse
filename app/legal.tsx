@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import policies from '@/content/legal.json';
-import { colors, layout, radius, spacing, type } from '@/theme';
+import { colors, layout, radius, spacing, typography } from '@/theme';
 
 export default function LegalScreen() {
   const router = useRouter();
@@ -90,11 +90,11 @@ const styles = StyleSheet.create({
     maxWidth: 800,
     alignSelf: 'center',
   },
-  title: { color: colors.text, fontSize: type.title, fontWeight: '700' },
-  heading: { color: colors.text, fontSize: 20, fontWeight: '700' },
-  body: { color: colors.muted, fontSize: type.body, lineHeight: 25 },
-  notice: { color: colors.accent, fontSize: 14, lineHeight: 21 },
-  link: { color: colors.accent, fontSize: 16 },
+  title: { ...typography.pageTitle, color: colors.text },
+  heading: { ...typography.cardTitle, color: colors.text },
+  body: { ...typography.body, color: colors.muted },
+  notice: { ...typography.detail, color: colors.accent },
+  link: { ...typography.button, color: colors.accent },
   button: { minHeight: 44, justifyContent: 'center' },
   section: { gap: spacing.sm, marginTop: spacing.md },
   card: {

@@ -20,7 +20,7 @@ import {
 } from '@/services/checkins';
 import { localDateKey } from '@/domain/schedule';
 import { useAuth } from '@/providers/AuthProvider';
-import { colors, layout, radius } from '@/theme';
+import { colors, layout, radius, typography } from '@/theme';
 export function CheckInCard() {
   const { session } = useAuth();
   const ownerId = session?.user.id;
@@ -338,14 +338,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.panel,
     gap: 8,
   },
-  title: { color: colors.text, fontSize: 20, fontWeight: '700' },
-  detail: { color: colors.muted, lineHeight: 20 },
-  label: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
+  title: { ...typography.sectionTitle, color: colors.text },
+  detail: { ...typography.body, color: colors.muted },
+  label: { ...typography.label, color: colors.text, marginBottom: 8 },
   row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   score: {
     width: 44,
@@ -363,12 +358,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentSoft,
     alignItems: 'center',
   },
-  action: { color: colors.accent, fontSize: 14, fontWeight: '600' },
+  action: { ...typography.button, color: colors.accent },
   input: {
+    ...typography.input,
     padding: 14,
     color: colors.text,
     backgroundColor: colors.panel2,
     borderRadius: radius.md,
-    fontSize: 16,
   },
 });

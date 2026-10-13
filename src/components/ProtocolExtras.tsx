@@ -24,7 +24,7 @@ import {
   containerDateKey,
   containerDateTimestamp,
 } from '@/domain/containerDates';
-import { colors, layout, radius } from '@/theme';
+import { colors, layout, radius, typography } from '@/theme';
 export function ScheduleExtras({
   times,
   onTimes,
@@ -380,10 +380,10 @@ const styles = StyleSheet.create({
     gap: 12,
     flexWrap: 'wrap',
   },
-  title: { color: colors.text, fontSize: 24, fontWeight: '700' },
-  text: { color: colors.text, fontSize: 14, fontWeight: '600' },
-  detail: { color: colors.muted, fontSize: 13, lineHeight: 20 },
-  warning: { color: colors.warning, fontSize: 13, lineHeight: 20 },
+  title: { ...typography.sectionTitle, color: colors.text },
+  text: { ...typography.label, color: colors.text },
+  detail: { ...typography.detail, color: colors.muted },
+  warning: { ...typography.detail, color: colors.warning },
   button: {
     minHeight: 44,
     padding: 12,
@@ -392,13 +392,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  action: { color: colors.accent, fontSize: 14, fontWeight: '600' },
+  action: { ...typography.button, color: colors.accent },
   input: {
+    ...typography.input,
     padding: 14,
     color: colors.text,
     backgroundColor: colors.panel2,
     borderRadius: radius.md,
-    fontSize: 16,
   },
   card: { padding: 12, borderRadius: radius.md, backgroundColor: colors.panel },
 });

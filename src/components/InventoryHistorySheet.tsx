@@ -6,7 +6,7 @@ import { RetryNotice } from './RetryNotice';
 import { listInventoryHistory } from '@/services/inventoryHistory';
 import type { InventoryHistoryEvent } from '@/domain/inventoryHistory';
 import type { TodayItem } from '@/services/pulse';
-import { colors, radius } from '@/theme';
+import { colors, radius, typography } from '@/theme';
 export function InventoryHistoryButton({ item }: { item: TodayItem }) {
   const { session } = useAuth();
   const uid = session?.user.id;
@@ -47,7 +47,13 @@ export function InventoryHistoryButton({ item }: { item: TodayItem }) {
           void load();
         }}
       >
-        <Text style={{ color: colors.accent, fontWeight: '600' }}>
+        <Text
+          style={{
+            ...typography.label,
+            color: colors.accent,
+            fontWeight: '600',
+          }}
+        >
           View stock history →
         </Text>
       </Pressable>
@@ -59,7 +65,7 @@ export function InventoryHistoryButton({ item }: { item: TodayItem }) {
           setRows([]);
         }}
       >
-        <Text style={{ color: colors.muted, lineHeight: 22 }}>
+        <Text style={{ ...typography.body, color: colors.muted }}>
           Latest 100 saved records. Tracking entries show their current
           corrected amount/status and current recorded date. See each container
           for its current balance. Full stored records are available in your
@@ -75,7 +81,9 @@ export function InventoryHistoryButton({ item }: { item: TodayItem }) {
           />
         )}
         {!loading && !error && !rows.length && (
-          <Text style={{ color: colors.muted }}>No container history yet.</Text>
+          <Text style={{ ...typography.body, color: colors.muted }}>
+            No container history yet.
+          </Text>
         )}
         {rows.map((row) => (
           <View
@@ -87,13 +95,19 @@ export function InventoryHistoryButton({ item }: { item: TodayItem }) {
               backgroundColor: colors.panel,
             }}
           >
-            <Text style={{ color: colors.text, fontWeight: '600' }}>
+            <Text
+              style={{
+                ...typography.label,
+                color: colors.text,
+                fontWeight: '600',
+              }}
+            >
               {row.title}
             </Text>
-            <Text style={{ color: colors.muted }}>
+            <Text style={{ ...typography.body, color: colors.muted }}>
               {new Date(row.at).toLocaleString()}
             </Text>
-            <Text style={{ color: colors.text, lineHeight: 22 }}>
+            <Text style={{ ...typography.body, color: colors.text }}>
               {row.detail}
             </Text>
           </View>

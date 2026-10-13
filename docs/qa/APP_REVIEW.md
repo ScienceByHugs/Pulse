@@ -20,3 +20,5 @@
 Browser walkthrough at 390×844 used the existing fictional Apple-review account. Checked Today, Protocol, Timeline, Insights, Account, report/profile sheets, Calendar and About. Verified existing sample observations load, unsaved notes survive a rejected date change, filter counts and clear controls update, report creation disables when no content is selected, notes reset off on reopen, and sign-out reaches login. No tracking records, profile details, credentials or calendar events were created/changed during the walkthrough; local test drafts were discarded.
 
 Physical iPhone/Android keyboard behavior, notification delivery, calendar permission/recovery, large text and screen-reader traversal remain pending the next authorized local native build. No TestFlight submission, production schema/config change, policy publication or cleanup activation occurred.
+
+Typography and spacing follow-up: [TYPOGRAPHY_REVIEW.md](TYPOGRAPHY_REVIEW.md). Build 14 predates that follow-up.

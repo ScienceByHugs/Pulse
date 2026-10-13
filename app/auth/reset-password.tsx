@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
-import { colors, radius, spacing } from '@/theme';
+import { colors, radius, spacing, typography } from '@/theme';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
@@ -186,20 +186,10 @@ const styles = StyleSheet.create({
     maxWidth: 520,
     alignSelf: 'center',
   },
-  kicker: {
-    color: colors.accent,
-    fontWeight: '700',
-    fontSize: 11,
-    letterSpacing: 1.4,
-  },
-  title: {
-    color: colors.text,
-    fontWeight: '700',
-    fontSize: 32,
-    letterSpacing: -1.1,
-  },
-  description: { color: colors.muted, fontSize: 14, lineHeight: 21 },
-  label: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  kicker: { ...typography.eyebrow, color: colors.accent },
+  title: { ...typography.pageTitle, color: colors.text },
+  description: { ...typography.body, color: colors.muted },
+  label: { ...typography.label, color: colors.text },
   labelRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -208,13 +198,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   input: {
+    ...typography.input,
     backgroundColor: colors.bgElevated,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
     color: colors.text,
     padding: 14,
-    fontSize: 16,
   },
   button: {
     backgroundColor: colors.accent,

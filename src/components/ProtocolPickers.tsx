@@ -1,6 +1,6 @@
 import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { SheetHeader } from './SheetHeader';
-import { colors } from '@/theme';
+import { colors, typography } from '@/theme';
 import { useState } from 'react';
 import {
   Keyboard,
@@ -342,18 +342,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     padding: 13,
-    marginVertical: 5,
+    marginVertical: 0,
     minWidth: 0,
     flexShrink: 1,
   },
-  controlLabel: {
-    color: '#9AABBA',
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0,
-    marginBottom: 6,
-  },
-  value: { color: ink, fontSize: 14, fontWeight: '600' },
+  controlLabel: { ...typography.caption, color: '#9AABBA', marginBottom: 6 },
+  value: { ...typography.label, color: ink },
   overlay: {
     flex: 1,
     backgroundColor: '#000B',
@@ -366,7 +360,7 @@ const styles = StyleSheet.create({
     padding: 18,
     maxHeight: '85%',
   },
-  title: { color: ink, fontSize: 21, fontWeight: '800', marginBottom: 12 },
+  title: { ...typography.sectionTitle, color: ink, marginBottom: 12 },
   monthRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -382,9 +376,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heading: {
+    ...typography.cardTitle,
     color: ink,
-    fontSize: 17,
-    fontWeight: '700',
     textAlign: 'center',
     marginVertical: 9,
   },
@@ -412,6 +405,6 @@ const styles = StyleSheet.create({
     minHeight: 44,
     alignItems: 'center',
   },
-  hourScroll: { flexGrow: 0, maxHeight: 58, marginBottom: 10 },
+  hourScroll: { flexGrow: 0, marginBottom: 10 },
   action: { padding: 12, alignItems: 'center', marginTop: 6, borderRadius: 8 },
 });

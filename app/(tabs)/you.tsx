@@ -30,7 +30,7 @@ import {
   View,
 } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { colors, layout, radius, spacing, type } from '@/theme';
+import { colors, layout, radius, spacing, typography } from '@/theme';
 import { PulseMenu } from '@/components/PulseMenu';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
@@ -686,7 +686,9 @@ export default function YouScreen() {
           style={styles.dataButton}
           onPress={() => router.push('/legal')}
         >
-          <Text style={{ color: colors.accent }}>Legal & Privacy →</Text>
+          <Text style={{ ...typography.body, color: colors.accent }}>
+            Legal & Privacy →
+          </Text>
         </Pressable>
         <Text style={styles.sectionLabel}>Privacy & reminders</Text>
         <View style={styles.card}>
@@ -1102,22 +1104,20 @@ const styles = StyleSheet.create({
   },
   avatarImage: { width: 86, height: 86, borderRadius: 43 },
   profileName: {
+    ...typography.sectionTitle,
     color: colors.text,
-    fontSize: 24,
-    fontWeight: '700',
     textAlign: 'center',
     marginTop: spacing.md,
   },
   profileEmail: {
+    ...typography.detail,
     color: colors.muted,
-    fontSize: 14,
     textAlign: 'center',
     marginTop: 4,
   },
   fieldLabel: {
+    ...typography.label,
     color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
     marginTop: spacing.md,
   },
   photoActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
@@ -1146,6 +1146,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   profileInput: {
+    ...typography.input,
     marginTop: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
@@ -1154,7 +1155,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     color: colors.text,
     backgroundColor: colors.bgElevated,
-    fontSize: 16,
   },
   profileSaveDisabled: { opacity: 0.45 },
   profileCard: {
@@ -1178,10 +1178,8 @@ const styles = StyleSheet.create({
   },
   avatarText: { color: colors.accent, fontSize: 28, fontWeight: '700' },
   sectionLabel: {
+    ...typography.eyebrow,
     color: colors.subtle,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.4,
     marginTop: spacing.sm,
     marginBottom: spacing.sm,
   },
@@ -1196,9 +1194,9 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   settingRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  settingCopy: { flex: 1 },
-  cardTitle: { color: colors.text, fontSize: 16, fontWeight: '800' },
-  detail: { color: colors.muted, marginTop: 5, lineHeight: 19, fontSize: 13 },
+  settingCopy: { flex: 1, minWidth: 0 },
+  cardTitle: { ...typography.cardTitle, color: colors.text },
+  detail: { ...typography.detail, color: colors.muted, marginTop: 8 },
   divider: {
     height: 1,
     backgroundColor: colors.border,
@@ -1215,7 +1213,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     backgroundColor: colors.accentSoft,
   },
-  dataButtonText: { color: colors.accent, fontWeight: '700', letterSpacing: 0 },
+  dataButtonText: { ...typography.button, color: colors.accent },
   deleteButton: {
     borderWidth: 1,
     borderColor: '#6f3030',
@@ -1224,14 +1222,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.sm,
   },
-  deleteButtonText: { color: '#ff9b9b', fontWeight: '700', letterSpacing: 0 },
+  deleteButtonText: { ...typography.button, color: '#ff9b9b' },
   aboutRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: spacing.sm,
     paddingHorizontal: 2,
   },
-  aboutText: { color: colors.subtle, fontSize: 11 },
+  aboutText: { ...typography.caption, color: colors.subtle },
   signOut: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -1240,5 +1238,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.xl,
   },
-  signOutText: { color: colors.text, fontWeight: '700', letterSpacing: 1 },
+  signOutText: { ...typography.button, color: colors.text },
 });

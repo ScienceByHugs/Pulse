@@ -10,7 +10,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { colors, layout, radius, spacing, type } from '@/theme';
+import { colors, layout, radius, spacing, typography } from '@/theme';
 
 const sections = [
   {
@@ -272,20 +272,8 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   panelHeading: { flex: 1, minWidth: 0 },
-  panelTitle: {
-    color: colors.text,
-    fontSize: 27,
-    fontWeight: '700',
-    letterSpacing: -0.9,
-    marginTop: 7,
-  },
-  panelSubtitle: {
-    color: colors.muted,
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0,
-    marginTop: 4,
-  },
+  panelTitle: { ...typography.pageTitle, color: colors.text, marginTop: 7 },
+  panelSubtitle: { ...typography.detail, color: colors.muted, marginTop: 4 },
   close: {
     minHeight: 44,
     width: 44,
@@ -305,12 +293,7 @@ const styles = StyleSheet.create({
     gap: 9,
     marginBottom: 3,
   },
-  sectionTitle: {
-    color: '#A9BDCD',
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
+  sectionTitle: { ...typography.eyebrow, color: '#A9BDCD' },
   sectionRule: { flex: 1, height: 1, backgroundColor: colors.border },
   item: {
     flexDirection: 'row',
@@ -335,9 +318,9 @@ const styles = StyleSheet.create({
   },
   itemMarkerActive: { backgroundColor: colors.accent },
   itemBody: { flex: 1, minWidth: 0, gap: 3 },
-  itemText: { color: colors.text, fontSize: 15, fontWeight: '800' },
+  itemText: { ...typography.label, color: colors.text },
   itemTextActive: { color: colors.accent },
-  itemCaption: { color: '#A9BDCD', fontSize: 12, lineHeight: 18 },
+  itemCaption: { ...typography.detail, color: '#A9BDCD' },
   arrow: { color: colors.subtle, fontSize: 18, fontWeight: '700' },
   arrowActive: { color: colors.accent, fontSize: 10 },
 });

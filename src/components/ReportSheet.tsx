@@ -13,7 +13,7 @@ import {
 import { ProtocolDatePicker } from './ProtocolPickers';
 import { shareTrackingReport } from '@/services/reports';
 import { localDateKey } from '@/domain/schedule';
-import { colors, layout, radius } from '@/theme';
+import { colors, layout, radius, typography } from '@/theme';
 export function ReportSheet() {
   const [open, setOpen] = useState(false);
   const [start, setStart] = useState(
@@ -152,9 +152,9 @@ export function ReportSheet() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   page: { padding: layout.pageInset, paddingBottom: 40, gap: 16 },
-  title: { color: colors.text, fontSize: 24, fontWeight: '700' },
-  detail: { color: colors.muted, lineHeight: 20 },
-  text: { flex: 1, flexShrink: 1, color: colors.text, fontSize: 15 },
+  title: { ...typography.sectionTitle, color: colors.text },
+  detail: { ...typography.body, color: colors.muted },
+  text: { ...typography.label, flex: 1, flexShrink: 1, color: colors.text },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -168,7 +168,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: colors.accentSoft,
     alignItems: 'center',
-    marginVertical: 8,
+    marginTop: 0,
+    marginBottom: 16,
   },
-  action: { color: colors.accent, fontSize: 14, fontWeight: '600' },
+  action: { ...typography.button, color: colors.accent },
 });

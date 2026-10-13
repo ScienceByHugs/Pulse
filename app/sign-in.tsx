@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/providers/AuthProvider';
-import { colors, radius, spacing } from '@/theme';
+import { colors, radius, spacing, typography } from '@/theme';
 
 const AUTH_REDIRECT_URL = 'pulse://auth/callback';
 
@@ -555,10 +555,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   eyebrow: {
+    ...typography.eyebrow,
     color: colors.accent,
-    fontSize: 10,
-    letterSpacing: 2.4,
-    fontWeight: '800',
     marginTop: spacing.xl,
   },
   sheetPage: {
@@ -568,7 +566,7 @@ const styles = StyleSheet.create({
     maxWidth: 520,
     alignSelf: 'center',
   },
-  label: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  label: { ...typography.label, color: colors.text },
   labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -608,30 +606,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  helpText: { color: colors.muted, fontSize: 13, fontWeight: '500' },
+  helpText: { ...typography.detail, color: colors.muted },
   logo: {
     color: colors.text,
     fontSize: 38,
-    letterSpacing: 8,
+    letterSpacing: -0.4,
     fontWeight: '900',
     marginTop: 4,
   },
-  title: {
-    color: colors.text,
-    fontSize: 30,
-    fontWeight: '800',
-    letterSpacing: -1,
-    marginTop: 34,
-  },
+  title: { ...typography.pageTitle, color: colors.text, marginTop: 34 },
   subtitle: {
+    ...typography.body,
     color: colors.muted,
-    fontSize: 15,
-    lineHeight: 22,
     marginTop: 8,
     maxWidth: 420,
   },
   form: { gap: 12, marginTop: 30 },
   input: {
+    ...typography.input,
     backgroundColor: colors.panel,
     borderColor: colors.border,
     borderWidth: 1,
@@ -639,7 +631,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 15,
     color: colors.text,
-    fontSize: 16,
   },
   primary: {
     backgroundColor: colors.accent,
@@ -648,14 +639,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 4,
   },
-  primaryText: { color: '#03111f', fontWeight: '900', letterSpacing: 1.1 },
+  primaryText: { ...typography.button, color: '#03111f' },
   secondary: { paddingVertical: 12, alignItems: 'center' },
-  secondaryText: { color: colors.accent, fontWeight: '700' },
+  secondaryText: { ...typography.button, color: colors.accent },
   disabled: { opacity: 0.55 },
-  disclaimer: {
-    color: colors.muted,
-    fontSize: 11,
-    lineHeight: 16,
-    marginTop: 28,
-  },
+  disclaimer: { ...typography.caption, color: colors.muted, marginTop: 28 },
 });

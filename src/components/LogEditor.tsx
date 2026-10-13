@@ -22,7 +22,7 @@ import {
   undoDoseLog,
   type TimelineEntry,
 } from '@/services/pulse';
-import { colors, radius } from '@/theme';
+import { colors, radius, typography } from '@/theme';
 
 export function LogEditor({
   entry,
@@ -280,20 +280,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  label: {
-    color: colors.accent,
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  title: { color: colors.text, fontSize: 24, fontWeight: '800' },
-  body: { color: colors.muted, lineHeight: 21 },
+  label: { ...typography.eyebrow, color: colors.accent },
+  title: { ...typography.sectionTitle, color: colors.text },
+  body: { ...typography.body, color: colors.muted },
   input: {
+    ...typography.input,
     color: colors.text,
     backgroundColor: colors.panel2,
     padding: 14,
     borderRadius: radius.md,
-    fontSize: 16,
   },
   primary: {
     backgroundColor: colors.accent,

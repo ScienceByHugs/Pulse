@@ -28,7 +28,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { colors, layout, radius, spacing, type } from '@/theme';
+import { colors, layout, radius, spacing, typography } from '@/theme';
 import { PulseMenu } from '@/components/PulseMenu';
 import { SubstanceArtwork } from '@/components/SubstanceArtwork';
 import {
@@ -776,7 +776,7 @@ export default function ProtocolScreen() {
         {activeProtocol && (
           <Pressable
             accessibilityRole="button"
-            style={styles.scheduleEditTrigger}
+            style={[styles.scheduleEditTrigger, { marginBottom: spacing.md }]}
             onPress={() => setDuplicateSource(activeProtocol)}
           >
             <Text style={styles.scheduleEditTriggerText}>
@@ -1378,7 +1378,7 @@ export default function ProtocolScreen() {
                       <View style={styles.twoCol}>
                         <TextInput
                           style={[styles.input, styles.flex]}
-                          placeholder="Amount per entry"
+                          placeholder="Amount"
                           accessibilityLabel="Amount per recorded entry"
                           placeholderTextColor={colors.muted}
                           keyboardType="decimal-pad"
@@ -2396,10 +2396,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   launchText: {
+    ...typography.label,
     color: colors.accent,
-    fontWeight: '700',
-    fontSize: 13,
-    letterSpacing: 0,
     textAlign: 'center',
   },
   card: {
@@ -2408,20 +2406,16 @@ const styles = StyleSheet.create({
     padding: layout.cardInset,
     borderWidth: 0,
     borderColor: 'transparent',
-    gap: 12,
-    marginBottom: spacing.md,
+    gap: 16,
+    marginBottom: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  cardTitle: { color: colors.text, fontSize: 18, fontWeight: '800' },
-  cardDetail: { color: colors.muted, marginTop: 4, lineHeight: 20 },
-  scheduleText: {
-    color: colors.accent,
-    marginTop: 5,
-    fontSize: 12,
-    fontWeight: '700',
-  },
+  cardTitle: { ...typography.cardTitle, color: colors.text },
+  cardDetail: { ...typography.body, color: colors.muted, marginTop: 8 },
+  scheduleText: { ...typography.detail, color: colors.accent, marginTop: 5 },
   input: {
+    ...typography.input,
     backgroundColor: colors.panel2,
     borderWidth: 1,
     borderColor: colors.border,
@@ -2429,10 +2423,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 13,
     color: colors.text,
-    fontSize: 15,
   },
   twoCol: { flexDirection: 'row', gap: 10 },
-  flex: { flex: 1 },
+  flex: { flex: 1, minWidth: 0 },
   primary: {
     backgroundColor: colors.accent,
     borderRadius: radius.md,
@@ -2440,14 +2433,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 2,
   },
-  primaryText: { color: '#03111f', fontWeight: '700', fontSize: 15 },
-  smallLabel: {
-    color: colors.muted,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginTop: 4,
-  },
+  primaryText: { ...typography.button, color: '#03111f' },
+  smallLabel: { ...typography.eyebrow, color: colors.muted, marginTop: 8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     borderRadius: 999,
@@ -2461,12 +2448,17 @@ const styles = StyleSheet.create({
     borderColor: colors.accentBorder,
     backgroundColor: colors.accentSoft,
   },
-  chipText: { color: colors.muted, fontSize: 12, textTransform: 'capitalize' },
+  chipText: {
+    ...typography.caption,
+    color: colors.muted,
+    textTransform: 'capitalize',
+  },
   chipTextActive: { color: colors.accent, fontWeight: '800' },
-  dayRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 6 },
+  dayRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   day: {
-    width: 38,
-    height: 38,
+    minWidth: 38,
+    minHeight: 44,
+    padding: 6,
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
@@ -2478,7 +2470,7 @@ const styles = StyleSheet.create({
     borderColor: colors.accentBorder,
     backgroundColor: colors.accentSoft,
   },
-  dayText: { color: colors.muted, fontWeight: '800' },
+  dayText: { ...typography.label, color: colors.muted },
   protocolPicker: {
     backgroundColor: 'transparent',
     padding: layout.cardInset,
@@ -2506,13 +2498,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     gap: spacing.sm,
   },
-  libraryTitle: {
-    color: colors.text,
-    fontSize: 23,
-    fontWeight: '700',
-    letterSpacing: -0.7,
-  },
-  librarySubtitle: { color: colors.muted, fontSize: 12, marginTop: 4 },
+  libraryTitle: { ...typography.sectionTitle, color: colors.text },
+  librarySubtitle: { ...typography.detail, color: colors.muted, marginTop: 8 },
   scheduleEditTrigger: {
     backgroundColor: colors.bgElevated,
     borderWidth: 1,
@@ -2524,13 +2511,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
   },
-  scheduleEditTriggerText: {
-    color: colors.accent,
-    fontWeight: '700',
-    fontSize: 11,
-    letterSpacing: 0.7,
-  },
-  scheduleEditSubtext: { color: colors.muted, fontSize: 11, lineHeight: 16 },
+  scheduleEditTriggerText: { ...typography.label, color: colors.accent },
+  scheduleEditSubtext: { ...typography.detail, color: colors.muted },
   scheduleEditor: {
     backgroundColor: colors.panel2,
     borderWidth: 1,
@@ -2539,7 +2521,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     gap: spacing.md,
   },
-  scheduleHint: { color: colors.muted, fontSize: 11, lineHeight: 17 },
+  scheduleHint: { ...typography.detail, color: colors.muted },
   signatureCard: {
     backgroundColor: 'transparent',
     borderRadius: 0,
@@ -2567,24 +2549,15 @@ const styles = StyleSheet.create({
   },
   signatureTop: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   signatureHeaderText: { flex: 1, minWidth: 0, gap: 6 },
-  signatureCategory: {
-    color: colors.accent,
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-  },
+  signatureCategory: { ...typography.eyebrow, color: colors.accent },
   signatureName: {
+    ...typography.sectionTitle,
     color: colors.text,
-    fontSize: 21,
-    fontWeight: '700',
-    lineHeight: 26,
-    letterSpacing: -0.5,
     flexShrink: 1,
   },
   signatureAmount: {
+    ...typography.detail,
     color: colors.muted,
-    fontSize: 12,
-    lineHeight: 17,
     textTransform: 'capitalize',
   },
   signatureDivider: { height: 1, backgroundColor: colors.border },
@@ -2596,22 +2569,11 @@ const styles = StyleSheet.create({
     maxWidth: '43%',
     gap: 5,
   },
-  signatureMetaLabel: {
-    color: colors.subtle,
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-  },
-  signatureMetaValue: {
-    color: colors.text,
-    fontSize: 12,
-    lineHeight: 18,
-    fontWeight: '700',
-  },
+  signatureMetaLabel: { ...typography.eyebrow, color: colors.subtle },
+  signatureMetaValue: { ...typography.label, color: colors.text },
   signatureStock: {
+    ...typography.label,
     color: colors.accent,
-    fontSize: 13,
-    fontWeight: '700',
     fontVariant: ['tabular-nums'],
     textAlign: 'right',
   },
@@ -2624,12 +2586,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   signatureReservoirFill: { height: '100%', borderRadius: radius.pill },
-  signatureReservoirFoot: {
-    color: colors.subtle,
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
+  signatureReservoirFoot: { ...typography.caption, color: colors.subtle },
   signatureActions: { flexDirection: 'row', gap: 9 },
   signatureEditButton: {
     flex: 1,
@@ -2642,12 +2599,7 @@ const styles = StyleSheet.create({
     borderColor: colors.accentBorder,
     borderWidth: 1,
   },
-  signatureEditText: {
-    color: colors.accent,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
+  signatureEditText: { ...typography.compactButton, color: colors.accent },
   signaturePauseButton: {
     minWidth: 92,
     minHeight: 44,
@@ -2657,13 +2609,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderWidth: 1,
   },
-  signaturePauseText: {
-    color: colors.muted,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  itemTitle: { color: colors.text, fontSize: 16, fontWeight: '800' },
+  signaturePauseText: { ...typography.compactButton, color: colors.muted },
+  itemTitle: { ...typography.cardTitle, color: colors.text },
   protocolDateBand: {
     flexDirection: 'row',
     gap: spacing.sm,
@@ -2673,9 +2620,8 @@ const styles = StyleSheet.create({
   },
   protocolDateColumn: { flex: 1, minWidth: 0, gap: 5 },
   protocolDateText: {
+    ...typography.label,
     color: colors.text,
-    fontWeight: '800',
-    fontSize: 12,
     fontVariant: ['tabular-nums'],
   },
   protocolEditPanel: {
@@ -2695,13 +2641,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.accentBorder,
   },
-  protocolEditTriggerText: {
-    color: colors.accent,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-  },
-  protocolEditHint: { color: colors.muted, fontSize: 11, lineHeight: 17 },
+  protocolEditTriggerText: { ...typography.label, color: colors.accent },
+  protocolEditHint: { ...typography.detail, color: colors.muted },
   primaryInline: {
     flex: 1,
     minHeight: 44,
@@ -2724,12 +2665,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.accentSoft,
   },
-  secondaryActionText: {
-    color: colors.accent,
-    fontWeight: '700',
-    fontSize: 11,
-    letterSpacing: 0.8,
-  },
+  secondaryActionText: { ...typography.compactButton, color: colors.accent },
   archiveAction: {
     flex: 1,
     borderWidth: 1,
@@ -2738,12 +2674,7 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     alignItems: 'center',
   },
-  archiveActionText: {
-    color: colors.muted,
-    fontWeight: '700',
-    fontSize: 11,
-    letterSpacing: 0.8,
-  },
+  archiveActionText: { ...typography.compactButton, color: colors.muted },
   protocolRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2764,12 +2695,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 9,
   },
-  activateText: {
-    color: colors.accent,
-    fontWeight: '700',
-    fontSize: 10,
-    letterSpacing: 0.7,
-  },
+  activateText: { ...typography.compactButton, color: colors.accent },
   mapCard: {
     backgroundColor: 'transparent',
     borderRadius: 0,
@@ -2785,13 +2711,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: spacing.md,
   },
-  mapTitle: {
-    color: colors.text,
-    fontSize: 22,
-    fontWeight: '700',
-    marginTop: 4,
-    letterSpacing: -0.5,
-  },
+  mapTitle: { ...typography.sectionTitle, color: colors.text, marginTop: 4 },
   mapLegendPill: {
     backgroundColor: colors.accentSoft,
     borderWidth: 1,
@@ -2800,12 +2720,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  mapLegendText: {
-    color: colors.accent,
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
+  mapLegendText: { ...typography.caption, color: colors.accent },
   weekStrip: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -2872,12 +2787,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  mapDetailsToggleText: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-    color: colors.accent,
-  },
+  mapDetailsToggleText: { ...typography.compactButton, color: colors.accent },
   mapScheduleList: {
     marginTop: spacing.md,
     borderTopWidth: 1,
@@ -2904,10 +2814,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
-  mapScheduleItems: { color: colors.text, fontSize: 13, fontWeight: '800' },
+  mapScheduleItems: { ...typography.label, color: colors.text },
   mapScheduleMeta: {
+    ...typography.detail,
     color: colors.muted,
-    fontSize: 10,
     marginTop: 3,
     fontVariant: ['tabular-nums'],
   },
@@ -2944,9 +2854,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   builderTitle: {
+    ...typography.sectionTitle,
     color: colors.text,
-    fontSize: 22,
-    fontWeight: '800',
     marginTop: 5,
   },
   progress: {
@@ -2964,7 +2873,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
   },
-  builderSummaryName: { color: colors.text, fontSize: 16, fontWeight: '700' },
+  builderSummaryName: { ...typography.cardTitle, color: colors.text },
   builderNav: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
   backButton: {
     paddingHorizontal: 16,
@@ -2973,12 +2882,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  backText: {
-    color: colors.muted,
-    fontWeight: '700',
-    fontSize: 11,
-    letterSpacing: 0.8,
-  },
+  backText: { ...typography.compactButton, color: colors.muted },
   reviewBox: {
     backgroundColor: colors.bgElevated,
     borderRadius: radius.lg,
@@ -2986,6 +2890,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.md,
   },
-  reviewName: { color: colors.text, fontSize: 20, fontWeight: '800' },
+  reviewName: { ...typography.cardTitle, color: colors.text },
   disabled: { opacity: 0.55 },
 });

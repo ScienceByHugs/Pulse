@@ -6,7 +6,7 @@ import { useSync } from '@/providers/SyncProvider';
 import { useAuth } from '@/providers/AuthProvider';
 import { updateQuickLog, type QuickLogPayload } from '@/lib/outbox';
 import { ProtocolDatePicker, ProtocolTimePicker } from './ProtocolPickers';
-import { colors, layout, radius } from '@/theme';
+import { colors, layout, radius, typography } from '@/theme';
 import { deviceTimeZone, zonedDateKey } from '@/domain/occurrences';
 export function SyncStatus() {
   const sync = useSync();
@@ -177,9 +177,9 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     minHeight: 44,
   },
-  text: { color: colors.text, fontSize: 15, fontWeight: '600' },
-  detail: { color: colors.muted, lineHeight: 20, marginTop: 6 },
-  warning: { color: colors.warning, lineHeight: 20, marginTop: 6 },
+  text: { ...typography.label, color: colors.text },
+  detail: { ...typography.detail, color: colors.muted, marginTop: 6 },
+  warning: { ...typography.detail, color: colors.warning, marginTop: 6 },
   card: {
     padding: 16,
     borderRadius: radius.lg,

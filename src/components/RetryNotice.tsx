@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius } from '@/theme';
+import { colors, radius, typography } from '@/theme';
 export function RetryNotice({
   title = 'Could not finish',
   message,
@@ -38,8 +38,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.accentBorder,
   },
-  title: { color: colors.text, fontSize: 15, fontWeight: '600' },
-  detail: { color: colors.muted, lineHeight: 20 },
+  title: { ...typography.label, color: colors.text },
+  detail: { ...typography.body, color: colors.muted },
   button: {
     minHeight: 44,
     justifyContent: 'center',
@@ -47,5 +47,5 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: colors.accentSoft,
   },
-  action: { color: colors.accent, fontWeight: '600' },
+  action: { ...typography.button, color: colors.accent },
 });

@@ -7,7 +7,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { readOutbox } from '@/lib/outbox';
 import { administrationLabel } from '@/domain/administration';
 import { sitesForRoute } from '@/domain/sites';
-import { colors, radius } from '@/theme';
+import { colors, radius, typography } from '@/theme';
 export function ManualLogSheet({
   item,
   onClose,
@@ -129,15 +129,15 @@ export function ManualLogSheet({
   );
 }
 const styles = StyleSheet.create({
-  title: { color: colors.text, fontSize: 24, fontWeight: '700' },
-  label: { color: colors.text, fontWeight: '600' },
-  detail: { color: colors.muted, lineHeight: 22 },
+  title: { ...typography.sectionTitle, color: colors.text },
+  label: { ...typography.label, color: colors.text },
+  detail: { ...typography.body, color: colors.muted },
   input: {
+    ...typography.input,
     color: colors.text,
     backgroundColor: colors.panel2,
     padding: 16,
     borderRadius: radius.md,
-    fontSize: 16,
   },
   button: {
     minHeight: 48,
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: colors.accent,
   },
-  action: { color: colors.bg, fontWeight: '700' },
+  action: { ...typography.button, color: colors.bg },
   siteOption: {
     minHeight: 44,
     padding: 12,

@@ -25,7 +25,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, layout, radius } from '@/theme';
+import { colors, layout, radius, typography } from '@/theme';
 import { PulseMenu } from '@/components/PulseMenu';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { SyncStatus } from '@/components/SyncStatus';
@@ -408,13 +408,21 @@ export default function TodayScreen() {
             </Text>
             <Text style={styles.cardTitle}>
               {groups.next
-                ? `${groups.next.name} · ${new Date(groups.next.scheduledFor!).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+                ? groups.next.name
                 : groups.remaining.length
                   ? `${groups.remaining.length} ${groups.remaining.length === 1 ? 'entry' : 'entries'} remaining`
                   : groups.waiting.length
                     ? 'Waiting for sync confirmation'
                     : 'Today’s entries are recorded'}
             </Text>
+            {groups.next && (
+              <Text style={styles.time}>
+                {new Date(groups.next.scheduledFor!).toLocaleTimeString([], {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })}
+              </Text>
+            )}
             <Text style={styles.detail}>
               {groups.earlier
                 ? `${groups.earlier} earlier scheduled ${groups.earlier === 1 ? 'entry has' : 'entries have'} no record yet. Log only what you actually did.`
@@ -725,12 +733,7 @@ export default function TodayScreen() {
 }
 const styles = StyleSheet.create({
   entryGroup: { gap: 10 },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 16,
-  },
+  sectionTitle: { ...typography.cardTitle, color: colors.text, marginTop: 16 },
   siteDropdown: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -749,17 +752,17 @@ const styles = StyleSheet.create({
   page: {
     padding: layout.pageInset,
     paddingBottom: layout.pageBottom,
-    gap: 12,
+    gap: 16,
   },
-  title: { color: colors.text, fontSize: 28, fontWeight: '700' },
-  eyebrow: { color: colors.muted, fontSize: 12, fontWeight: '600' },
-  detail: { color: colors.muted, fontSize: 13, lineHeight: 20, marginTop: 4 },
+  title: { ...typography.pageTitle, color: colors.text },
+  eyebrow: { ...typography.eyebrow, color: colors.muted },
+  detail: { ...typography.detail, color: colors.muted, marginTop: 4 },
   summary: {
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  summaryText: { color: colors.text, fontSize: 14 },
+  summaryText: { ...typography.body, color: colors.text },
   card: {
     padding: 16,
     borderRadius: radius.lg,
@@ -769,9 +772,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   highlight: { borderColor: colors.accent },
-  cardTitle: { color: colors.text, fontSize: 20, fontWeight: '700' },
+  cardTitle: { ...typography.cardTitle, color: colors.text },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  time: { color: colors.accent, fontSize: 13, fontWeight: '600' },
+  time: { ...typography.label, color: colors.accent },
   actions: {
     flexDirection: 'row',
     gap: 12,
@@ -786,7 +789,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
   },
-  primaryText: { color: colors.bg, fontSize: 15, fontWeight: '700' },
+  primaryText: { ...typography.button, color: colors.bg },
   secondary: {
     minHeight: 44,
     paddingHorizontal: 14,
@@ -795,8 +798,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentSoft,
     justifyContent: 'center',
   },
-  actionText: { color: colors.accent, fontSize: 14, fontWeight: '600' },
-  saved: { color: colors.success, fontSize: 13, lineHeight: 20 },
-  warning: { color: colors.warning, fontSize: 13, lineHeight: 20 },
-  metric: { color: colors.text, fontSize: 28, fontWeight: '700' },
+  actionText: { ...typography.button, color: colors.accent },
+  saved: { ...typography.detail, color: colors.success },
+  warning: { ...typography.detail, color: colors.warning },
+  metric: { ...typography.metric, color: colors.text },
 });
