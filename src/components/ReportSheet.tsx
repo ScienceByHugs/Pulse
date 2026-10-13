@@ -1,7 +1,14 @@
 import { RetryNotice } from './RetryNotice';
 import { FormSheet } from './FormSheet';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 
 import { ProtocolDatePicker } from './ProtocolPickers';
 import { shareTrackingReport } from '@/services/reports';
@@ -18,8 +25,10 @@ export function ReportSheet() {
   const [notes, setNotes] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const invalidDateRange = !start || !end || end < start;
+  const canCreate = !busy && !invalidDateRange && (logs || checkins);
   async function share() {
-    if (busy) return;
+    if (!canCreate) return;
     setSaveError('');
     setBusy(true);
     try {
@@ -46,6 +55,7 @@ export function ReportSheet() {
         style={styles.button}
         onPress={() => {
           setSaveError('');
+          setNotes(false);
           setOpen(true);
         }}
       >
@@ -70,10 +80,32 @@ export function ReportSheet() {
         <Text style={styles.detail}>
           A readable PDF, created on your device. Select the dates and
           observations you want to include. Sharing only happens when you choose
-          a destination.
+          a destination on your phone. On the web, the PDF downloads to your
+          browser.
         </Text>
-        <ProtocolDatePicker label="From" value={start} onChange={setStart} />
-        <ProtocolDatePicker label="Through" value={end} onChange={setEnd} />
+        <View pointerEvents={busy ? 'none' : 'auto'} style={{ gap: 16 }}>
+          <ProtocolDatePicker
+            label="From"
+            disabled={busy}
+            value={start}
+            onChange={(value) => {
+              if (!busy) setStart(value);
+            }}
+          />
+          <ProtocolDatePicker
+            label="Through"
+            disabled={busy}
+            value={end}
+            onChange={(value) => {
+              if (!busy) setEnd(value);
+            }}
+          />
+        </View>
+        {invalidDateRange && (
+          <Text accessibilityLiveRegion="polite" style={styles.detail}>
+            Choose a Through date on or after the From date.
+          </Text>
+        )}
         {[
           { label: 'Tracking logs', value: logs, set: setLogs },
           {
@@ -88,19 +120,29 @@ export function ReportSheet() {
             <Switch
               accessibilityLabel={row.label}
               value={row.value}
-              disabled={index === 2 && !checkins && !logs}
+              disabled={busy || (index === 2 && !checkins && !logs)}
               onValueChange={row.set}
             />
           </View>
         ))}
+        {!logs && !checkins && (
+          <Text accessibilityLiveRegion="polite" style={styles.detail}>
+            Choose tracking logs or daily observations to include.
+          </Text>
+        )}
         <Pressable
           accessibilityRole="button"
-          style={styles.button}
-          disabled={busy}
+          style={[styles.button, !canCreate && { opacity: 0.5 }]}
+          disabled={!canCreate}
+          accessibilityState={{ disabled: !canCreate, busy }}
           onPress={() => void share()}
         >
           <Text style={styles.action}>
-            {busy ? 'Creating PDF…' : 'Create & share PDF'}
+            {busy
+              ? 'Creating PDF…'
+              : Platform.OS === 'web'
+                ? 'Create & download PDF'
+                : 'Create & share PDF'}
           </Text>
         </Pressable>
       </FormSheet>
@@ -112,7 +154,7 @@ const styles = StyleSheet.create({
   page: { padding: layout.pageInset, paddingBottom: 40, gap: 16 },
   title: { color: colors.text, fontSize: 24, fontWeight: '700' },
   detail: { color: colors.muted, lineHeight: 20 },
-  text: { color: colors.text, fontSize: 15 },
+  text: { flex: 1, flexShrink: 1, color: colors.text, fontSize: 15 },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',

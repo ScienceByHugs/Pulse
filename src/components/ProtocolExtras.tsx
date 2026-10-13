@@ -20,6 +20,10 @@ import {
 import { localDateKey, formatSchedule } from '@/domain/schedule';
 import { deviceTimeZone } from '@/domain/occurrences';
 import { supplyEstimate, preferredContainer } from '@/domain/inventory';
+import {
+  containerDateKey,
+  containerDateTimestamp,
+} from '@/domain/containerDates';
 import { colors, layout, radius } from '@/theme';
 export function ScheduleExtras({
   times,
@@ -77,6 +81,7 @@ export function ScheduleExtras({
           </Text>
         </View>
         <Switch
+          accessibilityLabel="Keep my home time zone"
           value={zone !== 'local'}
           onValueChange={(value) => onZone(value ? deviceTimeZone() : 'local')}
         />
@@ -104,7 +109,7 @@ export function DuplicateProtocolSheet({
   const [end, setEnd] = useState('');
   const [busy, setBusy] = useState(false);
   async function save() {
-    if (!source) return;
+    if (!source || busy) return;
     setBusy(true);
     try {
       const created = await duplicateProtocol(
@@ -143,6 +148,7 @@ export function DuplicateProtocolSheet({
         accessibilityLabel="Copied protocol name"
         value={name}
         onChangeText={setName}
+        editable={!busy}
         maxLength={100}
         style={styles.input}
         placeholder={source ? `${source.name} copy` : 'Protocol name'}
@@ -150,11 +156,13 @@ export function DuplicateProtocolSheet({
       />
       <ProtocolDatePicker
         label="New start date"
+        disabled={busy}
         value={start}
         onChange={setStart}
       />
       <ProtocolDatePicker
         label="New end date (optional)"
+        disabled={busy}
         value={end}
         onChange={setEnd}
       />
@@ -208,24 +216,29 @@ export function InventoryDetails({
         new Date(container.user_use_by_at) <= new Date()),
   );
   function edit() {
-    setOpened(container.opened_at?.slice(0, 10) ?? '');
-    setExpires(container.expires_at?.slice(0, 10) ?? '');
-    setUseBy(container.user_use_by_at?.slice(0, 10) ?? '');
+    setOpened(containerDateKey(container.opened_at));
+    setExpires(containerDateKey(container.expires_at));
+    setUseBy(containerDateKey(container.user_use_by_at));
     setLot(container.lot_number ?? '');
     setActive(container.is_active);
     setOpen(true);
   }
   async function save() {
+    if (busy) return;
     setBusy(true);
     try {
       await updateInventoryDates(container.id, {
-        opened_at: opened ? new Date(opened + 'T00:00:00').toISOString() : null,
-        expires_at: expires
-          ? new Date(expires + 'T23:59:59').toISOString()
-          : null,
-        user_use_by_at: useBy
-          ? new Date(useBy + 'T23:59:59').toISOString()
-          : null,
+        opened_at: containerDateTimestamp(opened, 'start', container.opened_at),
+        expires_at: containerDateTimestamp(
+          expires,
+          'end',
+          container.expires_at,
+        ),
+        user_use_by_at: containerDateTimestamp(
+          useBy,
+          'end',
+          container.user_use_by_at,
+        ),
         lot_number: lot.trim() || null,
         is_active: active,
       });
@@ -255,12 +268,17 @@ export function InventoryDetails({
       </Text>
       <Text style={styles.detail}>
         {container.opened_at
-          ? `Opened ${container.opened_at.slice(0, 10)} · `
+          ? `Opened ${containerDateKey(container.opened_at)} · `
           : ''}
         {container.expires_at
-          ? `Expires ${container.expires_at.slice(0, 10)}`
+          ? `Expires ${containerDateKey(container.expires_at)}`
           : 'No expiry entered'}
       </Text>
+      {container.user_use_by_at && (
+        <Text style={styles.detail}>
+          Recorded use-by {containerDateKey(container.user_use_by_at)}
+        </Text>
+      )}
       <Pressable
         accessibilityRole="button"
         style={styles.button}
@@ -279,25 +297,33 @@ export function InventoryDetails({
           Enter dates from your own records or packaging. Pulse does not
           calculate product stability or recommend a use-by date.
         </Text>
+        <Text style={styles.detail}>
+          Dates use this device’s time zone. New expiry and recorded use-by
+          dates include the whole selected day.
+        </Text>
         <ProtocolDatePicker
           label="Opened date (optional)"
           value={opened}
           onChange={setOpened}
+          disabled={busy}
         />
         <ProtocolDatePicker
           label="Expiry date (optional)"
           value={expires}
           onChange={setExpires}
+          disabled={busy}
         />
         <ProtocolDatePicker
           label="Your recorded use-by date (optional)"
           value={useBy}
           onChange={setUseBy}
+          disabled={busy}
         />
         <TextInput
           accessibilityLabel="Lot number, optional"
           value={lot}
           onChangeText={setLot}
+          editable={!busy}
           maxLength={100}
           style={styles.input}
           placeholder="Lot number (optional)"
@@ -305,7 +331,12 @@ export function InventoryDetails({
         />
         <View style={styles.row}>
           <Text style={styles.text}>Use this container for logging</Text>
-          <Switch value={active} onValueChange={setActive} />
+          <Switch
+            accessibilityLabel="Use this container for logging"
+            value={active}
+            onValueChange={setActive}
+            disabled={busy}
+          />
         </View>
         <Pressable
           accessibilityRole="button"

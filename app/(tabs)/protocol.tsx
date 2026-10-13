@@ -11,6 +11,7 @@ import {
   InventoryEstimate,
 } from '@/components/ProtocolExtras';
 import { occurrencesForDay } from '@/domain/occurrences';
+import { protocolDraftSchedule } from '@/domain/protocolDraftSchedule';
 import { rescheduleReminders } from '@/lib/reminders';
 import { PageHeader } from '@/components/PageHeader';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
@@ -579,31 +580,17 @@ export default function ProtocolScreen() {
   }
 
   function buildSchedule() {
-    if (scheduleType === 'as_needed') return { type: 'as_needed' };
-    const startDate = localDateKey();
-    const extra = {
-      times: [time, ...additionalTimes].filter(Boolean),
-      timeZone,
-    };
-    if (scheduleType === 'daily') return { type: 'daily', time, ...extra };
-    if (scheduleType === 'weekdays')
-      return { type: 'weekdays', time, days, ...extra };
-    if (scheduleType === 'interval')
-      return {
-        type: 'interval',
-        time,
-        ...extra,
-        everyDays: Math.max(1, Number(everyDays) || 1),
-        startDate,
-      };
-    return {
-      type: 'cycle',
+    return protocolDraftSchedule({
+      type: scheduleType,
       time,
-      ...extra,
-      onDays: Math.max(1, Number(onDays) || 1),
-      offDays: Math.max(0, Number(offDays) || 0),
-      startDate,
-    };
+      additionalTimes,
+      timeZone,
+      days,
+      everyDays,
+      onDays,
+      offDays,
+      startDate: localDateKey(),
+    });
   }
 
   async function beginSubstance() {
@@ -994,7 +981,8 @@ export default function ProtocolScreen() {
                 <Text style={styles.cardTitle}>{activeProtocol.name}</Text>
                 <Text style={styles.cardDetail}>{activeProtocol.status}</Text>
                 <Text style={styles.cardDetail}>
-                  {visibleItems.length} tracked items
+                  {visibleItems.length} tracked{' '}
+                  {visibleItems.length === 1 ? 'item' : 'items'}
                 </Text>
                 <View style={styles.protocolDateBand}>
                   <View style={styles.protocolDateColumn}>
@@ -1391,6 +1379,7 @@ export default function ProtocolScreen() {
                         <TextInput
                           style={[styles.input, styles.flex]}
                           placeholder="Amount per entry"
+                          accessibilityLabel="Amount per recorded entry"
                           placeholderTextColor={colors.muted}
                           keyboardType="decimal-pad"
                           value={dose}
@@ -1399,6 +1388,7 @@ export default function ProtocolScreen() {
                         <TextInput
                           style={[styles.input, styles.flex]}
                           placeholder="Unit"
+                          accessibilityLabel="Amount unit"
                           placeholderTextColor={colors.muted}
                           value={unit}
                           onChangeText={setUnit}
@@ -1604,11 +1594,16 @@ export default function ProtocolScreen() {
                           accessibilityRole="button"
                           style={[styles.primary, styles.flex]}
                           onPress={() => {
-                            if (
-                              scheduleType === 'weekdays' &&
-                              days.length === 0
-                            )
-                              return Alert.alert('Choose at least one day');
+                            try {
+                              buildSchedule();
+                            } catch (error) {
+                              return Alert.alert(
+                                'Check your schedule',
+                                error instanceof Error
+                                  ? error.message
+                                  : 'Review the schedule you entered.',
+                              );
+                            }
                             setBuilderStep(3);
                           }}
                         >

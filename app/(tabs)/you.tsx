@@ -3,7 +3,7 @@ import { reminderHealthText } from '@/domain/reminderHealth';
 import { getReminderHealth } from '@/lib/reminders';
 import { RetryNotice } from '@/components/RetryNotice';
 import { Linking } from 'react-native';
-import { SheetHeader } from '@/components/SheetHeader';
+import { FormSheet } from '@/components/FormSheet';
 import * as ImagePicker from 'expo-image-picker';
 import {
   getProfilePhotoUrl,
@@ -15,13 +15,11 @@ import { isValidEmail } from '@/domain/validation';
 import { PulseBrand } from '@/components/PulseBrand';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import {
   Alert,
   Image,
-  KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -43,12 +41,13 @@ import {
   getLowStockAlertsEnabled,
   setLowStockAlertsEnabled,
   setBiometricLockEnabled,
-  setPrivateNotifications,
 } from '@/lib/privacy';
 import {
   disableReminders,
+  clearPendingReminders,
   enableReminders,
-  rescheduleReminders,
+  setReminderPrivacy,
+  ReminderPrivacyUpdateError,
   sendTestNotification,
 } from '@/lib/reminders';
 import { listTodayItems } from '@/services/pulse';
@@ -69,11 +68,18 @@ export default function YouScreen() {
   const [reminders, setReminders] = useState(false);
   const [lowStockAlerts, setLowStockAlerts] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [refreshingHealth, setRefreshingHealth] = useState(false);
+  const healthRequest = useRef(false);
   const [notificationHealth, setNotificationHealth] = useState<Awaited<
     ReturnType<typeof getReminderHealth>
   > | null>(null);
   const [healthError, setHealthError] = useState('');
   async function refreshNotificationHealth() {
+    if (healthRequest.current) return;
+    healthRequest.current = true;
+    setRefreshingHealth(true);
     setHealthError('');
     try {
       setNotificationHealth(await getReminderHealth());
@@ -81,6 +87,9 @@ export default function YouScreen() {
       setHealthError(
         'Could not read notification status. Retry while Pulse is open.',
       );
+    } finally {
+      healthRequest.current = false;
+      setRefreshingHealth(false);
     }
   }
   const [displayName, setDisplayName] = useState(() =>
@@ -130,7 +139,7 @@ export default function YouScreen() {
   }
 
   async function choosePhoto() {
-    if (photoBusy) return;
+    if (photoBusy || savingProfile || accountBusy || busy) return;
     setPhotoBusy(true);
     setPhotoError('');
     try {
@@ -162,6 +171,7 @@ export default function YouScreen() {
   }
 
   function confirmRemovePhoto() {
+    if (photoBusy || savingProfile || accountBusy || busy) return;
     Alert.alert('Remove profile photo?', 'Your initials will appear instead.', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -194,6 +204,7 @@ export default function YouScreen() {
   }
 
   const load = useCallback(async () => {
+    setLoadError('');
     void refreshNotificationHealth();
     const [lock, privateMode, reminderMode, lowStockMode] = await Promise.all([
       getBiometricLockEnabled(),
@@ -207,7 +218,9 @@ export default function YouScreen() {
     setLowStockAlerts(lowStockMode);
     const {
       data: { user },
+      error,
     } = await supabase.auth.getUser();
+    if (error) throw error;
     const currentName = String(user?.user_metadata?.full_name ?? '');
     setDisplayName(currentName);
     setSavedName(currentName);
@@ -229,7 +242,11 @@ export default function YouScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void load().catch(() => undefined);
+      void load().catch(() =>
+        setLoadError(
+          'Could not refresh your account. Your saved profile remains visible. Check your connection and retry.',
+        ),
+      );
       // Keep private photo links fresh while this screen remains open.
       const timer = setInterval(() => {
         if (session?.user.id)
@@ -245,6 +262,7 @@ export default function YouScreen() {
   );
 
   async function saveProfile() {
+    if (savingProfile || photoBusy || accountBusy || busy) return;
     const name = displayName.trim();
     if (!name || name.length > 80)
       return Alert.alert(
@@ -348,33 +366,46 @@ export default function YouScreen() {
   }
 
   async function toggleLock(value: boolean) {
-    if (!value) {
-      await setBiometricLockEnabled(false);
-      setBiometricLock(false);
-      return;
-    }
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (!value) {
+        await setBiometricLockEnabled(false);
+        setBiometricLock(false);
+        return;
+      }
 
-    const hardware = await LocalAuthentication.hasHardwareAsync();
-    const enrolled = hardware && (await LocalAuthentication.isEnrolledAsync());
-    if (!enrolled) {
+      const hardware = await LocalAuthentication.hasHardwareAsync();
+      const enrolled =
+        hardware && (await LocalAuthentication.isEnrolledAsync());
+      if (!enrolled) {
+        Alert.alert(
+          'Biometrics unavailable',
+          'Set up Face ID, Touch ID, or device biometrics first.',
+        );
+        return;
+      }
+
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Enable Pulse privacy lock',
+        disableDeviceFallback: false,
+      });
+      if (!result.success) return;
+
+      await setBiometricLockEnabled(true);
+      setBiometricLock(true);
+    } catch (error) {
       Alert.alert(
-        'Biometrics unavailable',
-        'Set up Face ID, Touch ID, or device biometrics first.',
+        'Could not update privacy lock',
+        error instanceof Error ? error.message : 'Please try again.',
       );
-      return;
+    } finally {
+      setBusy(false);
     }
-
-    const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'Enable Pulse privacy lock',
-      disableDeviceFallback: false,
-    });
-    if (!result.success) return;
-
-    await setBiometricLockEnabled(true);
-    setBiometricLock(true);
   }
 
   async function toggleReminders(value: boolean) {
+    if (busy) return;
     setBusy(true);
     try {
       if (!value) {
@@ -397,6 +428,14 @@ export default function YouScreen() {
         error instanceof Error ? error.message : 'Unknown error',
       );
     } finally {
+      try {
+        setReminders(await getRemindersEnabled());
+      } catch {
+        setHealthError(
+          'Could not read your saved reminder preference. Refresh the status before changing it again.',
+        );
+      }
+      await refreshNotificationHealth();
       setBusy(false);
     }
   }
@@ -409,8 +448,8 @@ export default function YouScreen() {
       Alert.alert(
         scheduled ? 'Test scheduled' : 'Notifications are disabled',
         scheduled
-          ? 'A test notification is scheduled for 8 seconds from now. Lock the phone or leave Pulse to check the banner. iOS Focus settings may silence it.'
-          : 'Enable notifications for Pulse in iPhone Settings → Notifications, then try again.',
+          ? 'A test notification is scheduled for 8 seconds from now. Lock the phone or leave Pulse to check the banner. Focus or Do Not Disturb settings may silence it.'
+          : 'Enable notifications for Pulse in device settings, then try again.',
       );
     } catch (error) {
       Alert.alert(
@@ -418,6 +457,7 @@ export default function YouScreen() {
         error instanceof Error ? error.message : 'Unknown error',
       );
     } finally {
+      await refreshNotificationHealth();
       setBusy(false);
     }
   }
@@ -446,20 +486,45 @@ export default function YouScreen() {
         error instanceof Error ? error.message : 'Unknown error',
       );
     } finally {
+      await refreshNotificationHealth();
       setBusy(false);
     }
   }
 
   async function togglePrivateNotifications(value: boolean) {
-    setPrivateNotificationsState(value);
-    await setPrivateNotifications(value);
-    if (reminders) {
-      const items = await listTodayItems();
-      await rescheduleReminders(items);
+    if (busy) return;
+    setBusy(true);
+    try {
+      await setReminderPrivacy(value, () => listTodayItems());
+      setPrivateNotificationsState(value);
+    } catch (error) {
+      const saved =
+        error instanceof ReminderPrivacyUpdateError && error.preferenceSaved;
+      try {
+        setPrivateNotificationsState(await getPrivateNotifications());
+      } catch {
+        if (saved) setPrivateNotificationsState(value);
+      }
+      Alert.alert(
+        saved
+          ? 'Notification text saved · reminders need attention'
+          : 'Could not save notification privacy',
+        saved
+          ? error instanceof ReminderPrivacyUpdateError && error.pendingCleared
+            ? 'Your preference was saved and old pending alerts were cleared, but your routine could not refresh. Reconnect, then turn protocol reminders off and on to restore them.'
+            : 'Your preference was saved, but scheduled reminders could not be fully refreshed. Reconnect, then turn protocol reminders off and on to restore them.'
+          : error instanceof Error
+            ? error.message
+            : 'Please try again.',
+      );
+    } finally {
+      await refreshNotificationHealth();
+      setBusy(false);
     }
   }
 
   async function exportData() {
+    if (busy || photoBusy || savingProfile || accountBusy) return;
     setBusy(true);
     try {
       await exportPulseData();
@@ -474,6 +539,7 @@ export default function YouScreen() {
   }
 
   function confirmDeleteAccount() {
+    if (busy || photoBusy || savingProfile || accountBusy) return;
     Alert.alert(
       'Delete Pulse account?',
       'This permanently deletes your Pulse account and synced protocol, inventory, and log data. This cannot be undone. Shared exports and phone calendar copies remain outside Pulse. Disconnect your calendar first to remove its Pulse entries.',
@@ -505,8 +571,31 @@ export default function YouScreen() {
   }
 
   async function signOut() {
-    const { error } = await supabase.auth.signOut();
-    if (error) Alert.alert('Could not sign out', error.message);
+    if (busy || photoBusy || savingProfile || accountBusy) return;
+    setBusy(true);
+    setSigningOut(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      try {
+        await clearPendingReminders();
+      } catch {
+        Alert.alert(
+          'Signed out · notification cleanup incomplete',
+          'Your account is signed out, but some device notifications could not be cleared. Disable Pulse notifications in device settings if you need to stop them immediately.',
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        'Could not sign out',
+        error instanceof Error
+          ? error.message
+          : 'Check your connection and try again.',
+      );
+    } finally {
+      setSigningOut(false);
+      setBusy(false);
+    }
   }
 
   return (
@@ -526,13 +615,25 @@ export default function YouScreen() {
           title="Your space"
           description="Make Pulse feel like you."
         />
+        {!!loadError && (
+          <RetryNotice
+            message={loadError}
+            onRetry={() =>
+              void load().catch(() =>
+                setLoadError(
+                  'Could not refresh your account. Check your connection and retry.',
+                ),
+              )
+            }
+          />
+        )}
         <View style={styles.profileCard}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={
               photoUrl ? 'Change profile photo' : 'Add profile photo'
             }
-            disabled={photoBusy}
+            disabled={photoBusy || busy || savingProfile || accountBusy}
             onPress={() => void choosePhoto()}
             style={styles.avatar}
           >
@@ -562,6 +663,7 @@ export default function YouScreen() {
           )}
           <Pressable
             accessibilityRole="button"
+            disabled={busy || photoBusy || savingProfile || accountBusy}
             onPress={openProfile}
             style={styles.dataButton}
           >
@@ -590,16 +692,25 @@ export default function YouScreen() {
         <View style={styles.card}>
           <SettingRow
             title="Biometric app lock"
-            detail="Require Face ID, Touch ID, or device biometrics when Pulse opens."
+            detail={
+              Platform.OS === 'web'
+                ? 'Available in the iPhone and Android app.'
+                : 'Require Face ID, Touch ID, or device biometrics when Pulse opens.'
+            }
             value={biometricLock}
+            disabled={busy || Platform.OS === 'web'}
             onValueChange={(value) => void toggleLock(value)}
           />
           <View style={styles.divider} />
           <SettingRow
             title="Protocol reminders"
-            detail="Schedule local reminders from your active protocol."
+            detail={
+              Platform.OS === 'web'
+                ? 'Local reminders are available in the iPhone and Android app.'
+                : 'Schedule local reminders from your active protocol.'
+            }
             value={reminders}
-            disabled={busy}
+            disabled={busy || Platform.OS === 'web'}
             onValueChange={(value) => void toggleReminders(value)}
           />
           <View style={styles.divider} />
@@ -607,6 +718,7 @@ export default function YouScreen() {
             title="Private notification text"
             detail="Hide item names and amounts from notification previews."
             value={privateNotifications}
+            disabled={busy || Platform.OS === 'web'}
             onValueChange={(value) => void togglePrivateNotifications(value)}
           />
           <View style={styles.divider} />
@@ -614,7 +726,7 @@ export default function YouScreen() {
             title="Low-stock supply alerts"
             detail="Opt in to discreet alerts when any active container reaches your configured threshold. Names and amounts stay private."
             value={lowStockAlerts}
-            disabled={busy}
+            disabled={busy || Platform.OS === 'web'}
             onValueChange={(value) => void toggleLowStockAlerts(value)}
           />
         </View>
@@ -622,7 +734,7 @@ export default function YouScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Send test notification"
-          disabled={busy}
+          disabled={busy || Platform.OS === 'web'}
           style={styles.dataButton}
           onPress={() => void testNotification()}
         >
@@ -667,10 +779,16 @@ export default function YouScreen() {
           )}
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{ busy: refreshingHealth }}
+            disabled={refreshingHealth || busy}
             style={styles.dataButton}
             onPress={() => void refreshNotificationHealth()}
           >
-            <Text style={styles.dataButtonText}>Refresh reminder status</Text>
+            <Text style={styles.dataButtonText}>
+              {refreshingHealth
+                ? 'Checking reminder status…'
+                : 'Refresh reminder status'}
+            </Text>
           </Pressable>
           {Platform.OS !== 'web' && (
             <Pressable
@@ -691,6 +809,7 @@ export default function YouScreen() {
         <Text style={styles.sectionLabel}>Account</Text>
         <Pressable
           accessibilityRole="button"
+          disabled={busy || photoBusy || savingProfile || accountBusy}
           onPress={() => setAccountSheet('security')}
           style={styles.accountRow}
         >
@@ -708,15 +827,17 @@ export default function YouScreen() {
             permanently delete your account and synced data.
           </Text>
           <Pressable
+            accessibilityRole="button"
             style={styles.dataButton}
-            disabled={busy}
+            disabled={busy || photoBusy || savingProfile || accountBusy}
             onPress={() => void exportData()}
           >
             <Text style={styles.dataButtonText}>Export my data</Text>
           </Pressable>
           <Pressable
+            accessibilityRole="button"
             style={styles.deleteButton}
-            disabled={busy}
+            disabled={busy || photoBusy || savingProfile || accountBusy}
             onPress={confirmDeleteAccount}
           >
             <Text style={styles.deleteButtonText}>Delete account & data</Text>
@@ -731,208 +852,209 @@ export default function YouScreen() {
           <Text style={styles.aboutText}>Science By Hugs</Text>
         </View>
 
-        <Pressable style={styles.signOut} onPress={() => void signOut()}>
-          <Text style={styles.signOutText}>Sign out</Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ busy: signingOut }}
+          disabled={busy || photoBusy || savingProfile || accountBusy}
+          style={styles.signOut}
+          onPress={() => void signOut()}
+        >
+          <Text style={styles.signOutText}>
+            {signingOut ? 'Signing out…' : 'Sign out'}
+          </Text>
         </Pressable>
       </ScrollView>
-      <Modal
+      <FormSheet
         visible={accountSheet !== null}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={closeSheet}
+        contentKey={accountSheet ?? 'closed'}
+        label={
+          accountSheet === 'profile' ? 'Edit profile' : 'Sign-in & security'
+        }
+        onClose={closeSheet}
+        busy={savingProfile || photoBusy || accountBusy}
       >
-        <SafeAreaView style={styles.safe}>
-          <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          >
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.sheetContent}
-            >
-              <SheetHeader
-                label={
-                  accountSheet === 'profile'
-                    ? 'Edit profile'
-                    : 'Sign-in & security'
-                }
-                onClose={closeSheet}
-                disabled={savingProfile || photoBusy || accountBusy}
-              />
-              {accountSheet === 'profile' ? (
-                <View style={styles.profileEditor}>
-                  <Text style={styles.cardTitle}>Your profile</Text>
-                  <View style={styles.sheetAvatar}>
-                    {photoUrl && !photoFailed ? (
-                      <Image
-                        source={{ uri: photoUrl }}
-                        style={styles.avatarImage}
-                        onError={() => setPhotoFailed(true)}
-                      />
-                    ) : (
-                      <Text style={styles.avatarText}>{initials}</Text>
-                    )}
-                  </View>
-                  <View style={styles.photoActions}>
-                    <Pressable
-                      accessibilityRole="button"
-                      disabled={photoBusy}
-                      style={[
-                        styles.dataButton,
-                        styles.photoAction,
-                        photoBusy && styles.profileSaveDisabled,
-                      ]}
-                      onPress={() => void choosePhoto()}
-                    >
-                      <Text style={styles.dataButtonText}>
-                        {photoBusy
-                          ? 'Updating…'
-                          : photoUrl
-                            ? 'Change photo'
-                            : 'Add photo'}
-                      </Text>
-                    </Pressable>
-                    {photoUrl && (
-                      <Pressable
-                        accessibilityRole="button"
-                        disabled={photoBusy}
-                        style={[styles.dataButton, styles.photoAction]}
-                        onPress={confirmRemovePhoto}
-                      >
-                        <Text style={styles.dataButtonText}>Remove photo</Text>
-                      </Pressable>
-                    )}
-                  </View>
-                  <Text style={styles.detail}>
-                    Your photo is visible only in your account.
-                  </Text>
-                  <Text style={styles.detail}>
-                    Set the name and optional contact number shown in your
-                    private profile. This phone number is not verified for
-                    sign-in or text messages.
-                  </Text>
-                  <TextInput
-                    accessibilityLabel="Display name"
-                    autoCapitalize="words"
-                    autoCorrect={false}
-                    maxLength={80}
-                    style={styles.profileInput}
-                    placeholder="Your name"
-                    placeholderTextColor={colors.muted}
-                    value={displayName}
-                    onChangeText={setDisplayName}
-                  />
-                  <TextInput
-                    accessibilityLabel="Contact phone number, optional"
-                    keyboardType="phone-pad"
-                    autoComplete="tel"
-                    maxLength={30}
-                    style={styles.profileInput}
-                    placeholder="Contact phone (optional)"
-                    placeholderTextColor={colors.muted}
-                    value={contactPhone}
-                    onChangeText={setContactPhone}
-                  />
-                  <Pressable
-                    accessibilityRole="button"
-                    style={[
-                      styles.dataButton,
-                      (savingProfile ||
-                        photoBusy ||
-                        (displayName.trim() === savedName &&
-                          contactPhone.trim() === savedPhone)) &&
-                        styles.profileSaveDisabled,
-                    ]}
-                    disabled={
-                      savingProfile ||
-                      photoBusy ||
-                      (displayName.trim() === savedName &&
-                        contactPhone.trim() === savedPhone)
-                    }
-                    onPress={() => void saveProfile()}
-                  >
-                    <Text style={styles.dataButtonText}>
-                      {savingProfile ? 'Saving…' : 'Save profile'}
-                    </Text>
-                  </Pressable>
-                </View>
+        {accountSheet === 'profile' ? (
+          <View style={styles.profileEditor}>
+            <Text style={styles.cardTitle}>Your profile</Text>
+            <View style={styles.sheetAvatar}>
+              {photoUrl && !photoFailed ? (
+                <Image
+                  source={{ uri: photoUrl }}
+                  style={styles.avatarImage}
+                  onError={() => setPhotoFailed(true)}
+                />
               ) : (
-                <View style={styles.profileEditor}>
-                  <Text style={styles.cardTitle}>Change email</Text>
-                  <Text style={styles.detail}>
-                    Current sign-in email: {session?.user.email ?? '—'}. A new
-                    address may require confirmation through email.
-                  </Text>
-                  <TextInput
-                    accessibilityLabel="New account email"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    autoComplete="email"
-                    style={styles.profileInput}
-                    placeholder="New email address"
-                    placeholderTextColor={colors.muted}
-                    value={newEmail}
-                    onChangeText={setNewEmail}
-                  />
-                  <Pressable
-                    accessibilityRole="button"
-                    disabled={accountBusy || !newEmail.trim()}
-                    style={[
-                      styles.dataButton,
-                      (accountBusy || !newEmail.trim()) &&
-                        styles.profileSaveDisabled,
-                    ]}
-                    onPress={() => void requestEmailChange()}
-                  >
-                    <Text style={styles.dataButtonText}>
-                      Request email change
-                    </Text>
-                  </Pressable>
-                  <View style={styles.divider} />
-                  <Text style={styles.cardTitle}>Change password</Text>
-                  <Text style={styles.detail}>
-                    Choose a new password with at least 8 characters. You may be
-                    asked to verify your identity.
-                  </Text>
-                  <TextInput
-                    accessibilityLabel="New account password"
-                    secureTextEntry
-                    autoComplete="new-password"
-                    style={styles.profileInput}
-                    placeholder="New password"
-                    placeholderTextColor={colors.muted}
-                    value={newPassword}
-                    onChangeText={setNewPassword}
-                  />
-                  <TextInput
-                    accessibilityLabel="Confirm account password"
-                    secureTextEntry
-                    autoComplete="new-password"
-                    style={styles.profileInput}
-                    placeholder="Confirm new password"
-                    placeholderTextColor={colors.muted}
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                  />
-                  <Pressable
-                    accessibilityRole="button"
-                    disabled={accountBusy || !newPassword || !confirmPassword}
-                    style={[
-                      styles.dataButton,
-                      (accountBusy || !newPassword || !confirmPassword) &&
-                        styles.profileSaveDisabled,
-                    ]}
-                    onPress={() => void changePassword()}
-                  >
-                    <Text style={styles.dataButtonText}>Update password</Text>
-                  </Pressable>
-                </View>
+                <Text style={styles.avatarText}>{initials}</Text>
               )}
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </Modal>
+            </View>
+            <View style={styles.photoActions}>
+              <Pressable
+                accessibilityRole="button"
+                disabled={photoBusy || savingProfile}
+                style={[
+                  styles.dataButton,
+                  styles.photoAction,
+                  photoBusy && styles.profileSaveDisabled,
+                ]}
+                onPress={() => void choosePhoto()}
+              >
+                <Text style={styles.dataButtonText}>
+                  {photoBusy
+                    ? 'Updating…'
+                    : photoUrl
+                      ? 'Change photo'
+                      : 'Add photo'}
+                </Text>
+              </Pressable>
+              {photoUrl && (
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={photoBusy || savingProfile}
+                  style={[styles.dataButton, styles.photoAction]}
+                  onPress={confirmRemovePhoto}
+                >
+                  <Text style={styles.dataButtonText}>Remove photo</Text>
+                </Pressable>
+              )}
+            </View>
+            <Text style={styles.detail}>
+              Your photo is visible only in your account.
+            </Text>
+            <Text style={styles.detail}>
+              Set the name and optional contact number shown in your private
+              profile. This phone number is not verified for sign-in or text
+              messages.
+            </Text>
+            <Text style={styles.fieldLabel}>Display name</Text>
+            <TextInput
+              accessibilityLabel="Display name"
+              autoCapitalize="words"
+              autoCorrect={false}
+              maxLength={80}
+              style={styles.profileInput}
+              placeholder="Your name"
+              placeholderTextColor={colors.muted}
+              value={displayName}
+              onChangeText={setDisplayName}
+              editable={!savingProfile && !photoBusy}
+            />
+            <Text style={styles.fieldLabel}>Contact phone · optional</Text>
+            <TextInput
+              accessibilityLabel="Contact phone number, optional"
+              keyboardType="phone-pad"
+              autoComplete="tel"
+              maxLength={30}
+              style={styles.profileInput}
+              placeholder="Contact phone (optional)"
+              placeholderTextColor={colors.muted}
+              value={contactPhone}
+              onChangeText={setContactPhone}
+              editable={!savingProfile && !photoBusy}
+            />
+            <Pressable
+              accessibilityRole="button"
+              style={[
+                styles.dataButton,
+                (savingProfile ||
+                  photoBusy ||
+                  (displayName.trim() === savedName &&
+                    contactPhone.trim() === savedPhone)) &&
+                  styles.profileSaveDisabled,
+              ]}
+              disabled={
+                savingProfile ||
+                photoBusy ||
+                (displayName.trim() === savedName &&
+                  contactPhone.trim() === savedPhone)
+              }
+              onPress={() => void saveProfile()}
+            >
+              <Text style={styles.dataButtonText}>
+                {savingProfile ? 'Saving…' : 'Save profile'}
+              </Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.profileEditor}>
+            <Text style={styles.cardTitle}>Change email</Text>
+            <Text style={styles.detail}>
+              Current sign-in email: {session?.user.email ?? '—'}. A new address
+              may require confirmation through email.
+            </Text>
+            <Text style={styles.fieldLabel}>New email address</Text>
+            <TextInput
+              accessibilityLabel="New account email"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              style={styles.profileInput}
+              placeholder="New email address"
+              placeholderTextColor={colors.muted}
+              value={newEmail}
+              onChangeText={setNewEmail}
+              editable={!accountBusy}
+            />
+            <Pressable
+              accessibilityRole="button"
+              disabled={accountBusy || !newEmail.trim()}
+              style={[
+                styles.dataButton,
+                (accountBusy || !newEmail.trim()) && styles.profileSaveDisabled,
+              ]}
+              onPress={() => void requestEmailChange()}
+            >
+              <Text style={styles.dataButtonText}>Request email change</Text>
+            </Pressable>
+            <View style={styles.divider} />
+            <Text style={styles.cardTitle}>Change password</Text>
+            <Text style={styles.detail}>
+              Choose a new password with at least 8 characters. You may be asked
+              to verify your identity.
+            </Text>
+            <Text style={styles.fieldLabel}>New password</Text>
+            <TextInput
+              accessibilityLabel="New account password"
+              secureTextEntry
+              autoComplete="new-password"
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={styles.profileInput}
+              placeholder="New password"
+              placeholderTextColor={colors.muted}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              editable={!accountBusy}
+            />
+            <Text style={styles.fieldLabel}>Confirm new password</Text>
+            <TextInput
+              accessibilityLabel="Confirm account password"
+              secureTextEntry
+              autoComplete="new-password"
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={styles.profileInput}
+              placeholder="Confirm new password"
+              placeholderTextColor={colors.muted}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              editable={!accountBusy}
+            />
+            <Pressable
+              accessibilityRole="button"
+              disabled={accountBusy || !newPassword || !confirmPassword}
+              style={[
+                styles.dataButton,
+                (accountBusy || !newPassword || !confirmPassword) &&
+                  styles.profileSaveDisabled,
+              ]}
+              onPress={() => void changePassword()}
+            >
+              <Text style={styles.dataButtonText}>Update password</Text>
+            </Pressable>
+          </View>
+        )}
+      </FormSheet>
     </SafeAreaView>
   );
 }
@@ -992,7 +1114,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
   },
-  sheetContent: { padding: layout.pageInset, paddingBottom: spacing.xxl },
+  fieldLabel: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: spacing.md,
+  },
   photoActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   photoAction: { paddingHorizontal: spacing.md, minHeight: 44 },
   accountRow: {
@@ -1019,7 +1146,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   profileInput: {
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,

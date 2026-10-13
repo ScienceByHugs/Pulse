@@ -1,6 +1,6 @@
 import { RetryNotice } from './RetryNotice';
 import { FormSheet } from './FormSheet';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
   Alert,
@@ -19,8 +19,14 @@ import {
   type CheckIn,
 } from '@/services/checkins';
 import { localDateKey } from '@/domain/schedule';
+import { useAuth } from '@/providers/AuthProvider';
 import { colors, layout, radius } from '@/theme';
 export function CheckInCard() {
+  const { session } = useAuth();
+  const ownerId = session?.user.id;
+  const owner = useRef(ownerId);
+  owner.current = ownerId;
+  const request = useRef(0);
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(localDateKey());
   const [sleep, setSleep] = useState('');
@@ -29,22 +35,55 @@ export function CheckInCard() {
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [retrySave, setRetrySave] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [dirty, setDirty] = useState(false);
   const [rows, setRows] = useState<CheckIn[]>([]);
   const load = useCallback(async () => {
+    const current = ++request.current;
+    setLoading(true);
+    setLoadError('');
     try {
-      setRows(await listCheckIns());
+      if (!ownerId) throw new Error('Sign in to load your check-ins.');
+      const next = await listCheckIns(undefined, undefined, ownerId);
+      if (owner.current !== ownerId || request.current !== current) return null;
+      setRows(next);
+      return next;
     } catch {
-      /* Check-in availability does not block Today. */
+      if (owner.current === ownerId && request.current === current)
+        setLoadError(
+          'Your check-ins could not load. Retry before editing, so saved observations are preserved.',
+        );
+      return null;
+    } finally {
+      if (owner.current === ownerId && request.current === current)
+        setLoading(false);
     }
-  }, []);
+  }, [ownerId]);
+  useEffect(() => {
+    setOpen(false);
+    setRows([]);
+    setDirty(false);
+    setSleep('');
+    setEnergy(null);
+    setMood(null);
+    setNotes('');
+  }, [ownerId]);
   useFocusEffect(
     useCallback(() => {
       void load();
+      return () => {
+        request.current += 1;
+        setOpen(false);
+        setLoading(false);
+      };
     }, [load]),
   );
-  function edit(day = localDateKey()) {
+  function edit(day = localDateKey(), available = rows) {
     setSaveError('');
-    const entry = rows.find((r) => r.local_date === day);
+    setRetrySave(false);
+    const entry = available.find((r) => r.local_date === day);
     setDate(day);
     setSleep(
       entry?.sleep === null || entry?.sleep === undefined
@@ -54,22 +93,44 @@ export function CheckInCard() {
     setEnergy(entry?.energy ?? null);
     setMood(entry?.mood ?? null);
     setNotes(entry?.notes ?? '');
+    setDirty(false);
+  }
+  async function openForDate(day: string) {
+    if (busy || loading) return;
+    if (dirty && open && day !== date) {
+      setRetrySave(false);
+      setSaveError(
+        'Save or discard your changes before choosing another date.',
+      );
+      return;
+    }
+    const next = await load();
+    if (!next || owner.current !== ownerId) return;
+    edit(day, next);
+    setOpen(true);
   }
   async function save() {
-    if (busy) return;
+    if (busy || loading || loadError || !ownerId) return;
     setSaveError('');
+    setRetrySave(false);
     setBusy(true);
     try {
-      await saveCheckIn({
-        local_date: date,
-        sleep: sleep.trim() ? Number(sleep) : null,
-        energy,
-        mood,
-        notes: notes.trim() || null,
-      });
-      await load();
+      await saveCheckIn(
+        {
+          local_date: date,
+          sleep: sleep.trim() ? Number(sleep) : null,
+          energy,
+          mood,
+          notes: notes.trim() || null,
+        },
+        ownerId,
+      );
+      if (owner.current !== ownerId) return;
+      setDirty(false);
       setOpen(false);
+      await load();
     } catch (e) {
+      setRetrySave(true);
       setSaveError(
         e instanceof Error ? e.message : 'Check your connection and try again.',
       );
@@ -84,17 +145,28 @@ export function CheckInCard() {
       <View style={styles.card}>
         <Text style={styles.title}>How’s your day?</Text>
         <Text style={styles.detail}>
-          {today
-            ? 'Your check-in is saved. You can edit it whenever you need.'
-            : 'An optional moment to record sleep, energy, mood or a note.'}
+          {loading
+            ? 'Loading your saved check-ins…'
+            : loadError
+              ? 'Your saved observations need to load before editing.'
+              : today
+                ? 'Your check-in is saved. You can edit it whenever you need.'
+                : 'An optional moment to record sleep, energy, mood or a note.'}
         </Text>
+        {!!loadError && (
+          <RetryNotice
+            title="Check-ins unavailable"
+            message={loadError}
+            onRetry={() => void load()}
+            busy={loading}
+          />
+        )}
         <Pressable
           accessibilityRole="button"
           style={styles.button}
-          onPress={() => {
-            edit();
-            setOpen(true);
-          }}
+          disabled={busy || loading || !!loadError}
+          accessibilityState={{ disabled: busy || loading || !!loadError }}
+          onPress={() => void openForDate(localDateKey())}
         >
           <Text style={styles.action}>
             {today ? 'Edit today’s check-in' : 'Add a check-in'}
@@ -104,15 +176,27 @@ export function CheckInCard() {
       <FormSheet
         label={'Daily check-in'}
         visible={open}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          request.current += 1;
+          setOpen(false);
+          setLoading(false);
+        }}
         busy={busy}
       >
+        {!!loadError && (
+          <RetryNotice
+            title="Check-ins unavailable"
+            message={loadError}
+            busy={loading}
+            onRetry={() => void load()}
+          />
+        )}
         {!!saveError && (
           <RetryNotice
-            title="Could not save check-in"
+            title="Check-in needs attention"
             message={saveError}
             busy={busy}
-            onRetry={() => void save()}
+            onRetry={retrySave && !loadError ? () => void save() : undefined}
           />
         )}
 
@@ -123,14 +207,19 @@ export function CheckInCard() {
         <ProtocolDatePicker
           label="Check-in date"
           value={date}
-          onChange={edit}
+          disabled={busy || loading}
+          onChange={(day) => void openForDate(day)}
         />
         <Text style={styles.label}>Sleep (hours)</Text>
         <TextInput
           accessibilityLabel="Hours slept, optional"
           keyboardType="decimal-pad"
           value={sleep}
-          onChangeText={setSleep}
+          editable={!busy && !loading}
+          onChangeText={(value) => {
+            setSleep(value);
+            setDirty(true);
+          }}
           placeholder="Leave blank if you prefer"
           placeholderTextColor={colors.muted}
           style={styles.input}
@@ -144,6 +233,7 @@ export function CheckInCard() {
               {[1, 2, 3, 4, 5].map((score) => (
                 <Pressable
                   accessibilityRole="button"
+                  disabled={busy || loading}
                   accessibilityLabel={`${kind} ${score}`}
                   accessibilityState={{
                     selected: (kind === 'energy' ? energy : mood) === score,
@@ -154,11 +244,12 @@ export function CheckInCard() {
                     (kind === 'energy' ? energy : mood) === score &&
                       styles.selected,
                   ]}
-                  onPress={() =>
+                  onPress={() => {
+                    setDirty(true);
                     kind === 'energy'
                       ? setEnergy(energy === score ? null : score)
-                      : setMood(mood === score ? null : score)
-                  }
+                      : setMood(mood === score ? null : score);
+                  }}
                 >
                   <Text style={styles.action}>{score}</Text>
                 </Pressable>
@@ -171,25 +262,39 @@ export function CheckInCard() {
           accessibilityLabel="Check-in notes, optional"
           multiline
           maxLength={2000}
+          editable={!busy && !loading}
           value={notes}
-          onChangeText={setNotes}
+          onChangeText={(value) => {
+            setNotes(value);
+            setDirty(true);
+          }}
           style={[styles.input, { minHeight: 100, textAlignVertical: 'top' }]}
         />
         <Pressable
           accessibilityRole="button"
           style={styles.button}
-          disabled={busy}
+          disabled={busy || loading || !!loadError}
           onPress={() => void save()}
         >
           <Text style={styles.action}>
             {busy ? 'Saving…' : 'Save check-in'}
           </Text>
         </Pressable>
+        {dirty && (
+          <Pressable
+            accessibilityRole="button"
+            style={styles.button}
+            disabled={busy || loading}
+            onPress={() => edit(date)}
+          >
+            <Text style={styles.action}>Discard unsaved changes</Text>
+          </Pressable>
+        )}
         {existing && (
           <Pressable
             accessibilityRole="button"
             style={styles.button}
-            disabled={busy}
+            disabled={busy || loading || !!loadError}
             onPress={() =>
               Alert.alert(
                 'Delete this check-in?',

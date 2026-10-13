@@ -91,7 +91,12 @@ export default function TodayScreen() {
     shownTarget.current = '';
   }, [params.item, params.occurrence]);
   const uid = session?.user.id;
+  const owner = useRef(uid);
+  owner.current = uid;
+  const loadVersion = useRef(0);
   const load = useCallback(async () => {
+    const version = ++loadVersion.current;
+    setLoading(true);
     setLoadError('');
     try {
       const [items, history, all, protocols, nextVersions] = await Promise.all([
@@ -101,6 +106,7 @@ export default function TodayScreen() {
         listProtocols(),
         listItemVersions(),
       ]);
+      if (owner.current !== uid || version !== loadVersion.current) return;
       const pausedProtocols = new Set(
         protocols.filter((p) => p.status === 'paused').map((p) => p.id),
       );
@@ -133,12 +139,15 @@ export default function TodayScreen() {
       setPaused(data.paused);
       setOffline(false);
       if (uid) await cacheToday(uid, data);
+      if (owner.current !== uid || version !== loadVersion.current) return;
       await Promise.allSettled([
         rescheduleReminders(items, history, sync.pending),
         updatePulseTodayWidget(todayOccurrences(items).length, 'Open Pulse'),
       ]);
     } catch (error) {
+      if (owner.current !== uid || version !== loadVersion.current) return;
       const cached = uid ? await cachedToday(uid) : null;
+      if (owner.current !== uid || version !== loadVersion.current) return;
       if (isNetworkError(error) && cached) {
         setItems(cached.items);
         setHistoryItems(cached.historyItems ?? cached.items);
@@ -156,12 +165,16 @@ export default function TodayScreen() {
         );
       }
     } finally {
-      setLoading(false);
+      if (owner.current === uid && version === loadVersion.current)
+        setLoading(false);
     }
   }, [uid, sync.revision]);
   useFocusEffect(
     useCallback(() => {
       void load();
+      return () => {
+        loadVersion.current += 1;
+      };
     }, [load]),
   );
   const items = useMemo(() => todayOccurrences(allItems), [allItems]);

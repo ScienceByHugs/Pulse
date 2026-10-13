@@ -20,3 +20,5 @@ Latest validation: 54 automated tests, TypeScript, configured app assets and pol
 Follow-up validation: live read-only abandoned-signup audit found no eligible accounts. Browser checks confirmed stock history loads, web reminder diagnostics refresh without requesting permissions, sign-out reaches login, and signup checkbox exposes aria-checked and gates account creation. No new account was created and no tracking record was changed. Native device QA remains pending.
 
 Account deletion now attempts each device cleanup independently and distinguishes confirmed server deletion from incomplete local cleanup. Account exports use owner-filtered cursor pagination and stop before sharing if the signed-in account changes.
+
+Further app walkthrough fixes and latest validation are recorded in APP_REVIEW.md.

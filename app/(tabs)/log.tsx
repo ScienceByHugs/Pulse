@@ -1,18 +1,26 @@
 import { useWindowDimensions } from 'react-native';
-import { matchesTimelineSearch } from '@/domain/timelineSearch';
 import { entryName, recordDay } from '@/domain/occurrences';
+import {
+  filterTimelineEntries,
+  entriesForCalendarDay,
+  groupTimelineByDay,
+  recordedTimeLabel,
+  timelineProtocolId,
+} from '@/domain/timelinePresentation';
+import { RetryNotice } from '@/components/RetryNotice';
 import { ProtocolDatePicker } from '@/components/ProtocolPickers';
 import { ReportSheet } from '@/components/ReportSheet';
 import { SyncStatus } from '@/components/SyncStatus';
+import { FormSheet } from '@/components/FormSheet';
 import { PageHeader } from '@/components/PageHeader';
 import { LogEditor } from '@/components/LogEditor';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
-  Alert,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -43,12 +51,14 @@ function dayKey(value: string) {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
+    year: 'numeric',
   });
 }
 
 export default function LogScreen() {
   const { fontScale } = useWindowDimensions();
   const [search, setSearch] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
   const [substanceFilter, setSubstanceFilter] = useState('');
   const [protocolFilter, setProtocolFilter] = useState('');
@@ -56,6 +66,10 @@ export default function LogScreen() {
   const [throughDate, setThroughDate] = useState('');
   const [editingEntry, setEditingEntry] = useState<TimelineEntry | null>(null);
   const [entries, setEntries] = useState<TimelineEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const loadVersion = useRef(0);
   const [historyTruncated, setHistoryTruncated] = useState(false);
   const [protocols, setProtocols] = useState<TrackedProtocol[]>([]);
   const [protocolItems, setProtocolItems] = useState<TodayItem[]>([]);
@@ -73,12 +87,16 @@ export default function LogScreen() {
   >('week');
 
   const load = useCallback(async () => {
+    const version = ++loadVersion.current;
+    setLoading(true);
+    setLoadError('');
     try {
       const [history, nextProtocols, nextItems] = await Promise.all([
         listTimelineHistory(),
         listProtocols(),
         listProtocolItems(),
       ]);
+      if (version !== loadVersion.current) return;
       setEntries(history.entries);
       setHistoryTruncated(history.truncated);
       setProtocols(nextProtocols);
@@ -88,19 +106,63 @@ export default function LogScreen() {
           ? previous
           : (nextProtocols[0]?.id ?? null),
       );
+      setLoaded(true);
     } catch (error) {
-      Alert.alert(
-        'Could not load timeline',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+      if (version === loadVersion.current)
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : 'Check your connection and try again.',
+        );
+    } finally {
+      if (version === loadVersion.current) setLoading(false);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       void load();
+      return () => {
+        loadVersion.current += 1;
+      };
     }, [load]),
   );
+
+  const matchingEntries = useMemo(
+    () =>
+      filterTimelineEntries(
+        entries,
+        {
+          search,
+          status: statusFilter,
+          substance: substanceFilter,
+          protocol: protocolFilter,
+          from: fromDate,
+          through: throughDate,
+        },
+        protocolItems,
+      ),
+    [
+      entries,
+      search,
+      statusFilter,
+      substanceFilter,
+      protocolFilter,
+      fromDate,
+      throughDate,
+      protocolItems,
+    ],
+  );
+  const invalidDateRange = Boolean(
+    fromDate && throughDate && throughDate < fromDate,
+  );
+  const filterCount = [
+    statusFilter,
+    substanceFilter,
+    protocolFilter,
+    fromDate,
+    throughDate,
+  ].filter(Boolean).length;
 
   const cycleEntries = useMemo(() => {
     if (!selectedProtocol) return [];
@@ -109,19 +171,14 @@ export default function LogScreen() {
         .filter((item) => item.protocol_id === selectedProtocol)
         .map((item) => item.id),
     );
-    const protocol = protocols.find((entry) => entry.id === selectedProtocol);
-    return entries.filter((entry) => {
-      if (entry.snapshot?.protocolId)
+    return matchingEntries.filter((entry) => {
+      if (typeof entry.snapshot?.protocolId === 'string')
         return entry.snapshot.protocolId === selectedProtocol;
       if (!entry.protocol_item_id || !itemIds.has(entry.protocol_item_id))
         return false;
-      const date = recordDay(entry);
-      return (
-        (!protocol?.starts_on || date >= protocol.starts_on) &&
-        (!protocol?.ends_on || date <= protocol.ends_on)
-      );
+      return true;
     });
-  }, [entries, protocolItems, protocols, selectedProtocol]);
+  }, [matchingEntries, protocolItems, selectedProtocol]);
 
   const monthDate = useMemo(() => {
     const date = new Date();
@@ -137,7 +194,7 @@ export default function LogScreen() {
     const firstWeekday = new Date(year, month, 1).getDay();
     const dayCount = new Date(year, month + 1, 0).getDate();
     const counts = new Map<string, number>();
-    for (const entry of entries) {
+    for (const entry of matchingEntries) {
       const key = recordDay(entry);
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
@@ -157,14 +214,14 @@ export default function LogScreen() {
       },
     );
     return cells;
-  }, [entries, monthDate]);
+  }, [matchingEntries, monthDate]);
 
   const weekDays = useMemo(() => {
     const start = new Date();
     start.setHours(12, 0, 0, 0);
     start.setDate(start.getDate() - start.getDay() + weekOffset * 7);
     const counts = new Map<string, number>();
-    for (const entry of entries) {
+    for (const entry of matchingEntries) {
       const day = recordDay(entry);
       counts.set(day, (counts.get(day) ?? 0) + 1);
     }
@@ -180,7 +237,7 @@ export default function LogScreen() {
         today: key === localDateKey(),
       };
     });
-  }, [entries, weekOffset]);
+  }, [matchingEntries, weekOffset]);
 
   const weekLabel = useMemo(() => {
     const start = weekDays[0]?.key;
@@ -192,7 +249,7 @@ export default function LogScreen() {
   const yearAtlas = useMemo(() => {
     const counts = Array.from({ length: 12 }, () => 0);
     const activeDays = Array.from({ length: 12 }, () => new Set<string>());
-    for (const entry of entries) {
+    for (const entry of matchingEntries) {
       const date = new Date(recordDay(entry) + 'T12:00:00');
       if (date.getFullYear() !== yearValue) continue;
       const month = date.getMonth();
@@ -207,14 +264,14 @@ export default function LogScreen() {
       count,
       days: activeDays[index]?.size ?? 0,
     }));
-  }, [entries, yearValue]);
+  }, [matchingEntries, yearValue]);
   const maxYearCount = Math.max(1, ...yearAtlas.map((entry) => entry.count));
 
   const viewEntries = useMemo(() => {
     const now = new Date();
-    if (viewMode === 'all') return entries;
+    if (viewMode === 'all') return matchingEntries;
     if (viewMode === 'year') {
-      return entries.filter((entry) => {
+      return matchingEntries.filter((entry) => {
         const date = new Date(recordDay(entry) + 'T12:00:00');
         return (
           date.getFullYear() === yearValue &&
@@ -225,7 +282,7 @@ export default function LogScreen() {
     if (viewMode === 'week') {
       const start = weekDays[0]?.key;
       const end = weekDays[6]?.key;
-      return entries.filter((entry) => {
+      return matchingEntries.filter((entry) => {
         const logged = recordDay(entry);
         return selectedWeekDay
           ? logged === selectedWeekDay
@@ -233,7 +290,7 @@ export default function LogScreen() {
       });
     }
     if (viewMode === 'month') {
-      return entries.filter((entry) => {
+      return matchingEntries.filter((entry) => {
         const logged = recordDay(entry);
         return selectedDay
           ? logged === selectedDay
@@ -241,11 +298,10 @@ export default function LogScreen() {
       });
     }
     if (viewMode === 'cycle') return cycleEntries;
-    const start = new Date(now);
-    start.setHours(0, 0, 0, 0);
-    return entries.filter((entry) => new Date(entry.logged_at) >= start);
+    const today = localDateKey(now);
+    return entriesForCalendarDay(matchingEntries, today);
   }, [
-    entries,
+    matchingEntries,
     cycleEntries,
     viewMode,
     monthDate,
@@ -264,55 +320,39 @@ export default function LogScreen() {
             .filter((e) => e.protocol_item_id)
             .map((e) => [
               e.protocol_item_id!,
-              { id: e.protocol_item_id!, name: entryName(e) },
+              {
+                id: e.protocol_item_id!,
+                name:
+                  protocolItems.find((item) => item.id === e.protocol_item_id)
+                    ?.name ?? entryName(e),
+              },
             ]),
         ).values(),
       ),
-    [entries],
+    [entries, protocolItems],
   );
   const filterProtocols = useMemo(
     () =>
       Array.from(
         new Map(
           entries
-            .filter((e) => typeof e.snapshot?.protocolId === 'string')
+            .filter((e) => timelineProtocolId(e, protocolItems))
             .map((e) => [
-              String(e.snapshot!.protocolId),
+              timelineProtocolId(e, protocolItems)!,
               {
-                id: String(e.snapshot!.protocolId),
-                name: String(e.snapshot!.protocolName ?? 'Protocol'),
+                id: timelineProtocolId(e, protocolItems)!,
+                name:
+                  protocols.find(
+                    (protocol) =>
+                      protocol.id === timelineProtocolId(e, protocolItems),
+                  )?.name ?? String(e.snapshot?.protocolName ?? 'Protocol'),
               },
             ]),
         ).values(),
       ),
-    [entries],
+    [entries, protocolItems, protocols],
   );
-  const filteredEntries = useMemo(
-    () =>
-      viewEntries.filter((entry) => {
-        const day = recordDay(entry);
-        const text =
-          `${entryName(entry)} ${entry.snapshot?.protocolName ?? ''} ${protocolItems.find((item) => item.id === entry.protocol_item_id)?.name ?? ''}`.toLowerCase();
-        return (
-          matchesTimelineSearch(entry, search, protocolItems) &&
-          (!statusFilter || entry.status === statusFilter) &&
-          (!substanceFilter || entry.protocol_item_id === substanceFilter) &&
-          (!protocolFilter || entry.snapshot?.protocolId === protocolFilter) &&
-          (!fromDate || day >= fromDate) &&
-          (!throughDate || day <= throughDate)
-        );
-      }),
-    [
-      viewEntries,
-      search,
-      statusFilter,
-      substanceFilter,
-      protocolFilter,
-      fromDate,
-      throughDate,
-      protocolItems,
-    ],
-  );
+  const filteredEntries = viewEntries;
   const activity = useMemo(() => {
     const now = new Date();
     return Array.from({ length: 7 }, (_, index) => {
@@ -321,12 +361,12 @@ export default function LogScreen() {
       date.setDate(now.getDate() - (6 - index));
       const next = new Date(date);
       next.setDate(date.getDate() + 1);
-      const count = (viewMode === 'cycle' ? cycleEntries : entries).filter(
-        (entry) => {
-          const logged = new Date(recordDay(entry) + 'T12:00:00');
-          return logged >= date && logged < next;
-        },
-      ).length;
+      const count = (
+        viewMode === 'cycle' ? cycleEntries : matchingEntries
+      ).filter((entry) => {
+        const logged = new Date(recordDay(entry) + 'T12:00:00');
+        return logged >= date && logged < next;
+      }).length;
       return {
         key: localDateKey(date),
         label: date
@@ -336,21 +376,18 @@ export default function LogScreen() {
         today: index === 6,
       };
     });
-  }, [entries, cycleEntries, viewMode]);
+  }, [matchingEntries, cycleEntries, viewMode]);
+  const activityTotal = activity.reduce((sum, day) => sum + day.count, 0);
 
   const maxActivity = useMemo(
     () => Math.max(1, ...activity.map((day) => day.count)),
     [activity],
   );
 
-  const groups = useMemo(() => {
-    const map = new Map<string, TimelineEntry[]>();
-    for (const entry of filteredEntries) {
-      const key = dayKey(recordDay(entry) + 'T12:00:00');
-      map.set(key, [...(map.get(key) ?? []), entry]);
-    }
-    return [...map.entries()];
-  }, [filteredEntries]);
+  const groups = useMemo(
+    () => groupTimelineByDay(filteredEntries),
+    [filteredEntries],
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -363,6 +400,15 @@ export default function LogScreen() {
           },
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={() => void load()}
+            tintColor={colors.accent}
+          />
+        }
       >
         <PulseMenu />
         <PageHeader
@@ -370,6 +416,14 @@ export default function LogScreen() {
           description="Review and correct your recorded history."
         />
         <SyncStatus />
+        {!!loadError && (
+          <RetryNotice
+            title="Could not load Timeline"
+            message={`${loadError}${loaded ? ' Your last loaded records are shown below.' : ''}`}
+            busy={loading}
+            onRetry={() => void load()}
+          />
+        )}
         <ReportSheet />
         <Text
           style={{ color: colors.text, fontWeight: '600', marginBottom: 8 }}
@@ -407,9 +461,15 @@ export default function LogScreen() {
             accessibilityLiveRegion="polite"
             style={{ color: colors.muted }}
           >
-            {filteredEntries.length} matching{' '}
-            {filteredEntries.length === 1 ? 'entry' : 'entries'}
-            {historyTruncated ? ' in loaded history' : ''}
+            {loading && !loaded ? (
+              'Loading your history…'
+            ) : (
+              <>
+                {filteredEntries.length} matching{' '}
+                {filteredEntries.length === 1 ? 'entry' : 'entries'}
+                {historyTruncated ? ' in loaded history' : ''}
+              </>
+            )}
           </Text>
           {!!search && (
             <Pressable
@@ -425,75 +485,46 @@ export default function LogScreen() {
             </Pressable>
           )}
         </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8, paddingVertical: 10 }}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Timeline filters, ${filterCount} active`}
+          onPress={() => setFiltersOpen(true)}
+          style={{
+            minHeight: 44,
+            padding: 12,
+            borderRadius: radius.md,
+            backgroundColor: colors.panel2,
+          }}
         >
-          {['', 'completed', 'skipped', 'missed'].map((status) => (
-            <Pressable
-              key={status}
-              accessibilityRole="button"
-              accessibilityState={{ selected: statusFilter === status }}
-              onPress={() => {
-                setStatusFilter(status);
-                setViewMode('all');
-              }}
-              style={{
-                minHeight: 44,
-                padding: 12,
-                borderRadius: 12,
-                backgroundColor:
-                  statusFilter === status ? colors.accentSoft : colors.panel,
-              }}
-            >
-              <Text style={{ color: colors.accent }}>
-                {status || 'All statuses'}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8 }}
+          <Text style={{ color: colors.accent }}>
+            Filters{filterCount ? ` · ${filterCount} active` : ''} ▾
+          </Text>
+        </Pressable>
+        {invalidDateRange && (
+          <Text style={{ color: colors.warning }}>
+            Check the date range in Filters.
+          </Text>
+        )}
+        <FormSheet
+          label="Timeline filters"
+          visible={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
         >
-          {[{ id: '', name: 'All substances' }, ...filterItems].map((item) => (
-            <Pressable
-              key={item.id}
-              accessibilityState={{ selected: substanceFilter === item.id }}
-              onPress={() => {
-                setSubstanceFilter(item.id);
-                setViewMode('all');
-              }}
-              style={{
-                minHeight: 44,
-                padding: 12,
-                borderRadius: 12,
-                backgroundColor:
-                  substanceFilter === item.id
-                    ? colors.accentSoft
-                    : colors.panel,
-              }}
-            >
-              <Text style={{ color: colors.accent }}>{item.name}</Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8, paddingVertical: 10 }}
-        >
-          {[{ id: '', name: 'All protocols' }, ...filterProtocols].map(
-            (protocol) => (
+          <Text style={{ color: colors.muted, lineHeight: 22 }}>
+            Choose the records you want to review. Changes apply as you select
+            them.
+          </Text>
+          <Text style={{ color: colors.text, fontWeight: '600' }}>
+            Entry status
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {['', 'completed', 'skipped', 'missed'].map((status) => (
               <Pressable
-                key={protocol.id}
-                accessibilityState={{
-                  selected: protocolFilter === protocol.id,
-                }}
+                key={status}
+                accessibilityRole="button"
+                accessibilityState={{ selected: statusFilter === status }}
                 onPress={() => {
-                  setProtocolFilter(protocol.id);
+                  setStatusFilter(status);
                   setViewMode('all');
                 }}
                 style={{
@@ -501,52 +532,135 @@ export default function LogScreen() {
                   padding: 12,
                   borderRadius: 12,
                   backgroundColor:
-                    protocolFilter === protocol.id
-                      ? colors.accentSoft
-                      : colors.panel,
+                    statusFilter === status ? colors.accentSoft : colors.panel,
                 }}
               >
-                <Text style={{ color: colors.accent }}>{protocol.name}</Text>
+                <Text style={{ color: colors.accent }}>
+                  {status === 'completed'
+                    ? 'Recorded'
+                    : status === 'skipped'
+                      ? 'Skipped'
+                      : status === 'missed'
+                        ? 'Not recorded'
+                        : 'All statuses'}
+                </Text>
               </Pressable>
-            ),
-          )}
-        </ScrollView>
-        <ProtocolDatePicker
-          label="From date (optional)"
-          value={fromDate}
-          onChange={(value) => {
-            setFromDate(value);
-            setViewMode('all');
-          }}
-        />
-        <ProtocolDatePicker
-          label="Through date (optional)"
-          value={throughDate}
-          onChange={(value) => {
-            setThroughDate(value);
-            setViewMode('all');
-          }}
-        />
-        {(search ||
-          statusFilter ||
-          substanceFilter ||
-          protocolFilter ||
-          fromDate ||
-          throughDate) && (
-          <Pressable
-            style={{ minHeight: 44, justifyContent: 'center' }}
-            onPress={() => {
-              setSearch('');
-              setStatusFilter('');
-              setSubstanceFilter('');
-              setProtocolFilter('');
-              setFromDate('');
-              setThroughDate('');
-            }}
+            ))}
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 8 }}
           >
-            <Text style={{ color: colors.accent }}>Clear filters</Text>
-          </Pressable>
-        )}
+            {[{ id: '', name: 'All substances' }, ...filterItems].map(
+              (item) => (
+                <Pressable
+                  key={item.id}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: substanceFilter === item.id }}
+                  onPress={() => {
+                    setSubstanceFilter(item.id);
+                    setViewMode('all');
+                  }}
+                  style={{
+                    minHeight: 44,
+                    padding: 12,
+                    borderRadius: 12,
+                    backgroundColor:
+                      substanceFilter === item.id
+                        ? colors.accentSoft
+                        : colors.panel,
+                  }}
+                >
+                  <Text style={{ color: colors.accent }}>{item.name}</Text>
+                </Pressable>
+              ),
+            )}
+          </ScrollView>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 8, paddingVertical: 10 }}
+          >
+            {[{ id: '', name: 'All protocols' }, ...filterProtocols].map(
+              (protocol) => (
+                <Pressable
+                  key={protocol.id}
+                  accessibilityRole="button"
+                  accessibilityState={{
+                    selected: protocolFilter === protocol.id,
+                  }}
+                  onPress={() => {
+                    setProtocolFilter(protocol.id);
+                    setViewMode('all');
+                  }}
+                  style={{
+                    minHeight: 44,
+                    padding: 12,
+                    borderRadius: 12,
+                    backgroundColor:
+                      protocolFilter === protocol.id
+                        ? colors.accentSoft
+                        : colors.panel,
+                  }}
+                >
+                  <Text style={{ color: colors.accent }}>{protocol.name}</Text>
+                </Pressable>
+              ),
+            )}
+          </ScrollView>
+          <ProtocolDatePicker
+            label="From date (optional)"
+            value={fromDate}
+            optional
+            onChange={(value) => {
+              setFromDate(value);
+              setViewMode('all');
+            }}
+          />
+          <ProtocolDatePicker
+            label="Through date (optional)"
+            value={throughDate}
+            optional
+            onChange={(value) => {
+              setThroughDate(value);
+              setViewMode('all');
+            }}
+          />
+          {invalidDateRange && (
+            <Text
+              accessibilityLiveRegion="polite"
+              style={{ color: colors.warning }}
+            >
+              Through date must be on or after From date.
+            </Text>
+          )}
+          {Boolean(
+            search ||
+              statusFilter ||
+              substanceFilter ||
+              protocolFilter ||
+              fromDate ||
+              throughDate,
+          ) && (
+            <Pressable
+              accessibilityRole="button"
+              style={{ minHeight: 44, justifyContent: 'center' }}
+              onPress={() => {
+                setSearch('');
+                setStatusFilter('');
+                setSubstanceFilter('');
+                setProtocolFilter('');
+                setFromDate('');
+                setThroughDate('');
+              }}
+            >
+              <Text style={{ color: colors.accent }}>
+                Clear filters and search
+              </Text>
+            </Pressable>
+          )}
+        </FormSheet>
         {historyTruncated ? (
           <View style={styles.historyNotice}>
             <Text style={styles.historyNoticeTitle}>
@@ -904,8 +1018,8 @@ export default function LogScreen() {
               </Text>
             )}
             <Text style={styles.cycleHint}>
-              Showing recorded events associated with the selected protocol,
-              within its start/end dates when defined.
+              Showing the selected protocol’s recorded history, including
+              earlier dates if its tracking window has since changed.
             </Text>
           </View>
         ) : null}
@@ -919,11 +1033,7 @@ export default function LogScreen() {
                   : 'Last 7 days · overview'}
               </Text>
             </View>
-            <Text style={styles.signalTotal}>
-              {viewMode === 'cycle'
-                ? cycleEntries.length
-                : filteredEntries.length}
-            </Text>
+            <Text style={styles.signalTotal}>{activityTotal}</Text>
           </View>
           <View style={styles.signalStrip}>
             {activity.map((day) => (
@@ -963,22 +1073,30 @@ export default function LogScreen() {
           </View>
         </View>
 
-        {filteredEntries.length === 0 ? (
+        {!loaded ? null : filteredEntries.length === 0 ? (
           <View style={styles.emptyCard}>
             <View style={styles.emptyDot} />
             <Text style={styles.cardTitle}>
-              {viewMode === 'cycle'
-                ? 'No records for this cycle yet.'
-                : 'Your timeline starts here.'}
+              {entries.length && !invalidDateRange
+                ? 'No entries match this view.'
+                : viewMode === 'cycle'
+                  ? 'No records for this cycle yet.'
+                  : 'Your timeline starts here.'}
             </Text>
             <Text style={styles.detail}>
-              Log an item from Today and its history will appear automatically.
+              {invalidDateRange
+                ? 'Adjust the date range to review your records.'
+                : entries.length
+                  ? 'Try another date, change your filters, or select All to see more history.'
+                  : 'Log an item from Today and its history will appear automatically.'}
             </Text>
           </View>
         ) : (
           groups.map(([day, dayEntries]) => (
             <View key={day} style={styles.group}>
-              <Text style={styles.dayLabel}>{day.toUpperCase()}</Text>
+              <Text style={styles.dayLabel}>
+                {dayKey(day + 'T12:00:00').toUpperCase()}
+              </Text>
               {dayEntries.map((entry, index) => (
                 <View key={entry.id} style={styles.timelineRow}>
                   <View style={styles.rail}>
@@ -997,12 +1115,14 @@ export default function LogScreen() {
                         </Text>
                       </View>
                       <Text style={styles.time}>
-                        {new Date(entry.logged_at).toLocaleTimeString([], {
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })}
+                        {recordedTimeLabel(entry)}
                       </Text>
                     </View>
+                    {!!entry.time_zone && (
+                      <Text style={styles.site}>
+                        Recorded time zone · {entry.time_zone}
+                      </Text>
+                    )}
                     {!!entry.snapshot?.protocolName && (
                       <Text style={styles.site}>
                         Protocol · {String(entry.snapshot.protocolName)}
@@ -1074,7 +1194,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.9,
   },
   historyNoticeBody: { color: colors.muted, fontSize: 12, lineHeight: 18 },
-  modeStrip: { flexDirection: 'row', gap: 5, marginBottom: 14 },
+  modeStrip: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+    marginBottom: 14,
+  },
   yearAtlasCard: {
     backgroundColor: 'transparent',
     borderRadius: 0,
@@ -1336,7 +1461,9 @@ const styles = StyleSheet.create({
   cycleHint: { color: colors.muted, fontSize: 11, lineHeight: 17 },
   modeButton: {
     flex: 1,
-    minWidth: 0,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,

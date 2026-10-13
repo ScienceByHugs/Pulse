@@ -29,11 +29,13 @@ export function ProtocolDatePicker({
   value,
   onChange,
   optional = false,
+  disabled = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   optional?: boolean;
+  disabled?: boolean;
 }) {
   const reduceMotion = useReduceMotion();
   const [open, setOpen] = useState(false);
@@ -56,7 +58,9 @@ export function ProtocolDatePicker({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Select ${label}`}
-        style={styles.control}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        style={[styles.control, disabled && { opacity: 0.5 }]}
         onPress={() => {
           const [y, m] = value.split('-').map(Number);
           setCursor(
@@ -170,10 +174,12 @@ export function ProtocolTimePicker({
   label,
   value,
   onChange,
+  disabled = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }) {
   const reduceMotion = useReduceMotion();
   const [open, setOpen] = useState(false);
@@ -204,7 +210,9 @@ export function ProtocolTimePicker({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Select ${label}`}
-        style={styles.control}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        style={[styles.control, disabled && { opacity: 0.5 }]}
         onPress={() => {
           const h = Number(value.split(':')[0] || 8),
             m = Number(value.split(':')[1] || 0);

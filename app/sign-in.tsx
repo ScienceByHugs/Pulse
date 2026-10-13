@@ -3,7 +3,7 @@ import { isValidEmail } from '@/domain/validation';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { PulseBrand } from '@/components/PulseBrand';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import { type ComponentRef, useRef, useState } from 'react';
 import { Redirect, useRouter } from 'expo-router';
 import {
   Alert,
@@ -38,6 +38,9 @@ export default function SignInScreen() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [notice, setNotice] = useState('');
   const [adultUS, setAdultUS] = useState(false);
+  const passwordInput = useRef<ComponentRef<typeof TextInput>>(null);
+  const newPasswordInput = useRef<ComponentRef<typeof TextInput>>(null);
+  const confirmPasswordInput = useRef<ComponentRef<typeof TextInput>>(null);
 
   function openSheet(mode: 'signup' | 'reset' | 'verify') {
     setSheetEmail(email.trim());
@@ -60,10 +63,10 @@ export default function SignInScreen() {
 
   async function signIn() {
     if (busy) return;
-    if (!email || !password)
+    if (!isValidEmail(email.trim()) || !password)
       return Alert.alert(
-        'Missing information',
-        'Enter your email and password.',
+        'Check your details',
+        'Enter a valid email address and your password.',
       );
     setBusy(true);
     try {
@@ -227,6 +230,7 @@ export default function SignInScreen() {
         <ScrollView
           contentContainerStyle={styles.page}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
         >
           <PulseBrand />
@@ -249,6 +253,9 @@ export default function SignInScreen() {
               editable={!busy}
               value={email}
               onChangeText={setEmail}
+              returnKeyType="next"
+              submitBehavior="submit"
+              onSubmitEditing={() => passwordInput.current?.focus()}
             />
             <View style={styles.labelRow}>
               <Text style={styles.label}>Password</Text>
@@ -263,6 +270,7 @@ export default function SignInScreen() {
             </View>
             <View style={styles.passwordRow}>
               <TextInput
+                ref={passwordInput}
                 accessibilityLabel="Password"
                 style={[styles.input, styles.passwordInput]}
                 placeholder="Enter your password"
@@ -285,6 +293,7 @@ export default function SignInScreen() {
                   showPassword ? 'Hide password' : 'Show password'
                 }
                 onPress={() => setShowPassword(!showPassword)}
+                disabled={busy}
                 style={styles.reveal}
               >
                 <Text style={styles.secondaryText}>
@@ -294,7 +303,7 @@ export default function SignInScreen() {
             </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityState={{ disabled: busy }}
+              accessibilityState={{ disabled: busy, busy }}
               style={[styles.primary, busy && styles.disabled]}
               disabled={busy}
               onPress={signIn}
@@ -327,6 +336,7 @@ export default function SignInScreen() {
           <Pressable
             accessibilityRole="button"
             style={styles.secondary}
+            disabled={busy}
             onPress={() => router.push('/legal')}
           >
             <Text style={styles.secondaryText}>
@@ -345,6 +355,7 @@ export default function SignInScreen() {
         visible={sheet !== null}
         onClose={closeSheet}
         busy={busy}
+        contentKey={sheet ?? 'closed'}
       >
         <Text style={styles.title}>
           {sheet === 'signup'
@@ -391,12 +402,20 @@ export default function SignInScreen() {
               editable={!busy}
               value={sheetEmail}
               onChangeText={setSheetEmail}
+              returnKeyType={sheet === 'signup' ? 'next' : 'send'}
+              submitBehavior="submit"
+              onSubmitEditing={() => {
+                if (sheet === 'signup') newPasswordInput.current?.focus();
+                else if (sheet === 'reset') void resetPassword();
+                else if (sheet === 'verify') void resendConfirmation();
+              }}
             />
             {sheet === 'signup' && (
               <>
                 <Text style={styles.label}>Choose a password</Text>
                 <View style={styles.passwordRow}>
                   <TextInput
+                    ref={newPasswordInput}
                     accessibilityLabel="Choose a password"
                     style={[styles.input, styles.passwordInput]}
                     placeholder="At least 8 characters"
@@ -408,6 +427,11 @@ export default function SignInScreen() {
                     editable={!busy}
                     value={newPassword}
                     onChangeText={setNewPassword}
+                    returnKeyType="next"
+                    submitBehavior="submit"
+                    onSubmitEditing={() =>
+                      confirmPasswordInput.current?.focus()
+                    }
                   />
                   <Pressable
                     accessibilityRole="button"
@@ -418,6 +442,7 @@ export default function SignInScreen() {
                     }
                     style={styles.reveal}
                     onPress={() => setShowNewPassword(!showNewPassword)}
+                    disabled={busy}
                   >
                     <Text style={styles.secondaryText}>
                       {showNewPassword ? 'Hide' : 'Show'}
@@ -426,6 +451,7 @@ export default function SignInScreen() {
                 </View>
                 <Text style={styles.label}>Confirm password</Text>
                 <TextInput
+                  ref={confirmPasswordInput}
                   accessibilityLabel="Confirm password"
                   style={styles.input}
                   placeholder="Enter your password again"
@@ -437,12 +463,14 @@ export default function SignInScreen() {
                   editable={!busy}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
+                  returnKeyType="done"
                 />
               </>
             )}
             {sheet === 'signup' && (
               <Pressable
                 accessibilityRole="checkbox"
+                accessibilityLabel="I am 18 or older and reside in the United States"
                 aria-checked={adultUS}
                 accessibilityState={{ checked: adultUS, disabled: busy }}
                 disabled={busy}
@@ -465,6 +493,10 @@ export default function SignInScreen() {
             )}
             <Pressable
               accessibilityRole="button"
+              accessibilityState={{
+                disabled: busy || (sheet === 'signup' && !adultUS),
+                busy,
+              }}
               disabled={busy || (sheet === 'signup' && !adultUS)}
               style={[
                 styles.primary,

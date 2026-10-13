@@ -30,13 +30,18 @@ export async function listCheckIns(
     if (data.length < 500) return result;
   }
 }
-export async function saveCheckIn(input: Omit<CheckIn, 'id'>) {
+export async function saveCheckIn(
+  input: Omit<CheckIn, 'id'>,
+  expectedOwner?: string,
+) {
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser();
   if (error || !user?.email_confirmed_at)
     throw new Error('Connect and sign in to save a check-in.');
+  if (expectedOwner && user.id !== expectedOwner)
+    throw new Error('Your signed-in account changed. Open the check-in again.');
   if (
     !/^\d{4}-\d{2}-\d{2}$/.test(input.local_date) ||
     input.local_date > localDateKey()
