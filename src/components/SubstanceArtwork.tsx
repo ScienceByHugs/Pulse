@@ -16,6 +16,7 @@ import {
   removeSubstancePhoto,
 } from '@/services/substancePhoto';
 import { colors, radius, typography } from '@/theme';
+import { VialArtwork } from './VialArtwork';
 
 type Props = {
   category?: string | null;
@@ -113,27 +114,11 @@ export function SubstanceArtwork({
             style={styles.image}
           />
         ) : injectable ? (
-          <>
-            <Image
-              source={require('../../assets/substances/vial-green-template.png')}
-              resizeMode="cover"
-              style={styles.image}
-            />
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              style={[styles.name, large && styles.nameLarge]}
-            >
-              {name.toUpperCase()}
-            </Text>
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              style={[styles.quantity, large && styles.quantityLarge]}
-            >
-              {vialQuantity ?? '—'}
-            </Text>
-          </>
+          <VialArtwork
+            name={name}
+            quantity={vialQuantity}
+            size={large ? 258 : 88}
+          />
         ) : (
           <Text style={styles.mark}>
             {category?.slice(0, 1).toUpperCase() ?? '•'}
@@ -222,28 +207,6 @@ const styles = StyleSheet.create({
   },
   large: { width: 260, height: 260, alignSelf: 'center' },
   image: { width: '100%', height: '100%' },
-  name: {
-    position: 'absolute',
-    top: '49%',
-    left: '35%',
-    width: '30%',
-    fontSize: 4,
-    color: '#070F1E',
-    fontWeight: '900',
-    textAlign: 'center',
-  },
-  quantity: {
-    position: 'absolute',
-    top: '58%',
-    left: '38%',
-    width: '24%',
-    fontSize: 4,
-    color: '#FFFFFF',
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  nameLarge: { fontSize: 11 },
-  quantityLarge: { fontSize: 12 },
   mark: { color: colors.accent, fontSize: 34, fontWeight: '800' },
   inactive: { opacity: 0.55 },
   scrim: {
