@@ -34,3 +34,28 @@ Before upload, inspect the exported IPA rather than relying on Xcode's intermedi
 On 2026-10-13, build 15 was compiled locally and sent directly from the Mac using Xcode's Apple altool uploader after the queued EAS submission was confirmed canceled. Apple validation and upload returned no errors. Existing ASC API credentials were held only in a temporary private directory and removed after upload. No new key, password or account permission was created. Apple processing and physical-device QA are separate from upload success; see docs/qa/BUILD_15_RELEASE.md.
 
 For a future direct upload, first discover the installed flags with `xcrun altool --help`. Use the existing app-authorized API key via a private temporary file, not inline credential contents, then remove that copy. Do not commit credentials or uploader cache files. Confirm no other submission of the same build is running before switching upload routes. EAS Submit remains an alternative transfer service; it is separate from Expo cloud native builds.
+
+## Same-name signing identities and local export
+
+On October 14, multiple valid distribution identities shared the same display
+name. The Expo profiles and distribution certificate matched; selecting by
+display name nevertheless caused Xcode to choose another identity. Preserve
+the other identities. Compare the existing profiles' certificate fingerprints
+with the configured Expo certificate, then set `GYM_CODE_SIGNING_IDENTITY` to
+the verified SHA-1 for the local archive command. Do not assume a previously
+recorded fingerprint remains current after signing credentials change.
+
+If archive succeeds but EAS export fails, reuse that archive instead of
+compiling again. Xcode's local `-exportArchive` supports an explicit
+`signingCertificate` SHA-1, `signingStyle: manual`, `destination: export` and a
+`provisioningProfiles` mapping by verified profile name. The name mapping
+resolved build 17's UUID lookup issue. Temporary profile copies may be needed
+in `~/Library/Developer/Xcode/UserData/Provisioning Profiles` as well as the
+legacy `~/Library/MobileDevice/Provisioning Profiles` directory. Preserve
+existing files; remove only copies created for the attempt. Keep signing
+material in a private temporary directory/keychain, restore the previous
+keychain search list, and clean up all resources independently if one cleanup
+step fails. Verify the final IPA and matching symbols before retaining it.
+
+Build 17 was exported locally and is held without Apple upload at Anthony's
+instruction. See docs/qa/BUILD_17_RELEASE.md.
