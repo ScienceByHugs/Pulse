@@ -7,6 +7,15 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["app/**/*.ts", "app/**/*.tsx", "src/**/*.ts", "src/**/*.tsx", "widgets/**/*.ts", "widgets/**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
+  "include": [
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "widgets/**/*.ts",
+    "widgets/**/*.tsx",
+    "admin-web/**/*.ts",
+    "admin-web/**/*.tsx"
+  ],
   "exclude": ["supabase/functions/**"]
 }

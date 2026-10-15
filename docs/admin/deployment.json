@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-13",
+  "host": "https://pulse-sbh-admin.sciencebyhugs-pulse.workers.dev",
+  "cloudflareAccount": "e59cc8c4b6d34ce2867993d9eda8c634",
+  "worker": "pulse-sbh-admin",
+  "compatibilityDate": "2026-10-13",
+  "workerSha256": "cc7a0c3a0c924c8f0247e8c9cce8581919515a1877d193ba605ec9c6d80bc189",
+  "portalSha256": "ed3636ed489d305730e05c218a39d8609b3eeea4c0bc827b8ed117e37d60a518",
+  "backendMigration": "20261013133225_feedback_and_private_admin",
+  "operatorActivation": "pending verified admin account and user-performed MFA",
+  "nativeBuildStarted": false
+}

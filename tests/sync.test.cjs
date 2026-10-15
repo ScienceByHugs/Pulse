@@ -71,6 +71,7 @@ function harness() {
     'expo-crypto': { randomUUID },
     '@/lib/supabase': { supabase },
     '@/lib/outbox': outbox,
+    '@/lib/privateStorage': { privateStorage: storage },
   })('src/services/pulse.ts');
   return {
     outbox,

@@ -29,6 +29,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: node scripts/check-app-assets.cjs
+      - name: Verify bundled and public policy drafts match
+        run: python3 scripts/generate-legal-pages.py --check
 
   bundles:
     name: iOS, Android and web bundle compilation
@@ -49,6 +51,8 @@ jobs:
       - run: npm ci --legacy-peer-deps --ignore-scripts
       - name: Compile bundles without EAS Build or submission
         run: npx --no-install expo export --platform all --output-dir ci-export
+      - name: Compile admin portal and direct hosting artifact with public dummy values
+        run: npm run admin:host:build
       - name: Record verification scope
         run: |
           echo '### Pulse bundle compilation' >> "$GITHUB_STEP_SUMMARY"

@@ -85,3 +85,14 @@ test('revoked notification permission prevents scheduling and preserves existing
   assert.equal(await h.service.rescheduleReminders([], [], []), 0);
   assert.equal(h.getCanceled(), 0);
 });
+test('reading reminder health does not schedule, cancel or request notification permission', async () => {
+  const h = harness();
+  h.setAllowed(false);
+  const before = h.getScheduled().length,
+    canceled = h.getCanceled();
+  const status = await h.service.getReminderHealth();
+  assert.equal(status.permission.granted, false);
+  assert.equal(status.count, before);
+  assert.equal(h.getScheduled().length, before);
+  assert.equal(h.getCanceled(), canceled);
+});

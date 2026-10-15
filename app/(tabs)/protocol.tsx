@@ -1,3 +1,9 @@
+import { useWindowDimensions } from 'react-native';
+import { InventoryHistoryButton } from '@/components/InventoryHistorySheet';
+import { FormSheet } from '@/components/FormSheet';
+import { RetryNotice } from '@/components/RetryNotice';
+import { matchingSubstances } from '@/domain/substanceCatalog';
+import { administrationLabel } from '@/domain/administration';
 import {
   ScheduleExtras,
   DuplicateProtocolSheet,
@@ -5,18 +11,16 @@ import {
   InventoryEstimate,
 } from '@/components/ProtocolExtras';
 import { occurrencesForDay } from '@/domain/occurrences';
+import { protocolDraftSchedule } from '@/domain/protocolDraftSchedule';
 import { rescheduleReminders } from '@/lib/reminders';
-import { SheetHeader } from '@/components/SheetHeader';
 import { PageHeader } from '@/components/PageHeader';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
+  ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -24,7 +28,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { colors, layout, radius, spacing, type } from '@/theme';
+import { colors, layout, radius, spacing, typography } from '@/theme';
 import { PulseMenu } from '@/components/PulseMenu';
 import { SubstanceArtwork } from '@/components/SubstanceArtwork';
 import {
@@ -37,6 +41,8 @@ import {
   correctInventoryRemaining,
   createProtocol,
   createProtocolItem,
+  pendingProtocolItemCreation,
+  prepareProtocolItemCreation,
   listProtocolItems,
   listProtocols,
   setProtocolItemActive,
@@ -45,14 +51,10 @@ import {
   updateProtocolItemSchedule,
   updateProtocolDetails,
   updateProtocolStatus,
+  type CreateItemInput,
   type TodayItem,
 } from '@/services/pulse';
-import {
-  formatSchedule,
-  isDueOnDate,
-  localDateKey,
-  scheduleTime,
-} from '@/domain/schedule';
+import { formatSchedule, localDateKey, scheduleTime } from '@/domain/schedule';
 
 type Protocol = {
   id: string;
@@ -68,7 +70,13 @@ const ROUTES = [
   'topical',
   'other',
 ] as const;
-const SCHEDULES = ['daily', 'weekdays', 'interval', 'cycle'] as const;
+const SCHEDULES = [
+  'daily',
+  'weekdays',
+  'interval',
+  'cycle',
+  'as_needed',
+] as const;
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const CATEGORIES = [
   'Peptide',
@@ -81,6 +89,7 @@ const CATEGORIES = [
 ] as const;
 
 export default function ProtocolScreen() {
+  const { fontScale } = useWindowDimensions();
   const [duplicateSource, setDuplicateSource] = useState<Protocol | null>(null);
   const [additionalTimes, setAdditionalTimes] = useState<string[]>([]);
   const [timeZone, setTimeZone] = useState('local');
@@ -121,20 +130,27 @@ export default function ProtocolScreen() {
     Record<string, unknown>
   >({});
   const [itemName, setItemName] = useState('');
+  const [showSubstanceChoices, setShowSubstanceChoices] = useState(false);
   const [category, setCategory] = useState<string>('Peptide');
   const [showNewProtocol, setShowNewProtocol] = useState(false);
   const [dose, setDose] = useState('');
   const [unit, setUnit] = useState('mg');
-  const [route, setRoute] = useState<(typeof ROUTES)[number]>('subcutaneous');
+  const [route, setRoute] = useState<(typeof ROUTES)[number] | null>(null);
   const [scheduleType, setScheduleType] =
     useState<(typeof SCHEDULES)[number]>('daily');
-  const [time, setTime] = useState('08:00');
+  const [time, setTime] = useState('');
   const [days, setDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [everyDays, setEveryDays] = useState('2');
   const [onDays, setOnDays] = useState('5');
   const [offDays, setOffDays] = useState('2');
   const [inventory, setInventory] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [protocolLoading, setProtocolLoading] = useState(true);
+  const [saveError, setSaveError] = useState<{
+    key: string;
+    message: string;
+  } | null>(null);
   const [reservoirEditorId, setReservoirEditorId] = useState<string | null>(
     null,
   );
@@ -145,6 +161,9 @@ export default function ProtocolScreen() {
   const [reservoirThreshold, setReservoirThreshold] = useState('0');
   const [reservoirReason, setReservoirReason] = useState('');
   const [showBuilder, setShowBuilder] = useState(false);
+  const [heldCreation, setHeldCreation] = useState<CreateItemInput | null>(
+    null,
+  );
   const [showMapDetails, setShowMapDetails] = useState(false);
   const [builderStep, setBuilderStep] = useState<1 | 2 | 3>(1);
 
@@ -207,6 +226,7 @@ export default function ProtocolScreen() {
   }, [visibleItems, activeProtocol]);
 
   const load = useCallback(async () => {
+    setLoadError('');
     try {
       const [nextProtocols, nextItems] = await Promise.all([
         listProtocols(),
@@ -236,10 +256,11 @@ export default function ProtocolScreen() {
           }),
       ).catch(() => undefined);
     } catch (error) {
-      Alert.alert(
-        'Could not load protocol',
-        error instanceof Error ? error.message : 'Unknown error',
+      setLoadError(
+        'Your protocols could not refresh. Check your connection and retry. Previously loaded information stays visible.',
       );
+    } finally {
+      setProtocolLoading(false);
     }
   }, []);
 
@@ -253,10 +274,11 @@ export default function ProtocolScreen() {
     if (!protocolName.trim()) return;
     try {
       setBusy(true);
-      await createProtocol(protocolName);
+      const created = await createProtocol(protocolName);
       setProtocolName('');
       setShowNewProtocol(false);
       await load();
+      setSelectedProtocolId(created.id);
     } catch (error) {
       Alert.alert(
         'Could not create protocol',
@@ -387,6 +409,7 @@ export default function ProtocolScreen() {
     const quantity = Number(reservoirQuantity);
     if (!reservoirQuantity.trim() || !Number.isFinite(quantity))
       return Alert.alert('Check quantity', 'Enter a valid numeric amount.');
+    setSaveError(null);
     try {
       setBusy(true);
       if (reservoirContainerId) {
@@ -412,16 +435,20 @@ export default function ProtocolScreen() {
       setReservoirReason('');
       await load();
     } catch (error) {
-      Alert.alert(
-        'Could not update reservoir',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+      setSaveError({
+        key: 'inventory',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Check your connection. Your changes are still in this form.',
+      });
     } finally {
       setBusy(false);
     }
   }
 
   function startEdit(item: TodayItem) {
+    setSaveError(null);
     setEditingItemId(item.id);
     setEditItemName(item.name);
     setEditCategory(item.category || 'Other');
@@ -431,7 +458,8 @@ export default function ProtocolScreen() {
   }
 
   async function saveItemEdit() {
-    if (!editingItemId) return;
+    if (!editingItemId || busy) return;
+    setSaveError(null);
     try {
       setBusy(true);
       await updateProtocolItemDetails(
@@ -445,16 +473,20 @@ export default function ProtocolScreen() {
       setEditingItemId(null);
       await load();
     } catch (error) {
-      Alert.alert(
-        'Could not save substance',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+      setSaveError({
+        key: 'details',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Check your connection. Your changes are still in this form.',
+      });
     } finally {
       setBusy(false);
     }
   }
 
   function beginScheduleEdit(item: TodayItem) {
+    setSaveError(null);
     const schedule = item.schedule;
     const kind = String(schedule.type);
     setEditingScheduleId(item.id);
@@ -520,16 +552,20 @@ export default function ProtocolScreen() {
     // Retain an existing short-term pause/override when editing the recurring pattern.
     if (editOriginalSchedule.temporary)
       next.temporary = editOriginalSchedule.temporary;
+    setSaveError(null);
     try {
       setBusy(true);
       await updateProtocolItemSchedule(editingScheduleId, next);
       setEditingScheduleId(null);
       await load();
     } catch (error) {
-      Alert.alert(
-        'Could not save schedule',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+      setSaveError({
+        key: 'schedule',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Check your connection. Your changes are still in this form.',
+      });
     } finally {
       setBusy(false);
     }
@@ -544,49 +580,106 @@ export default function ProtocolScreen() {
   }
 
   function buildSchedule() {
-    const startDate = localDateKey();
-    const extra = {
-      times: [time, ...additionalTimes].filter(Boolean),
-      timeZone,
-    };
-    if (scheduleType === 'daily') return { type: 'daily', time, ...extra };
-    if (scheduleType === 'weekdays')
-      return { type: 'weekdays', time, days, ...extra };
-    if (scheduleType === 'interval')
-      return {
-        type: 'interval',
-        time,
-        ...extra,
-        everyDays: Math.max(1, Number(everyDays) || 1),
-        startDate,
-      };
-    return {
-      type: 'cycle',
+    return protocolDraftSchedule({
+      type: scheduleType,
       time,
-      ...extra,
-      onDays: Math.max(1, Number(onDays) || 1),
-      offDays: Math.max(0, Number(offDays) || 0),
-      startDate,
-    };
+      additionalTimes,
+      timeZone,
+      days,
+      everyDays,
+      onDays,
+      offDays,
+      startDate: localDateKey(),
+    });
+  }
+
+  async function beginSubstance() {
+    if (busy) return;
+    setBusy(true);
+    setSaveError(null);
+    try {
+      const original = await pendingProtocolItemCreation();
+      setHeldCreation(original);
+      setBuilderStep(1);
+      setShowBuilder(!original);
+    } catch (error) {
+      Alert.alert(
+        'Could not check the earlier save',
+        error instanceof Error
+          ? error.message
+          : 'Check your connection and retry.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function finishItemCreation(input: CreateItemInput) {
+    setItemName('');
+    setShowSubstanceChoices(false);
+    setDose('');
+    setRoute(null);
+    setInventory('');
+    setShowBuilder(false);
+    setBuilderStep(1);
+    setHeldCreation(null);
+    setSaveError(null);
+    setSelectedProtocolId(input.protocolId);
+    await load();
+  }
+
+  async function resumeItemCreation() {
+    if (!heldCreation || busy) return;
+    setBusy(true);
+    setSaveError(null);
+    try {
+      await createProtocolItem(heldCreation);
+      await finishItemCreation(heldCreation);
+    } catch (error) {
+      setSaveError({
+        key: 'creation',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Check your connection and retry the original save.',
+      });
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function addItem() {
+    if (busy) return;
     const numericDose = Number(dose);
     const numericInventory = inventory ? Number(inventory) : undefined;
+    if (
+      inventory &&
+      (!Number.isFinite(numericInventory) || Number(numericInventory) <= 0)
+    )
+      return Alert.alert(
+        'Check container quantity',
+        'Enter a positive total quantity, or leave it blank.',
+      );
     if (!activeProtocol) return Alert.alert('Create a protocol first');
-    if (!itemName.trim() || !numericDose || numericDose <= 0 || !unit.trim()) {
+    if (
+      !itemName.trim() ||
+      !numericDose ||
+      numericDose <= 0 ||
+      !unit.trim() ||
+      !route
+    ) {
       return Alert.alert(
         'Check item details',
-        'Name, dose and unit are required.',
+        'Name, amount, unit and administration type are required.',
       );
     }
     if (scheduleType === 'weekdays' && days.length === 0) {
       return Alert.alert('Choose at least one day');
     }
 
+    let original: CreateItemInput;
     try {
-      setBusy(true);
-      await createProtocolItem({
+      original = prepareProtocolItemCreation({
         protocolId: activeProtocol.id,
         name: itemName,
         category,
@@ -599,17 +692,55 @@ export default function ProtocolScreen() {
             ? numericInventory
             : undefined,
       });
-      setItemName('');
-      setDose('');
-      setInventory('');
-      setShowBuilder(false);
-      setBuilderStep(1);
-      await load();
     } catch (error) {
-      Alert.alert(
-        'Could not add item',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+      setSaveError({
+        key: 'substance',
+        message:
+          error instanceof Error ? error.message : 'Check your item details.',
+      });
+      return;
+    }
+    setBusy(true);
+    setSaveError(null);
+    try {
+      await createProtocolItem(original);
+      await finishItemCreation(original);
+    } catch (error) {
+      // A failed durable creation may already have saved its parent. Preserve
+      // its exact details, including any date anchor, rather than reopening an
+      // editable form that would allocate a second parent ID.
+      try {
+        const pending = await pendingProtocolItemCreation();
+        if (pending) {
+          setHeldCreation(pending);
+          setShowBuilder(false);
+          setSaveError({
+            key: 'creation',
+            message:
+              error instanceof Error
+                ? error.message
+                : 'The original save still needs confirmation.',
+          });
+        } else {
+          setSaveError({
+            key: 'substance',
+            message:
+              error instanceof Error
+                ? error.message
+                : 'Could not save. Your details are still in this form.',
+          });
+        }
+      } catch {
+        setHeldCreation(original);
+        setShowBuilder(false);
+        setSaveError({
+          key: 'creation',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Could not confirm this save. Retry its original details.',
+        });
+      }
     } finally {
       setBusy(false);
     }
@@ -619,11 +750,24 @@ export default function ProtocolScreen() {
     <SafeAreaView style={styles.safe}>
       <OrbitalBackground />
       <ScrollView
-        contentContainerStyle={styles.page}
+        contentContainerStyle={[
+          styles.page,
+          {
+            paddingBottom: layout.pageBottom + Math.max(0, fontScale - 1) * 24,
+          },
+        ]}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
       >
         <PulseMenu />
+        {!!loadError && (
+          <RetryNotice
+            title="Could not refresh Protocol"
+            message={loadError}
+            onRetry={() => void load()}
+          />
+        )}
         <PageHeader
           title="Protocols"
           description="Manage your substances, schedules, and inventory."
@@ -632,7 +776,7 @@ export default function ProtocolScreen() {
         {activeProtocol && (
           <Pressable
             accessibilityRole="button"
-            style={styles.scheduleEditTrigger}
+            style={[styles.scheduleEditTrigger, { marginBottom: spacing.md }]}
             onPress={() => setDuplicateSource(activeProtocol)}
           >
             <Text style={styles.scheduleEditTriggerText}>
@@ -655,6 +799,7 @@ export default function ProtocolScreen() {
         />
         <View style={styles.launchRow}>
           <Pressable
+            accessibilityRole="button"
             style={styles.launchButton}
             onPress={() => setShowNewProtocol(true)}
           >
@@ -662,78 +807,135 @@ export default function ProtocolScreen() {
           </Pressable>
           {activeProtocol ? (
             <Pressable
+              accessibilityRole="button"
               style={styles.launchButton}
-              onPress={() => {
-                setBuilderStep(1);
-                setShowBuilder(true);
-              }}
+              onPress={() => void beginSubstance()}
             >
               <Text style={styles.launchText}>+ Add substance</Text>
             </Pressable>
           ) : null}
         </View>
-        <Modal
+        <FormSheet
+          label={'New protocol'}
           visible={showNewProtocol}
-          animationType="slide"
-          presentationStyle="pageSheet"
-          onRequestClose={() => {
-            if (!busy) setShowNewProtocol(false);
-          }}
+          onClose={() => setShowNewProtocol(false)}
+          busy={busy}
         >
-          <SafeAreaView style={styles.safe}>
-            <KeyboardAvoidingView
-              style={styles.flex}
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            >
-              <ScrollView
-                keyboardShouldPersistTaps="handled"
-                contentContainerStyle={styles.modalPage}
-              >
-                <View style={styles.builderCard}>
-                  <SheetHeader
-                    label="New protocol"
-                    disabled={busy}
-                    onClose={() => setShowNewProtocol(false)}
-                  />
-                  <Text style={styles.builderTitle}>
-                    Name your new protocol
-                  </Text>
-                  <TextInput
-                    accessibilityLabel="Protocol name"
-                    maxLength={100}
-                    style={styles.input}
-                    placeholder="e.g. Daily regimen"
-                    placeholderTextColor={colors.muted}
-                    value={protocolName}
-                    onChangeText={setProtocolName}
-                  />
-                  <Pressable
-                    accessibilityRole="button"
-                    style={styles.primary}
-                    disabled={busy}
-                    onPress={() => void addProtocol()}
-                  >
-                    <Text style={styles.primaryText}>
-                      {busy ? 'Creating…' : 'Create protocol'}
-                    </Text>
-                  </Pressable>
-                </View>
-              </ScrollView>
-            </KeyboardAvoidingView>
-          </SafeAreaView>
-        </Modal>
-
-        {protocols.length === 0 ? (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Create your first protocol</Text>
+          <View style={styles.builderCard}>
+            <Text style={styles.builderTitle}>Name your new protocol</Text>
+            <Text style={styles.smallLabel}>Protocol name</Text>
+            <TextInput
+              accessibilityLabel="Protocol name"
+              maxLength={100}
+              style={styles.input}
+              placeholder="e.g. Daily regimen"
+              placeholderTextColor={colors.muted}
+              value={protocolName}
+              onChangeText={setProtocolName}
+            />
             <Pressable
               accessibilityRole="button"
               style={styles.primary}
-              onPress={() => setShowNewProtocol(true)}
+              disabled={busy}
+              onPress={() => void addProtocol()}
             >
-              <Text style={styles.primaryText}>New protocol</Text>
+              <Text style={styles.primaryText}>
+                {busy ? 'Creating…' : 'Create protocol'}
+              </Text>
             </Pressable>
           </View>
+        </FormSheet>
+
+        {heldCreation && (
+          <FormSheet
+            label="Resume substance save"
+            busy={busy}
+            onClose={() => setHeldCreation(null)}
+          >
+            <Text style={styles.builderTitle}>Confirm your earlier save</Text>
+            <Text style={styles.cardDetail}>
+              Part of this substance may already be saved. Resume the original
+              details to finish safely, then edit the saved substance if needed.
+              Closing this sheet keeps the recovery available in Add substance.
+            </Text>
+            <View style={styles.reviewBox}>
+              <Text style={styles.reviewName}>{heldCreation.name}</Text>
+              <Text style={styles.cardDetail}>
+                {protocols.find((p) => p.id === heldCreation.protocolId)
+                  ?.name ?? 'Original protocol'}
+              </Text>
+              <Text style={styles.cardDetail}>
+                {heldCreation.doseAmount} {heldCreation.doseUnit} ·{' '}
+                {administrationLabel(heldCreation.route)}
+              </Text>
+              <Text style={styles.scheduleText}>
+                {formatSchedule(heldCreation.schedule)}
+              </Text>
+              {typeof heldCreation.schedule.startDate === 'string' && (
+                <Text style={styles.cardDetail}>
+                  Schedule anchor: {heldCreation.schedule.startDate}
+                </Text>
+              )}
+              <Text style={styles.cardDetail}>
+                {heldCreation.inventoryAmount
+                  ? `Original container: ${heldCreation.inventoryAmount} ${heldCreation.doseUnit}`
+                  : 'No initial container'}
+              </Text>
+            </View>
+            {saveError?.key === 'creation' && (
+              <RetryNotice
+                title="Save still needs confirmation"
+                message={saveError.message}
+              />
+            )}
+            <Pressable
+              accessibilityRole="button"
+              disabled={busy}
+              style={[styles.primary, busy && styles.disabled]}
+              onPress={() => void resumeItemCreation()}
+            >
+              <Text style={styles.primaryText}>
+                {busy ? 'Confirming…' : 'Resume original save'}
+              </Text>
+            </Pressable>
+          </FormSheet>
+        )}
+
+        {activeProtocol && visibleItems.length === 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Next: add your first substance</Text>
+            <Text style={styles.cardDetail}>
+              Choose a name or enter your own, then record your own
+              administration type, amount and routine.
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              style={styles.primary}
+              onPress={() => void beginSubstance()}
+            >
+              <Text style={styles.primaryText}>Add first substance</Text>
+            </Pressable>
+          </View>
+        )}
+        {protocolLoading && <ActivityIndicator color={colors.accent} />}
+        {protocols.length === 0 ? (
+          protocolLoading || loadError ? null : (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Set up your first routine</Text>
+              <Text style={styles.cardDetail}>
+                1. Name your protocol. 2. Add a substance. 3. Review your own
+                amount, method and schedule. Pulse does not choose these for
+                you.
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                style={styles.primary}
+                onPress={() => setShowNewProtocol(true)}
+              >
+                <Text style={styles.primaryText}>New protocol</Text>
+              </Pressable>
+            </View>
+          )
         ) : (
           <>
             {protocols.some((p) => p.status === 'active') ? (
@@ -779,7 +981,8 @@ export default function ProtocolScreen() {
                 <Text style={styles.cardTitle}>{activeProtocol.name}</Text>
                 <Text style={styles.cardDetail}>{activeProtocol.status}</Text>
                 <Text style={styles.cardDetail}>
-                  {visibleItems.length} tracked items
+                  {visibleItems.length} tracked{' '}
+                  {visibleItems.length === 1 ? 'item' : 'items'}
                 </Text>
                 <View style={styles.protocolDateBand}>
                   <View style={styles.protocolDateColumn}>
@@ -862,6 +1065,7 @@ export default function ProtocolScreen() {
                 )}
                 <View style={styles.protocolActions}>
                   <Pressable
+                    accessibilityRole="button"
                     style={styles.secondaryAction}
                     disabled={busy}
                     onPress={() =>
@@ -880,6 +1084,7 @@ export default function ProtocolScreen() {
                     </Text>
                   </Pressable>
                   <Pressable
+                    accessibilityRole="button"
                     style={styles.archiveAction}
                     disabled={busy}
                     onPress={() => confirmProtocolArchive(activeProtocol)}
@@ -909,6 +1114,7 @@ export default function ProtocolScreen() {
                   {protocol.status === 'paused' ||
                   protocol.status === 'archived' ? (
                     <Pressable
+                      accessibilityRole="button"
                       style={styles.activateButton}
                       disabled={busy}
                       onPress={() =>
@@ -1050,11 +1256,9 @@ export default function ProtocolScreen() {
 
             {activeProtocol && !showBuilder ? (
               <Pressable
+                accessibilityRole="button"
                 style={styles.addItemLaunch}
-                onPress={() => {
-                  setBuilderStep(1);
-                  setShowBuilder(true);
-                }}
+                onPress={() => void beginSubstance()}
               >
                 <View style={styles.addIcon}>
                   <Text style={styles.addIconText}>＋</Text>
@@ -1070,328 +1274,409 @@ export default function ProtocolScreen() {
             ) : null}
 
             {activeProtocol && showBuilder ? (
-              <Modal
-                visible
-                animationType="slide"
-                presentationStyle="pageSheet"
-                onRequestClose={() => {
-                  if (!busy) setShowBuilder(false);
+              <FormSheet
+                label={`Add substance · ${builderStep} of 3`}
+                visible={true}
+                onClose={() => {
+                  setShowBuilder(false);
+                  setBuilderStep(1);
                 }}
+                busy={busy}
+                contentKey={builderStep}
               >
-                <SafeAreaView style={styles.safe}>
-                  <KeyboardAvoidingView
-                    style={styles.flex}
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                  >
-                    <ScrollView
-                      key={builderStep}
-                      keyboardShouldPersistTaps="handled"
-                      contentContainerStyle={styles.modalPage}
-                    >
-                      <View style={styles.builderCard}>
-                        <SheetHeader
-                          label={`Add substance · ${builderStep} of 3`}
-                          disabled={busy}
-                          onClose={() => {
-                            setShowBuilder(false);
-                            setBuilderStep(1);
-                          }}
-                        />
-                        <Text style={styles.builderTitle}>
-                          {builderStep === 1
-                            ? 'What are you tracking?'
-                            : builderStep === 2
-                              ? 'When do you take it?'
-                              : 'Inventory & review'}
-                        </Text>
-                        <View style={styles.progress}>
-                          <View
-                            style={[
-                              styles.progressFill,
-                              {
-                                width:
-                                  builderStep === 1
-                                    ? '33%'
-                                    : builderStep === 2
-                                      ? '66%'
-                                      : '100%',
-                              },
-                            ]}
-                          />
-                        </View>
+                <View style={styles.builderCard}>
+                  <Text style={styles.builderTitle}>
+                    {builderStep === 1
+                      ? 'What are you tracking?'
+                      : builderStep === 2
+                        ? 'When do you take it?'
+                        : 'Inventory & review'}
+                  </Text>
+                  <View style={styles.progress}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        {
+                          width:
+                            builderStep === 1
+                              ? '33%'
+                              : builderStep === 2
+                                ? '66%'
+                                : '100%',
+                        },
+                      ]}
+                    />
+                  </View>
 
-                        {builderStep === 1 ? (
-                          <>
-                            <TextInput
-                              style={styles.input}
-                              placeholder="Item name"
-                              placeholderTextColor={colors.muted}
-                              value={itemName}
-                              onChangeText={setItemName}
-                            />
-                            <View style={styles.twoCol}>
-                              <TextInput
-                                style={[styles.input, styles.flex]}
-                                placeholder="Dose"
-                                placeholderTextColor={colors.muted}
-                                keyboardType="decimal-pad"
-                                value={dose}
-                                onChangeText={setDose}
-                              />
-                              <TextInput
-                                style={[styles.input, styles.flex]}
-                                placeholder="Unit"
-                                placeholderTextColor={colors.muted}
-                                value={unit}
-                                onChangeText={setUnit}
-                                autoCapitalize="none"
-                              />
-                            </View>
-                            <Text style={styles.smallLabel}>Category</Text>
-                            <View style={styles.chips}>
-                              {CATEGORIES.map((value) => (
-                                <Pressable
-                                  key={value}
-                                  onPress={() => setCategory(value)}
-                                  style={[
-                                    styles.chip,
-                                    category === value && styles.chipActive,
-                                  ]}
-                                >
-                                  <Text
-                                    style={[
-                                      styles.chipText,
-                                      category === value &&
-                                        styles.chipTextActive,
-                                    ]}
-                                  >
-                                    {value}
-                                  </Text>
-                                </Pressable>
-                              ))}
-                            </View>
-                            <Text style={styles.smallLabel}>Route</Text>
-                            <View style={styles.chips}>
-                              {ROUTES.map((value) => (
-                                <Pressable
-                                  key={value}
-                                  onPress={() => setRoute(value)}
-                                  style={[
-                                    styles.chip,
-                                    route === value && styles.chipActive,
-                                  ]}
-                                >
-                                  <Text
-                                    style={[
-                                      styles.chipText,
-                                      route === value && styles.chipTextActive,
-                                    ]}
-                                  >
-                                    {value}
-                                  </Text>
-                                </Pressable>
-                              ))}
-                            </View>
+                  {builderStep === 1 ? (
+                    <>
+                      <Text style={styles.smallLabel}>Substance name</Text>
+                      <TextInput
+                        accessibilityLabel="Substance name"
+                        style={styles.input}
+                        placeholder="Item name"
+                        placeholderTextColor={colors.muted}
+                        value={itemName}
+                        onChangeText={(value) => {
+                          setItemName(value);
+                          setShowSubstanceChoices(true);
+                        }}
+                      />
+                      <Pressable
+                        accessibilityRole="button"
+                        onPress={() =>
+                          setShowSubstanceChoices((value) => !value)
+                        }
+                        style={styles.backButton}
+                      >
+                        <Text style={styles.backText}>
+                          {showSubstanceChoices
+                            ? 'Close substance list'
+                            : 'Choose from substance list ▾'}
+                        </Text>
+                      </Pressable>
+                      {showSubstanceChoices && (
+                        <View style={styles.editCard}>
+                          <Text style={styles.scheduleHint}>
+                            Names for identifying what you already track. No
+                            amounts, routes or routines are recommended.
+                          </Text>
+                          {matchingSubstances(itemName).map((entry) => (
                             <Pressable
-                              style={styles.primary}
+                              key={entry.name}
+                              accessibilityRole="button"
+                              style={styles.backButton}
                               onPress={() => {
-                                if (
-                                  !itemName.trim() ||
-                                  !Number(dose) ||
-                                  Number(dose) <= 0 ||
-                                  !unit.trim()
-                                )
-                                  return Alert.alert(
-                                    'Add the basics first',
-                                    'Enter a name, dose and unit to continue.',
-                                  );
-                                setBuilderStep(2);
+                                setItemName(entry.name);
+                                setCategory(entry.category);
+                                setShowSubstanceChoices(false);
                               }}
                             >
-                              <Text style={styles.primaryText}>Continue</Text>
+                              <Text style={styles.backText}>{entry.name}</Text>
                             </Pressable>
-                          </>
-                        ) : null}
-
-                        {builderStep === 2 ? (
-                          <>
-                            <View style={styles.builderSummary}>
-                              <Text style={styles.builderSummaryName}>
-                                {itemName}
-                              </Text>
-                              <Text style={styles.cardDetail}>
-                                {dose} {unit} · {route}
-                              </Text>
-                            </View>
-
-                            <Text style={styles.smallLabel}>Schedule</Text>
-                            <View style={styles.chips}>
-                              {SCHEDULES.map((value) => (
-                                <Pressable
-                                  key={value}
-                                  onPress={() => setScheduleType(value)}
-                                  style={[
-                                    styles.chip,
-                                    scheduleType === value && styles.chipActive,
-                                  ]}
-                                >
-                                  <Text
-                                    style={[
-                                      styles.chipText,
-                                      scheduleType === value &&
-                                        styles.chipTextActive,
-                                    ]}
-                                  >
-                                    {value}
-                                  </Text>
-                                </Pressable>
-                              ))}
-                            </View>
-                            <ProtocolTimePicker
-                              label="Scheduled time"
-                              value={time}
-                              onChange={setTime}
-                            />
-                            <ScheduleExtras
-                              times={additionalTimes}
-                              onTimes={setAdditionalTimes}
-                              zone={timeZone}
-                              onZone={setTimeZone}
-                            />
-
-                            {scheduleType === 'weekdays' ? (
-                              <View style={styles.dayRow}>
-                                {DAY_LABELS.map((label, day) => (
-                                  <Pressable
-                                    key={`${label}-${day}`}
-                                    style={[
-                                      styles.day,
-                                      days.includes(day) && styles.dayActive,
-                                    ]}
-                                    onPress={() => toggleDay(day)}
-                                  >
-                                    <Text
-                                      style={[
-                                        styles.dayText,
-                                        days.includes(day) &&
-                                          styles.chipTextActive,
-                                      ]}
-                                    >
-                                      {label}
-                                    </Text>
-                                  </Pressable>
-                                ))}
-                              </View>
-                            ) : null}
-
-                            {scheduleType === 'interval' ? (
-                              <TextInput
-                                style={styles.input}
-                                placeholder="Every X days"
-                                placeholderTextColor={colors.muted}
-                                keyboardType="number-pad"
-                                value={everyDays}
-                                onChangeText={setEveryDays}
-                              />
-                            ) : null}
-
-                            {scheduleType === 'cycle' ? (
-                              <View style={styles.twoCol}>
-                                <TextInput
-                                  style={[styles.input, styles.flex]}
-                                  placeholder="Days on"
-                                  placeholderTextColor={colors.muted}
-                                  keyboardType="number-pad"
-                                  value={onDays}
-                                  onChangeText={setOnDays}
-                                />
-                                <TextInput
-                                  style={[styles.input, styles.flex]}
-                                  placeholder="Days off"
-                                  placeholderTextColor={colors.muted}
-                                  keyboardType="number-pad"
-                                  value={offDays}
-                                  onChangeText={setOffDays}
-                                />
-                              </View>
-                            ) : null}
-
-                            <View style={styles.builderNav}>
-                              <Pressable
-                                style={styles.backButton}
-                                onPress={() => setBuilderStep(1)}
-                              >
-                                <Text style={styles.backText}>Back</Text>
-                              </Pressable>
-                              <Pressable
-                                style={[styles.primary, styles.flex]}
-                                onPress={() => {
-                                  if (
-                                    scheduleType === 'weekdays' &&
-                                    days.length === 0
-                                  )
-                                    return Alert.alert(
-                                      'Choose at least one day',
-                                    );
-                                  setBuilderStep(3);
-                                }}
-                              >
-                                <Text style={styles.primaryText}>Continue</Text>
-                              </Pressable>
-                            </View>
-                          </>
-                        ) : null}
-
-                        {builderStep === 3 ? (
-                          <>
-                            <View style={styles.reviewBox}>
-                              <Text style={styles.reviewName}>{itemName}</Text>
-                              <Text style={styles.cardDetail}>
-                                {dose} {unit} · {route}
-                              </Text>
-                              <Text style={styles.scheduleText}>
-                                {formatSchedule(buildSchedule())}
-                              </Text>
-                            </View>
-                            <Text style={styles.smallLabel}>
-                              Inventory · optional
+                          ))}
+                          <Pressable
+                            accessibilityRole="button"
+                            style={styles.backButton}
+                            onPress={() => setShowSubstanceChoices(false)}
+                          >
+                            <Text style={styles.backText}>
+                              {itemName.trim()
+                                ? `Use custom name: ${itemName.trim()}`
+                                : 'Type my own substance name above'}
                             </Text>
-                            <TextInput
-                              style={styles.input}
-                              placeholder={`Starting inventory in ${unit || 'same unit'}`}
-                              placeholderTextColor={colors.muted}
-                              keyboardType="decimal-pad"
-                              value={inventory}
-                              onChangeText={setInventory}
-                            />
-                            <View style={styles.builderNav}>
-                              <Pressable
-                                style={styles.backButton}
-                                onPress={() => setBuilderStep(2)}
-                              >
-                                <Text style={styles.backText}>Back</Text>
-                              </Pressable>
-                              <Pressable
-                                style={[
-                                  styles.primary,
-                                  styles.flex,
-                                  busy && styles.disabled,
-                                ]}
-                                disabled={busy}
-                                onPress={() => void addItem()}
-                              >
-                                <Text style={styles.primaryText}>
-                                  {busy ? 'Adding…' : 'Add substance'}
-                                </Text>
-                              </Pressable>
-                            </View>
-                          </>
-                        ) : null}
+                          </Pressable>
+                        </View>
+                      )}
+                      <Text style={styles.smallLabel}>
+                        Amount per logged entry
+                      </Text>
+                      <Text style={styles.scheduleHint}>
+                        Separate from the total amount in your vial. Enter your
+                        own amount and administration type.
+                      </Text>
+                      <View style={styles.twoCol}>
+                        <TextInput
+                          style={[styles.input, styles.flex]}
+                          placeholder="Amount"
+                          accessibilityLabel="Amount per recorded entry"
+                          placeholderTextColor={colors.muted}
+                          keyboardType="decimal-pad"
+                          value={dose}
+                          onChangeText={setDose}
+                        />
+                        <TextInput
+                          style={[styles.input, styles.flex]}
+                          placeholder="Unit"
+                          accessibilityLabel="Amount unit"
+                          placeholderTextColor={colors.muted}
+                          value={unit}
+                          onChangeText={setUnit}
+                          autoCapitalize="none"
+                        />
                       </View>
-                    </ScrollView>
-                  </KeyboardAvoidingView>
-                </SafeAreaView>
-              </Modal>
+                      <Text style={styles.smallLabel}>Category</Text>
+                      <View style={styles.chips}>
+                        {CATEGORIES.map((value) => (
+                          <Pressable
+                            accessibilityRole="button"
+                            key={value}
+                            onPress={() => setCategory(value)}
+                            style={[
+                              styles.chip,
+                              category === value && styles.chipActive,
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.chipText,
+                                category === value && styles.chipTextActive,
+                              ]}
+                            >
+                              {value}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                      <Text style={styles.smallLabel}>Administration type</Text>
+                      <Text style={styles.scheduleHint}>
+                        Saved for this substance and used for future logs.
+                        Choose the method in your clinician’s instructions.
+                      </Text>
+                      <View style={styles.chips}>
+                        {ROUTES.map((value) => (
+                          <Pressable
+                            key={administrationLabel(value)}
+                            accessibilityRole="button"
+                            accessibilityLabel={administrationLabel(value)}
+                            accessibilityState={{ selected: route === value }}
+                            onPress={() => setRoute(value)}
+                            style={[
+                              styles.chip,
+                              route === value && styles.chipActive,
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.chipText,
+                                route === value && styles.chipTextActive,
+                              ]}
+                            >
+                              {administrationLabel(value)}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                      <Pressable
+                        accessibilityRole="button"
+                        style={styles.primary}
+                        onPress={() => {
+                          if (
+                            !itemName.trim() ||
+                            !Number(dose) ||
+                            Number(dose) <= 0 ||
+                            !unit.trim() ||
+                            !route
+                          )
+                            return Alert.alert(
+                              'Add the basics first',
+                              'Enter a name, amount, unit and administration type to continue.',
+                            );
+                          setBuilderStep(2);
+                        }}
+                      >
+                        <Text style={styles.primaryText}>Continue</Text>
+                      </Pressable>
+                    </>
+                  ) : null}
+
+                  {builderStep === 2 ? (
+                    <>
+                      <View style={styles.builderSummary}>
+                        <Text style={styles.builderSummaryName}>
+                          {itemName}
+                        </Text>
+                        <Text style={styles.cardDetail}>
+                          {dose} {unit} · {administrationLabel(route)}
+                        </Text>
+                      </View>
+
+                      <Text style={styles.smallLabel}>Schedule</Text>
+                      <View style={styles.chips}>
+                        {SCHEDULES.map((value) => (
+                          <Pressable
+                            accessibilityRole="button"
+                            key={value}
+                            onPress={() => setScheduleType(value)}
+                            style={[
+                              styles.chip,
+                              scheduleType === value && styles.chipActive,
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.chipText,
+                                scheduleType === value && styles.chipTextActive,
+                              ]}
+                            >
+                              {value === 'as_needed' ? 'As needed' : value}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                      {scheduleType !== 'as_needed' ? (
+                        <>
+                          {' '}
+                          <ProtocolTimePicker
+                            label="Scheduled time"
+                            value={time}
+                            onChange={setTime}
+                          />
+                          <ScheduleExtras
+                            times={additionalTimes}
+                            onTimes={setAdditionalTimes}
+                            zone={timeZone}
+                            onZone={setTimeZone}
+                          />
+                        </>
+                      ) : (
+                        <Text style={styles.scheduleHint}>
+                          No automatic due time or reminder. Use Today’s
+                          as-needed section to record actual activity.
+                        </Text>
+                      )}
+                      {scheduleType === 'weekdays' ? (
+                        <View style={styles.dayRow}>
+                          {DAY_LABELS.map((label, day) => (
+                            <Pressable
+                              accessibilityRole="button"
+                              key={`${label}-${day}`}
+                              style={[
+                                styles.day,
+                                days.includes(day) && styles.dayActive,
+                              ]}
+                              onPress={() => toggleDay(day)}
+                            >
+                              <Text
+                                style={[
+                                  styles.dayText,
+                                  days.includes(day) && styles.chipTextActive,
+                                ]}
+                              >
+                                {label}
+                              </Text>
+                            </Pressable>
+                          ))}
+                        </View>
+                      ) : null}
+
+                      {scheduleType === 'interval' ? (
+                        <TextInput
+                          style={styles.input}
+                          placeholder="Every X days"
+                          placeholderTextColor={colors.muted}
+                          keyboardType="number-pad"
+                          value={everyDays}
+                          onChangeText={setEveryDays}
+                        />
+                      ) : null}
+
+                      {scheduleType === 'cycle' ? (
+                        <View style={styles.twoCol}>
+                          <TextInput
+                            style={[styles.input, styles.flex]}
+                            placeholder="Days on"
+                            placeholderTextColor={colors.muted}
+                            keyboardType="number-pad"
+                            value={onDays}
+                            onChangeText={setOnDays}
+                          />
+                          <TextInput
+                            style={[styles.input, styles.flex]}
+                            placeholder="Days off"
+                            placeholderTextColor={colors.muted}
+                            keyboardType="number-pad"
+                            value={offDays}
+                            onChangeText={setOffDays}
+                          />
+                        </View>
+                      ) : null}
+
+                      <View style={styles.builderNav}>
+                        <Pressable
+                          accessibilityRole="button"
+                          style={styles.backButton}
+                          onPress={() => setBuilderStep(1)}
+                        >
+                          <Text style={styles.backText}>Back</Text>
+                        </Pressable>
+                        <Pressable
+                          accessibilityRole="button"
+                          style={[styles.primary, styles.flex]}
+                          onPress={() => {
+                            try {
+                              buildSchedule();
+                            } catch (error) {
+                              return Alert.alert(
+                                'Check your schedule',
+                                error instanceof Error
+                                  ? error.message
+                                  : 'Review the schedule you entered.',
+                              );
+                            }
+                            setBuilderStep(3);
+                          }}
+                        >
+                          <Text style={styles.primaryText}>Continue</Text>
+                        </Pressable>
+                      </View>
+                    </>
+                  ) : null}
+
+                  {builderStep === 3 ? (
+                    <>
+                      <View style={styles.reviewBox}>
+                        <Text style={styles.reviewName}>{itemName}</Text>
+                        <Text style={styles.cardDetail}>
+                          {dose} {unit} · {administrationLabel(route)}
+                        </Text>
+                        <Text style={styles.scheduleText}>
+                          {formatSchedule(buildSchedule())}
+                        </Text>
+                      </View>
+                      <Text style={styles.smallLabel}>
+                        Total in one vial/container · optional
+                      </Text>
+                      <TextInput
+                        style={styles.input}
+                        accessibilityLabel="Total quantity in one container"
+                        editable={!busy}
+                        placeholder={`Total container quantity in ${unit || 'same unit'}`}
+                        placeholderTextColor={colors.muted}
+                        keyboardType="decimal-pad"
+                        value={inventory}
+                        onChangeText={setInventory}
+                      />
+                      {saveError?.key === 'substance' && (
+                        <RetryNotice
+                          title="Check this substance"
+                          message={saveError.message}
+                        />
+                      )}
+                      <Text style={styles.scheduleHint}>
+                        This creates one container. For example, a 20 mg vial
+                        belongs here; it does not set the amount you log.
+                        Artwork uses this original container total, not
+                        remaining stock.
+                      </Text>
+                      <View style={styles.builderNav}>
+                        <Pressable
+                          accessibilityRole="button"
+                          style={styles.backButton}
+                          disabled={busy}
+                          onPress={() => setBuilderStep(2)}
+                        >
+                          <Text style={styles.backText}>Back</Text>
+                        </Pressable>
+                        <Pressable
+                          accessibilityRole="button"
+                          style={[
+                            styles.primary,
+                            styles.flex,
+                            busy && styles.disabled,
+                          ]}
+                          disabled={busy}
+                          onPress={() => void addItem()}
+                        >
+                          <Text style={styles.primaryText}>
+                            {busy ? 'Adding…' : 'Add substance'}
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </>
+                  ) : null}
+                </View>
+              </FormSheet>
             ) : null}
 
             {activeProtocol ? (
@@ -1446,6 +1731,14 @@ export default function ProtocolScreen() {
                       <View style={styles.signatureTop}>
                         <SubstanceArtwork
                           category={item.category}
+                          route={item.route}
+                          name={item.name}
+                          itemId={item.id}
+                          vialQuantity={
+                            inventoryItem
+                              ? `${inventoryItem.total_amount} ${inventoryItem.unit}`
+                              : undefined
+                          }
                           inactive={item.active === false}
                         />
                         <View style={styles.signatureHeaderText}>
@@ -1455,7 +1748,8 @@ export default function ProtocolScreen() {
                           </Text>
                           <Text style={styles.signatureName}>{item.name}</Text>
                           <Text style={styles.signatureAmount}>
-                            {item.dose_amount} {item.dose_unit} · {item.route}
+                            {item.dose_amount} {item.dose_unit} ·{' '}
+                            {administrationLabel(item.route)}
                           </Text>
                         </View>
                       </View>
@@ -1508,6 +1802,7 @@ export default function ProtocolScreen() {
                       ) : null}
                       <View style={{ gap: 9 }}>
                         <InventoryEstimate item={item} />
+                        <InventoryHistoryButton item={item} />
                         {(item.inventory_containers ?? []).map(
                           (container, index) => (
                             <View key={container.id} style={styles.protocolRow}>
@@ -1528,6 +1823,7 @@ export default function ProtocolScreen() {
                                 disabled={busy}
                                 style={styles.activateButton}
                                 onPress={() => {
+                                  setSaveError(null);
                                   setReservoirEditorId(item.id);
                                   setReservoirContainerId(container.id);
                                   setReservoirQuantity(
@@ -1555,6 +1851,7 @@ export default function ProtocolScreen() {
                           disabled={busy}
                           style={styles.scheduleEditTrigger}
                           onPress={() => {
+                            setSaveError(null);
                             setReservoirEditorId(item.id);
                             setReservoirContainerId(null);
                             setReservoirQuantity('');
@@ -1566,11 +1863,28 @@ export default function ProtocolScreen() {
                           </Text>
                         </Pressable>
                         {reservoirEditorId === item.id ? (
-                          <View style={styles.scheduleEditor}>
+                          <FormSheet
+                            label={`Inventory · ${item.name}`}
+                            busy={busy}
+                            onClose={() => setReservoirEditorId(null)}
+                          >
+                            {saveError?.key === 'inventory' && (
+                              <RetryNotice
+                                title="Could not save inventory"
+                                message={saveError.message}
+                                busy={busy}
+                                onRetry={() => void saveReservoir(item)}
+                              />
+                            )}
                             <Text style={styles.smallLabel}>
                               {reservoirContainerId
                                 ? 'CORRECT REMAINING QUANTITY'
-                                : 'NEW CONTAINER · QUANTITY'}
+                                : 'INVENTORY · NEW CONTAINER'}
+                            </Text>
+                            <Text style={styles.scheduleHint}>
+                              {reservoirContainerId
+                                ? 'Correct the stock you actually have left. This does not change your amount per entry.'
+                                : 'Enter the total quantity in this container, separate from your amount per entry.'}
                             </Text>
                             <TextInput
                               accessibilityLabel="Container quantity"
@@ -1632,7 +1946,7 @@ export default function ProtocolScreen() {
                                 <Text style={styles.primaryText}>Save</Text>
                               </Pressable>
                             </View>
-                          </View>
+                          </FormSheet>
                         ) : null}
                       </View>
                       <View style={styles.signatureActions}>
@@ -1692,7 +2006,19 @@ export default function ProtocolScreen() {
                         </Text>
                       </Pressable>
                       {editingScheduleId === item.id ? (
-                        <View style={styles.scheduleEditor}>
+                        <FormSheet
+                          label={`Schedule · ${item.name}`}
+                          busy={busy}
+                          onClose={() => setEditingScheduleId(null)}
+                        >
+                          {saveError?.key === 'schedule' && (
+                            <RetryNotice
+                              title="Could not save schedule"
+                              message={saveError.message}
+                              busy={busy}
+                              onRetry={() => void saveScheduleEdit()}
+                            />
+                          )}
                           <Text style={styles.smallLabel}>
                             TRACKING PATTERN
                           </Text>
@@ -1869,10 +2195,22 @@ export default function ProtocolScreen() {
                               </Text>
                             </Pressable>
                           </View>
-                        </View>
+                        </FormSheet>
                       ) : null}
                       {editingItemId === item.id ? (
-                        <View style={styles.editCard}>
+                        <FormSheet
+                          label={`Substance · ${item.name}`}
+                          busy={busy}
+                          onClose={() => setEditingItemId(null)}
+                        >
+                          {saveError?.key === 'details' && (
+                            <RetryNotice
+                              title="Could not save details"
+                              message={saveError.message}
+                              busy={busy}
+                              onRetry={() => void saveItemEdit()}
+                            />
+                          )}
                           <Text style={styles.smallLabel}>
                             EDIT SUBSTANCE · {item.name}
                           </Text>
@@ -1883,6 +2221,7 @@ export default function ProtocolScreen() {
                             value={editItemName}
                             onChangeText={setEditItemName}
                           />
+                          <Text style={styles.smallLabel}>Category</Text>
                           <View style={styles.chips}>
                             {CATEGORIES.map((cat) => (
                               <Pressable
@@ -1912,27 +2251,44 @@ export default function ProtocolScreen() {
                           <Text style={styles.smallLabel}>
                             TRACKED AMOUNT AND UNIT
                           </Text>
+                          <Text style={styles.scheduleHint}>
+                            Amount per entry, separate from the total in your
+                            container.
+                          </Text>
                           <View style={styles.twoCol}>
-                            <TextInput
-                              accessibilityLabel="Dose amount"
-                              style={[styles.input, styles.flex]}
-                              keyboardType="decimal-pad"
-                              value={editDose}
-                              onChangeText={setEditDose}
-                            />
-                            <TextInput
-                              accessibilityLabel="Dose unit"
-                              style={[styles.input, styles.flex]}
-                              value={editUnit}
-                              onChangeText={setEditUnit}
-                            />
+                            <View style={styles.flex}>
+                              <Text style={styles.smallLabel}>Amount</Text>
+                              <TextInput
+                                accessibilityLabel="Dose amount"
+                                style={[styles.input, styles.flex]}
+                                keyboardType="decimal-pad"
+                                value={editDose}
+                                onChangeText={setEditDose}
+                              />
+                            </View>
+                            <View style={styles.flex}>
+                              <Text style={styles.smallLabel}>Unit</Text>
+                              <TextInput
+                                accessibilityLabel="Dose unit"
+                                style={[styles.input, styles.flex]}
+                                value={editUnit}
+                                onChangeText={setEditUnit}
+                              />
+                            </View>
                           </View>
-                          <Text style={styles.smallLabel}>Route</Text>
+                          <Text style={styles.smallLabel}>
+                            Administration type
+                          </Text>
+                          <Text style={styles.scheduleHint}>
+                            Saved for this substance and used for future logs.
+                            Choose the method in your clinician’s instructions.
+                          </Text>
                           <View style={styles.chips}>
                             {ROUTES.map((kind) => (
                               <Pressable
                                 key={kind}
                                 accessibilityRole="button"
+                                accessibilityLabel={administrationLabel(kind)}
                                 accessibilityState={{
                                   selected: editRoute === kind,
                                 }}
@@ -1948,7 +2304,7 @@ export default function ProtocolScreen() {
                                     editRoute === kind && styles.chipTextActive,
                                   ]}
                                 >
-                                  {kind}
+                                  {administrationLabel(kind)}
                                 </Text>
                               </Pressable>
                             ))}
@@ -1959,6 +2315,7 @@ export default function ProtocolScreen() {
                           </Text>
                           <View style={styles.builderNav}>
                             <Pressable
+                              accessibilityRole="button"
                               style={styles.backButton}
                               disabled={busy}
                               onPress={() => setEditingItemId(null)}
@@ -1966,6 +2323,7 @@ export default function ProtocolScreen() {
                               <Text style={styles.backText}>Cancel</Text>
                             </Pressable>
                             <Pressable
+                              accessibilityRole="button"
                               style={[styles.primary, styles.flex]}
                               disabled={busy}
                               onPress={() => void saveItemEdit()}
@@ -1975,7 +2333,7 @@ export default function ProtocolScreen() {
                               </Text>
                             </Pressable>
                           </View>
-                        </View>
+                        </FormSheet>
                       ) : null}
                     </View>
                   );
@@ -2038,10 +2396,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   launchText: {
+    ...typography.label,
     color: colors.accent,
-    fontWeight: '700',
-    fontSize: 13,
-    letterSpacing: 0,
     textAlign: 'center',
   },
   card: {
@@ -2050,20 +2406,16 @@ const styles = StyleSheet.create({
     padding: layout.cardInset,
     borderWidth: 0,
     borderColor: 'transparent',
-    gap: 12,
-    marginBottom: spacing.md,
+    gap: 16,
+    marginBottom: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  cardTitle: { color: colors.text, fontSize: 18, fontWeight: '800' },
-  cardDetail: { color: colors.muted, marginTop: 4, lineHeight: 20 },
-  scheduleText: {
-    color: colors.accent,
-    marginTop: 5,
-    fontSize: 12,
-    fontWeight: '700',
-  },
+  cardTitle: { ...typography.cardTitle, color: colors.text },
+  cardDetail: { ...typography.body, color: colors.muted, marginTop: 8 },
+  scheduleText: { ...typography.detail, color: colors.accent, marginTop: 5 },
   input: {
+    ...typography.input,
     backgroundColor: colors.panel2,
     borderWidth: 1,
     borderColor: colors.border,
@@ -2071,10 +2423,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 13,
     color: colors.text,
-    fontSize: 15,
   },
   twoCol: { flexDirection: 'row', gap: 10 },
-  flex: { flex: 1 },
+  flex: { flex: 1, minWidth: 0 },
   primary: {
     backgroundColor: colors.accent,
     borderRadius: radius.md,
@@ -2082,14 +2433,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 2,
   },
-  primaryText: { color: '#03111f', fontWeight: '700', fontSize: 15 },
-  smallLabel: {
-    color: colors.muted,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginTop: 4,
-  },
+  primaryText: { ...typography.button, color: '#03111f' },
+  smallLabel: { ...typography.eyebrow, color: colors.muted, marginTop: 8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     borderRadius: 999,
@@ -2103,12 +2448,17 @@ const styles = StyleSheet.create({
     borderColor: colors.accentBorder,
     backgroundColor: colors.accentSoft,
   },
-  chipText: { color: colors.muted, fontSize: 12, textTransform: 'capitalize' },
+  chipText: {
+    ...typography.caption,
+    color: colors.muted,
+    textTransform: 'capitalize',
+  },
   chipTextActive: { color: colors.accent, fontWeight: '800' },
-  dayRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 6 },
+  dayRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   day: {
-    width: 38,
-    height: 38,
+    minWidth: 38,
+    minHeight: 44,
+    padding: 6,
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
@@ -2120,7 +2470,7 @@ const styles = StyleSheet.create({
     borderColor: colors.accentBorder,
     backgroundColor: colors.accentSoft,
   },
-  dayText: { color: colors.muted, fontWeight: '800' },
+  dayText: { ...typography.label, color: colors.muted },
   protocolPicker: {
     backgroundColor: 'transparent',
     padding: layout.cardInset,
@@ -2148,13 +2498,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     gap: spacing.sm,
   },
-  libraryTitle: {
-    color: colors.text,
-    fontSize: 23,
-    fontWeight: '700',
-    letterSpacing: -0.7,
-  },
-  librarySubtitle: { color: colors.muted, fontSize: 12, marginTop: 4 },
+  libraryTitle: { ...typography.sectionTitle, color: colors.text },
+  librarySubtitle: { ...typography.detail, color: colors.muted, marginTop: 8 },
   scheduleEditTrigger: {
     backgroundColor: colors.bgElevated,
     borderWidth: 1,
@@ -2166,13 +2511,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
   },
-  scheduleEditTriggerText: {
-    color: colors.accent,
-    fontWeight: '700',
-    fontSize: 11,
-    letterSpacing: 0.7,
-  },
-  scheduleEditSubtext: { color: colors.muted, fontSize: 11, lineHeight: 16 },
+  scheduleEditTriggerText: { ...typography.label, color: colors.accent },
+  scheduleEditSubtext: { ...typography.detail, color: colors.muted },
   scheduleEditor: {
     backgroundColor: colors.panel2,
     borderWidth: 1,
@@ -2181,7 +2521,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     gap: spacing.md,
   },
-  scheduleHint: { color: colors.muted, fontSize: 11, lineHeight: 17 },
+  scheduleHint: { ...typography.detail, color: colors.muted },
   signatureCard: {
     backgroundColor: 'transparent',
     borderRadius: 0,
@@ -2209,24 +2549,15 @@ const styles = StyleSheet.create({
   },
   signatureTop: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   signatureHeaderText: { flex: 1, minWidth: 0, gap: 6 },
-  signatureCategory: {
-    color: colors.accent,
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-  },
+  signatureCategory: { ...typography.eyebrow, color: colors.accent },
   signatureName: {
+    ...typography.sectionTitle,
     color: colors.text,
-    fontSize: 21,
-    fontWeight: '700',
-    lineHeight: 26,
-    letterSpacing: -0.5,
     flexShrink: 1,
   },
   signatureAmount: {
+    ...typography.detail,
     color: colors.muted,
-    fontSize: 12,
-    lineHeight: 17,
     textTransform: 'capitalize',
   },
   signatureDivider: { height: 1, backgroundColor: colors.border },
@@ -2238,22 +2569,11 @@ const styles = StyleSheet.create({
     maxWidth: '43%',
     gap: 5,
   },
-  signatureMetaLabel: {
-    color: colors.subtle,
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-  },
-  signatureMetaValue: {
-    color: colors.text,
-    fontSize: 12,
-    lineHeight: 18,
-    fontWeight: '700',
-  },
+  signatureMetaLabel: { ...typography.eyebrow, color: colors.subtle },
+  signatureMetaValue: { ...typography.label, color: colors.text },
   signatureStock: {
+    ...typography.label,
     color: colors.accent,
-    fontSize: 13,
-    fontWeight: '700',
     fontVariant: ['tabular-nums'],
     textAlign: 'right',
   },
@@ -2266,12 +2586,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   signatureReservoirFill: { height: '100%', borderRadius: radius.pill },
-  signatureReservoirFoot: {
-    color: colors.subtle,
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
+  signatureReservoirFoot: { ...typography.caption, color: colors.subtle },
   signatureActions: { flexDirection: 'row', gap: 9 },
   signatureEditButton: {
     flex: 1,
@@ -2284,12 +2599,7 @@ const styles = StyleSheet.create({
     borderColor: colors.accentBorder,
     borderWidth: 1,
   },
-  signatureEditText: {
-    color: colors.accent,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
+  signatureEditText: { ...typography.compactButton, color: colors.accent },
   signaturePauseButton: {
     minWidth: 92,
     minHeight: 44,
@@ -2299,13 +2609,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderWidth: 1,
   },
-  signaturePauseText: {
-    color: colors.muted,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  itemTitle: { color: colors.text, fontSize: 16, fontWeight: '800' },
+  signaturePauseText: { ...typography.compactButton, color: colors.muted },
+  itemTitle: { ...typography.cardTitle, color: colors.text },
   protocolDateBand: {
     flexDirection: 'row',
     gap: spacing.sm,
@@ -2315,9 +2620,8 @@ const styles = StyleSheet.create({
   },
   protocolDateColumn: { flex: 1, minWidth: 0, gap: 5 },
   protocolDateText: {
+    ...typography.label,
     color: colors.text,
-    fontWeight: '800',
-    fontSize: 12,
     fontVariant: ['tabular-nums'],
   },
   protocolEditPanel: {
@@ -2337,13 +2641,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.accentBorder,
   },
-  protocolEditTriggerText: {
-    color: colors.accent,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-  },
-  protocolEditHint: { color: colors.muted, fontSize: 11, lineHeight: 17 },
+  protocolEditTriggerText: { ...typography.label, color: colors.accent },
+  protocolEditHint: { ...typography.detail, color: colors.muted },
   primaryInline: {
     flex: 1,
     minHeight: 44,
@@ -2366,12 +2665,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.accentSoft,
   },
-  secondaryActionText: {
-    color: colors.accent,
-    fontWeight: '700',
-    fontSize: 11,
-    letterSpacing: 0.8,
-  },
+  secondaryActionText: { ...typography.compactButton, color: colors.accent },
   archiveAction: {
     flex: 1,
     borderWidth: 1,
@@ -2380,12 +2674,7 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     alignItems: 'center',
   },
-  archiveActionText: {
-    color: colors.muted,
-    fontWeight: '700',
-    fontSize: 11,
-    letterSpacing: 0.8,
-  },
+  archiveActionText: { ...typography.compactButton, color: colors.muted },
   protocolRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2406,12 +2695,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 9,
   },
-  activateText: {
-    color: colors.accent,
-    fontWeight: '700',
-    fontSize: 10,
-    letterSpacing: 0.7,
-  },
+  activateText: { ...typography.compactButton, color: colors.accent },
   mapCard: {
     backgroundColor: 'transparent',
     borderRadius: 0,
@@ -2427,13 +2711,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: spacing.md,
   },
-  mapTitle: {
-    color: colors.text,
-    fontSize: 22,
-    fontWeight: '700',
-    marginTop: 4,
-    letterSpacing: -0.5,
-  },
+  mapTitle: { ...typography.sectionTitle, color: colors.text, marginTop: 4 },
   mapLegendPill: {
     backgroundColor: colors.accentSoft,
     borderWidth: 1,
@@ -2442,12 +2720,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  mapLegendText: {
-    color: colors.accent,
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
+  mapLegendText: { ...typography.caption, color: colors.accent },
   weekStrip: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -2514,12 +2787,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  mapDetailsToggleText: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-    color: colors.accent,
-  },
+  mapDetailsToggleText: { ...typography.compactButton, color: colors.accent },
   mapScheduleList: {
     marginTop: spacing.md,
     borderTopWidth: 1,
@@ -2546,10 +2814,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
-  mapScheduleItems: { color: colors.text, fontSize: 13, fontWeight: '800' },
+  mapScheduleItems: { ...typography.label, color: colors.text },
   mapScheduleMeta: {
+    ...typography.detail,
     color: colors.muted,
-    fontSize: 10,
     marginTop: 3,
     fontVariant: ['tabular-nums'],
   },
@@ -2586,9 +2854,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   builderTitle: {
+    ...typography.sectionTitle,
     color: colors.text,
-    fontSize: 22,
-    fontWeight: '800',
     marginTop: 5,
   },
   progress: {
@@ -2606,7 +2873,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
   },
-  builderSummaryName: { color: colors.text, fontSize: 16, fontWeight: '700' },
+  builderSummaryName: { ...typography.cardTitle, color: colors.text },
   builderNav: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
   backButton: {
     paddingHorizontal: 16,
@@ -2615,12 +2882,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  backText: {
-    color: colors.muted,
-    fontWeight: '700',
-    fontSize: 11,
-    letterSpacing: 0.8,
-  },
+  backText: { ...typography.compactButton, color: colors.muted },
   reviewBox: {
     backgroundColor: colors.bgElevated,
     borderRadius: radius.lg,
@@ -2628,6 +2890,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.md,
   },
-  reviewName: { color: colors.text, fontSize: 20, fontWeight: '800' },
+  reviewName: { ...typography.cardTitle, color: colors.text },
   disabled: { opacity: 0.55 },
 });

@@ -2,30 +2,27 @@ import {
   entryName,
   wallTimeToInstant,
   zonedDateKey,
+  validTimeZone,
 } from '@/domain/occurrences';
-import { SheetHeader } from './SheetHeader';
+import { FormSheet } from './FormSheet';
+import { RetryNotice } from './RetryNotice';
+import { sitesForRoute } from '@/domain/sites';
 import { useState } from 'react';
 import {
   Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProtocolDatePicker, ProtocolTimePicker } from './ProtocolPickers';
-import { localDateKey } from '@/domain/schedule';
 import {
   correctDoseLog,
   undoDoseLog,
   type TimelineEntry,
 } from '@/services/pulse';
-import { colors, radius, spacing } from '@/theme';
+import { colors, radius, typography } from '@/theme';
 
 export function LogEditor({
   entry,
@@ -39,7 +36,9 @@ export function LogEditor({
   const originalDate = new Date(entry.logged_at);
   const [amount, setAmount] = useState(String(entry.amount));
   const zone =
-    entry.time_zone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+    entry.time_zone && validTimeZone(entry.time_zone)
+      ? entry.time_zone
+      : Intl.DateTimeFormat().resolvedOptions().timeZone;
   const originalKey = zonedDateKey(originalDate, zone);
   const originalClock = new Intl.DateTimeFormat('en-GB', {
     timeZone: zone,
@@ -50,13 +49,23 @@ export function LogEditor({
   const [date, setDate] = useState(originalKey);
   const [time, setTime] = useState(originalClock);
   const [site, setSite] = useState(entry.site ?? '');
+  const [showSites, setShowSites] = useState(false);
+  const [status, setStatus] = useState<'completed' | 'skipped' | null>(
+    entry.status === 'completed' || entry.status === 'skipped'
+      ? entry.status
+      : null,
+  );
+  const [saveError, setSaveError] = useState('');
   const [busy, setBusy] = useState(false);
   async function save(undo = false) {
     if (busy) return;
     try {
       setBusy(true);
+      setSaveError('');
       if (undo) await undoDoseLog(entry);
       else {
+        if (!status)
+          throw new Error('Choose whether this entry was recorded or skipped.');
         const value = Number(amount);
         if (!Number.isFinite(value) || value <= 0)
           throw new Error('Enter a positive amount.');
@@ -73,124 +82,181 @@ export function LogEditor({
           amount: value,
           loggedAt,
           site: site.trim() || null,
-          status: entry.status === 'skipped' ? 'skipped' : 'completed',
+          status,
         });
       }
       await onSaved();
       onClose();
     } catch (error) {
-      Alert.alert(
-        'Could not update entry',
-        error instanceof Error ? error.message : 'Please try again.',
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : 'Could not confirm the update. Close and review your Timeline before trying again.',
       );
     } finally {
       setBusy(false);
     }
   }
   return (
-    <Modal
-      visible
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={() => {
-        if (!busy) onClose();
-      }}
-    >
-      <SafeAreaView style={styles.safe}>
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.page}
-          >
-            <View style={styles.card}>
-              <SheetHeader
-                label="Edit entry"
-                disabled={busy}
-                onClose={onClose}
-              />
-              <Text style={styles.title}>{entryName(entry)}</Text>
-              <Text style={styles.body}>
-                {entry.status === 'skipped'
-                  ? 'Skipped entry · no inventory consumed.'
-                  : 'Amount changes adjust the original container’s inventory automatically.'}
-              </Text>
+    <FormSheet label="Edit entry" busy={busy} onClose={onClose}>
+      <View style={styles.card}>
+        <Text style={styles.title}>{entryName(entry)}</Text>
+        <Text style={styles.body}>
+          {status === 'skipped'
+            ? 'Skipped entry · no inventory consumed.'
+            : 'Amount changes adjust the original container’s inventory automatically.'}
+        </Text>
+        <Text style={styles.label}>Entry status</Text>
+        <View style={styles.header}>
+          {(['completed', 'skipped'] as const).map((value) => (
+            <Pressable
+              key={value}
+              accessibilityRole="button"
+              accessibilityState={{
+                selected: status === value,
+                disabled: busy,
+              }}
+              disabled={busy}
+              onPress={() => setStatus(value)}
+              style={[
+                styles.close,
+                status === value && {
+                  backgroundColor: colors.accentSoft,
+                  borderColor: colors.accentBorder,
+                },
+              ]}
+            >
               <Text style={styles.label}>
-                {entry.status === 'skipped'
-                  ? 'Scheduled amount'
-                  : 'Recorded amount'}{' '}
-                · {entry.unit}
+                {value === 'completed' ? 'Recorded' : 'Skipped'}
               </Text>
-              <TextInput
-                accessibilityLabel={`Recorded amount in ${entry.unit}`}
-                style={styles.input}
-                keyboardType="decimal-pad"
-                value={amount}
-                onChangeText={setAmount}
-              />
-              <ProtocolDatePicker
-                label="Recorded date"
-                value={date}
-                onChange={setDate}
-              />
-              <ProtocolTimePicker
-                label="Recorded time"
-                value={time}
-                onChange={setTime}
-              />
+            </Pressable>
+          ))}
+        </View>
+        {!status && (
+          <Text style={styles.body}>
+            Choose what happened before saving a correction.
+          </Text>
+        )}
+        <Text style={styles.label}>
+          {status === 'skipped' ? 'Scheduled amount' : 'Recorded amount'} ·{' '}
+          {entry.unit}
+        </Text>
+        <TextInput
+          accessibilityLabel={`${status === 'skipped' ? 'Scheduled' : 'Recorded'} amount in ${entry.unit}`}
+          style={styles.input}
+          keyboardType="decimal-pad"
+          value={amount}
+          onChangeText={setAmount}
+          editable={!busy}
+        />
+        <ProtocolDatePicker
+          label="Recorded date"
+          disabled={busy}
+          value={date}
+          onChange={(value) => {
+            if (!busy) setDate(value);
+          }}
+        />
+        <ProtocolTimePicker
+          label="Recorded time"
+          disabled={busy}
+          value={time}
+          onChange={(value) => {
+            if (!busy) setTime(value);
+          }}
+        />
+        <Text style={styles.body}>
+          Times use the original record’s time zone: {zone}.
+        </Text>
+        {sitesForRoute(entry.route ?? '').length ? (
+          <View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Recorded injection site: ${site || 'Not recorded'}`}
+              accessibilityState={{ expanded: showSites, disabled: busy }}
+              disabled={busy}
+              onPress={() => setShowSites((value) => !value)}
+              style={styles.close}
+            >
               <Text style={styles.body}>
-                Times use the original record’s time zone: {zone}.
+                {site || 'Select site (optional)'} {showSites ? '▴' : '▾'}
               </Text>
-              <TextInput
-                accessibilityLabel="Recorded site"
-                style={styles.input}
-                value={site}
-                onChangeText={setSite}
-                maxLength={100}
-                placeholder="Site · optional"
-                placeholderTextColor={colors.muted}
-              />
-              <Pressable
-                accessibilityRole="button"
-                disabled={busy}
-                style={styles.primary}
-                onPress={() => void save()}
-              >
-                <Text style={styles.primaryText}>
-                  {busy ? 'Saving…' : 'Save changes'}
-                </Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                disabled={busy}
-                style={styles.close}
-                onPress={() =>
-                  Alert.alert(
-                    'Undo this entry?',
-                    'Remove it from your active history and restore any inventory it used. The correction record is retained.',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      { text: 'Undo entry', onPress: () => void save(true) },
-                    ],
-                  )
-                }
-              >
-                <Text style={styles.label}>Undo entry</Text>
-              </Pressable>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </Modal>
+            </Pressable>
+            {showSites &&
+              [...new Set(['', ...sitesForRoute(entry.route ?? ''), site])].map(
+                (value) => (
+                  <Pressable
+                    key={value || 'none'}
+                    accessibilityRole="button"
+                    accessibilityState={{
+                      selected: site === value,
+                      disabled: busy,
+                    }}
+                    disabled={busy}
+                    onPress={() => {
+                      setSite(value);
+                      setShowSites(false);
+                    }}
+                    style={styles.close}
+                  >
+                    <Text style={styles.body}>
+                      {value || 'No site recorded'}
+                      {site === value ? ' ✓' : ''}
+                    </Text>
+                  </Pressable>
+                ),
+              )}
+          </View>
+        ) : (
+          <TextInput
+            accessibilityLabel="Recorded site"
+            style={styles.input}
+            value={site}
+            onChangeText={setSite}
+            maxLength={100}
+            placeholder="Site · optional"
+            placeholderTextColor={colors.muted}
+            editable={!busy}
+          />
+        )}
+        {!!saveError && (
+          <RetryNotice title="Could not update entry" message={saveError} />
+        )}
+        <Pressable
+          accessibilityRole="button"
+          disabled={busy || !status}
+          accessibilityState={{ disabled: busy || !status, busy }}
+          style={[styles.primary, (busy || !status) && { opacity: 0.5 }]}
+          onPress={() => void save()}
+        >
+          <Text style={styles.primaryText}>
+            {busy ? 'Saving…' : 'Save changes'}
+          </Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          disabled={busy}
+          style={styles.close}
+          onPress={() =>
+            Alert.alert(
+              'Undo this entry?',
+              'Remove it from your active history and restore any inventory it used. The correction record is retained.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Undo entry', onPress: () => void save(true) },
+              ],
+            )
+          }
+        >
+          <Text style={styles.label}>Undo entry</Text>
+        </Pressable>
+      </View>
+    </FormSheet>
   );
 }
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  page: { padding: spacing.md, paddingBottom: 32 },
   card: {
-    padding: spacing.md,
+    padding: 16,
     backgroundColor: colors.panel,
     borderRadius: radius.xl,
     borderWidth: 1,
@@ -214,20 +280,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  label: {
-    color: colors.accent,
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  title: { color: colors.text, fontSize: 24, fontWeight: '800' },
-  body: { color: colors.muted, lineHeight: 21 },
+  label: { ...typography.eyebrow, color: colors.accent },
+  title: { ...typography.sectionTitle, color: colors.text },
+  body: { ...typography.body, color: colors.muted },
   input: {
+    ...typography.input,
     color: colors.text,
     backgroundColor: colors.panel2,
     padding: 14,
     borderRadius: radius.md,
-    fontSize: 16,
   },
   primary: {
     backgroundColor: colors.accent,

@@ -6,6 +6,7 @@ import { buildReminderPlan } from '@/domain/reminderPlan';
 import {
   getPrivateNotifications,
   getRemindersEnabled,
+  setPrivateNotifications,
   setRemindersEnabled,
 } from '@/lib/privacy';
 import type { QuickLogPayload } from '@/lib/outbox';
@@ -36,7 +37,24 @@ export async function requestReminderPermission() {
   return requested.status === 'granted';
 }
 
-export async function rescheduleReminders(
+let notificationUpdates: Promise<unknown> = Promise.resolve();
+function updateNotifications<T>(work: () => Promise<T>): Promise<T> {
+  const result = notificationUpdates.then(work);
+  notificationUpdates = result.catch(() => undefined);
+  return result;
+}
+
+export function rescheduleReminders(
+  items: TodayItem[],
+  logs?: TimelineEntry[],
+  pending?: QuickLogPayload[],
+) {
+  return updateNotifications(() =>
+    rescheduleRemindersNow(items, logs, pending),
+  );
+}
+
+async function rescheduleRemindersNow(
   items: TodayItem[],
   logs?: TimelineEntry[],
   pending?: QuickLogPayload[],
@@ -106,18 +124,89 @@ export async function rescheduleReminders(
   return count;
 }
 
-export async function enableReminders(items: TodayItem[]) {
-  const allowed = await requestReminderPermission();
-  if (!allowed) return false;
-  await setRemindersEnabled(true);
-  await rescheduleReminders(items);
-  return true;
+export function enableReminders(items: TodayItem[]) {
+  return updateNotifications(async () => {
+    const allowed = await requestReminderPermission();
+    if (!allowed) return false;
+    await setRemindersEnabled(true);
+    try {
+      await rescheduleRemindersNow(items);
+      return true;
+    } catch (error) {
+      await Promise.allSettled([
+        setRemindersEnabled(false),
+        Notifications.cancelAllScheduledNotificationsAsync(),
+      ]);
+      throw error;
+    }
+  });
 }
 
-export async function disableReminders() {
-  await setRemindersEnabled(false);
-  if (Platform.OS !== 'web')
-    await Notifications.cancelAllScheduledNotificationsAsync();
+export function disableReminders() {
+  return updateNotifications(async () => {
+    try {
+      await setRemindersEnabled(false);
+    } finally {
+      if (Platform.OS !== 'web')
+        await Notifications.cancelAllScheduledNotificationsAsync();
+    }
+  });
+}
+
+/** Clears pending and delivered alerts; account cleanup manages preferences separately. */
+export function clearPendingReminders() {
+  return updateNotifications(async () => {
+    if (Platform.OS !== 'web') {
+      const results = await Promise.allSettled([
+        Notifications.cancelAllScheduledNotificationsAsync(),
+        Notifications.dismissAllNotificationsAsync(),
+      ]);
+      if (results.some((result) => result.status === 'rejected'))
+        throw new Error('Some device notifications could not be cleared.');
+    }
+  });
+}
+
+/** Cancel detailed pending alerts before any network read or privacy promise. */
+export class ReminderPrivacyUpdateError extends Error {
+  constructor(
+    readonly preferenceSaved: boolean,
+    readonly pendingCleared: boolean,
+    cause: unknown,
+  ) {
+    super(
+      cause instanceof Error
+        ? cause.message
+        : 'Notification privacy could not be updated.',
+    );
+    this.name = 'ReminderPrivacyUpdateError';
+  }
+}
+export function setReminderPrivacy(
+  privateMode: boolean,
+  refreshItems: () => Promise<TodayItem[]>,
+) {
+  return updateNotifications(async () => {
+    let pendingCleared = false,
+      preferenceSaved = false;
+    try {
+      if (privateMode && Platform.OS !== 'web') {
+        await Notifications.cancelAllScheduledNotificationsAsync();
+        pendingCleared = true;
+      }
+      await setPrivateNotifications(privateMode);
+      preferenceSaved = true;
+      if (Platform.OS === 'web' || !(await getRemindersEnabled())) return 0;
+      const items = await refreshItems();
+      return await rescheduleRemindersNow(items);
+    } catch (error) {
+      throw new ReminderPrivacyUpdateError(
+        preferenceSaved,
+        pendingCleared,
+        error,
+      );
+    }
+  });
 }
 
 /** One-off local test. Does not change the user's reminder preferences. */
@@ -154,4 +243,29 @@ export async function cancelOccurrenceReminder(key: string) {
       .filter((n) => n.content.data?.occurrenceKey === key)
       .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)),
   );
+}
+
+/** Reads status without requesting permission or scheduling anything. */
+export async function getReminderHealth() {
+  const enabled = await getRemindersEnabled();
+  if (Platform.OS === 'web')
+    return {
+      enabled,
+      permission: { granted: false, canAskAgain: false },
+      count: 0,
+      web: true,
+    };
+  const [permission, pending] = await Promise.all([
+    Notifications.getPermissionsAsync(),
+    Notifications.getAllScheduledNotificationsAsync(),
+  ]);
+  return {
+    enabled,
+    permission: {
+      granted: permission.granted,
+      canAskAgain: permission.canAskAgain,
+    },
+    count: pending.length,
+    web: false,
+  };
 }
