@@ -1,3 +1,5 @@
+> Historical snapshot. For current evidence and active gates, see [Release status](RELEASE_STATUS.md).
+
 # Pulse beta release plan — October 11, 2026
 
 Targets: internal TestFlight Friday, October 16; external TestFlight by Sunday, October 25 (America/Los_Angeles). External availability depends on Apple beta review.

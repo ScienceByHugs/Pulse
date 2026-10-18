@@ -1,3 +1,5 @@
+> Historical snapshot. For current evidence and active gates, see [Release status](RELEASE_STATUS.md).
+
 # Pulse release readiness — October 12, 2026
 
 No new signed native build or TestFlight submission is authorized. Build 9 is the existing release. Account data contains fictional Apple-review samples; its email is confirmed. Credentials must remain outside this document and GitHub.
