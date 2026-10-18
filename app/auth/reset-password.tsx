@@ -19,7 +19,7 @@ import { colors, radius, spacing, typography } from '@/theme';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
-  const { session, loading } = useAuth();
+  const { session, loading, authLinkError } = useAuth();
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [busy, setBusy] = useState(false);
@@ -30,7 +30,7 @@ export default function ResetPasswordScreen() {
 
   async function updatePassword() {
     if (updating.current || loading) return;
-    if (!session)
+    if (!session || authLinkError)
       return Alert.alert(
         'Link not ready',
         'Open the latest password reset email link again.',
@@ -79,7 +79,9 @@ export default function ResetPasswordScreen() {
               ? 'Your new password has been saved. Use it the next time you sign in.'
               : loading
                 ? 'Verifying your reset link…'
-                : session
+                : authLinkError
+                  ? authLinkError
+                  : session
                   ? 'Choose a new password with at least 8 characters.'
                   : 'Your reset link could not be verified. Return to sign-in to request a new one.'}
           </Text>
@@ -91,7 +93,7 @@ export default function ResetPasswordScreen() {
             >
               <Text style={styles.buttonText}>Continue to Pulse</Text>
             </Pressable>
-          ) : session && !loading ? (
+          ) : session && !loading && !authLinkError ? (
             <>
               <View style={styles.labelRow}>
                 <Text style={styles.label}>New password</Text>

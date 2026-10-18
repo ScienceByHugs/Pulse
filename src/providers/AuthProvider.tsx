@@ -14,65 +14,32 @@ import {
   useState,
 } from 'react';
 import { supabase } from '@/lib/supabase';
+import { AUTH_LINK_ERROR, createAuthLinkConsumer, isAuthUrl } from '@/lib/authLinks';
 
 type AuthContextValue = {
   session: Session | null;
   loading: boolean;
+  authLinkError: string | null;
 };
 
 const AuthContext = createContext<AuthContextValue>({
   session: null,
   loading: true,
+  authLinkError: null,
 });
-
-function paramsFromUrl(url: string) {
-  const merged = [url.split('?')[1]?.split('#')[0], url.split('#')[1]]
-    .filter(Boolean)
-    .join('&');
-  return new URLSearchParams(merged);
-}
-
-async function consumeAuthUrl(url: string) {
-  const params = paramsFromUrl(url);
-  const tokenHash = params.get('token_hash');
-  const type = params.get('type');
-  if (
-    tokenHash &&
-    (type === 'recovery' || type === 'email' || type === 'signup')
-  ) {
-    const { error } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type,
-    });
-    if (error) throw error;
-    return;
-  }
-  const code = params.get('code');
-  if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (error) throw error;
-    return;
-  }
-
-  const accessToken = params.get('access_token');
-  const refreshToken = params.get('refresh_token');
-  if (accessToken && refreshToken) {
-    const { error } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
-    if (error) throw error;
-  }
-}
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [linkPending, setLinkPending] = useState(true);
+  const [authLinkError, setAuthLinkError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
     let verificationVersion = 0;
     let previousUserId: string | null = null;
+    let linkVersion = 0;
+    const consumeAuthUrl = createAuthLinkConsumer(supabase.auth);
 
     async function clearDevicePreviews() {
       await disableReminders();
@@ -137,24 +104,27 @@ export function AuthProvider({ children }: PropsWithChildren) {
       }
     }
 
-    void supabase.auth
-      .getSession()
-      .then(({ data }) => validateSession(data.session))
-      .catch(() => {
-        if (mounted) {
-          setSession(null);
+    async function handleAuthUrl(url: string) {
+      const version = ++linkVersion;
+      if (mounted) {
+        setLinkPending(true);
+        setAuthLinkError(null);
+      }
+      try {
+        const candidate = await consumeAuthUrl(url);
+        if (mounted && version === linkVersion) await validateSession(candidate);
+      } catch {
+        if (mounted && version === linkVersion) {
+          setAuthLinkError(AUTH_LINK_ERROR);
           setLoading(false);
         }
-      });
-
-    void Linking.getInitialURL().then((url) => {
-      if (url?.startsWith('pulse://auth/'))
-        void consumeAuthUrl(url).catch(() => undefined);
-    });
+      } finally {
+        if (mounted && version === linkVersion) setLinkPending(false);
+      }
+    }
 
     const linkListener = Linking.addEventListener('url', ({ url }) => {
-      if (url.startsWith('pulse://auth/'))
-        void consumeAuthUrl(url).catch(() => undefined);
+      if (isAuthUrl(url)) void handleAuthUrl(url);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange(
@@ -165,6 +135,27 @@ export function AuthProvider({ children }: PropsWithChildren) {
         }, 0);
       },
     );
+
+    // Resolve the initial URL before declaring startup finished. Explicitly
+    // validate the returned session instead of relying only on auth events.
+    const initialLinkVersion = linkVersion;
+    void (async () => {
+      try {
+        const url = await Linking.getInitialURL();
+        if (!mounted || initialLinkVersion !== linkVersion) return;
+        if (url && isAuthUrl(url)) {
+          await handleAuthUrl(url);
+        } else {
+          const { data } = await supabase.auth.getSession();
+          if (mounted && initialLinkVersion === linkVersion)
+            await validateSession(data.session);
+        }
+      } catch {
+        if (mounted && initialLinkVersion === linkVersion) setLoading(false);
+      } finally {
+        if (mounted && initialLinkVersion === linkVersion) setLinkPending(false);
+      }
+    })();
 
     if (Platform.OS !== 'web' && AppState.currentState === 'active')
       supabase.auth.startAutoRefresh();
@@ -177,6 +168,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return () => {
       mounted = false;
       verificationVersion++;
+      linkVersion++;
       linkListener.remove();
       appStateListener.remove();
       if (Platform.OS !== 'web') supabase.auth.stopAutoRefresh();
@@ -184,7 +176,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
-  const value = useMemo(() => ({ session, loading }), [session, loading]);
+  const value = useMemo(
+    () => ({ session, loading: loading || linkPending, authLinkError }),
+    [session, loading, linkPending, authLinkError],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
