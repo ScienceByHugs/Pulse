@@ -12,6 +12,9 @@ import {
 } from '@/services/profilePhoto';
 import { PageHeader } from '@/components/PageHeader';
 import { isValidEmail } from '@/domain/validation';
+import { authEmailErrorMessage } from '@/domain/authEmail';
+import { authEmailGate } from '@/lib/authEmail';
+import { useAuthEmailCooldown } from '@/hooks/useAuthEmailCooldown';
 import { PulseBrand } from '@/components/PulseBrand';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -63,6 +66,7 @@ export default function YouScreen() {
   const { fontScale } = useWindowDimensions();
   const router = useRouter();
   const { session } = useAuth();
+  const emailWaitSeconds = useAuthEmailCooldown();
   const [biometricLock, setBiometricLock] = useState(false);
   const [privateNotifications, setPrivateNotificationsState] = useState(true);
   const [reminders, setReminders] = useState(false);
@@ -312,11 +316,10 @@ export default function YouScreen() {
     if (accountBusy) return;
     setAccountBusy(true);
     try {
-      const { error } = await supabase.auth.updateUser(
+      await authEmailGate.run(() => supabase.auth.updateUser(
         { email: address },
         { emailRedirectTo: 'pulse://auth/callback' },
-      );
-      if (error) throw error;
+      ));
       setNewEmail('');
       Alert.alert(
         'Check your inbox',
@@ -325,7 +328,7 @@ export default function YouScreen() {
     } catch (error) {
       Alert.alert(
         'Could not change email',
-        error instanceof Error ? error.message : 'Please try again.',
+        authEmailErrorMessage(error),
       );
     } finally {
       setAccountBusy(false);
@@ -1002,14 +1005,16 @@ export default function YouScreen() {
             />
             <Pressable
               accessibilityRole="button"
-              disabled={accountBusy || !newEmail.trim()}
+              disabled={accountBusy || emailWaitSeconds > 0 || !newEmail.trim()}
               style={[
                 styles.dataButton,
-                (accountBusy || !newEmail.trim()) && styles.profileSaveDisabled,
+                (accountBusy || emailWaitSeconds > 0 || !newEmail.trim()) && styles.profileSaveDisabled,
               ]}
               onPress={() => void requestEmailChange()}
             >
-              <Text style={styles.dataButtonText}>Request email change</Text>
+              <Text style={styles.dataButtonText}>
+                {emailWaitSeconds > 0 ? `Try again in ${emailWaitSeconds}s` : 'Request email change'}
+              </Text>
             </Pressable>
             <View style={styles.divider} />
             <Text style={styles.cardTitle}>Change password</Text>

@@ -1,0 +1,535 @@
+{
+  "baseline": "ece6e4137eb979d6c195d2c5f96ed153aba8fa2f",
+  "observed_at": "2026-10-17 Pacific / 2026-10-18 UTC",
+  "method": "git merge-base --is-ancestor; otherwise git cherry against main. Patch equivalence does not prove native acceptance. Revalidate head and backup before deletion.",
+  "branches": [
+    {
+      "branch": "codex/daily-tracking-polish",
+      "head": "0b8fbb07e3f41ada7c8fd7c517c7cf83ba011c24",
+      "classification": "contained",
+      "unique_patches": 0
+    },
+    {
+      "branch": "codex/login-flow-polish",
+      "head": "ece6e4137eb979d6c195d2c5f96ed153aba8fa2f",
+      "classification": "contained",
+      "unique_patches": 0
+    },
+    {
+      "branch": "codex/testflight-readiness",
+      "head": "bbc273a365ddf72ef150c4efbd71a1758b45335f",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "design/day2-compact-today-header",
+      "head": "7b2da61ddb675134976452d35db55a1dc6e88266",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "design/editorial-open-today",
+      "head": "302f49215404b8728aa1e590985829cf9a5b61e1",
+      "classification": "review-required",
+      "unique_patches": 2
+    },
+    {
+      "branch": "design/editorial-system-all-screens",
+      "head": "6aa7e2d2312c82af87b80a59eb5f8fb9e14b79fd",
+      "classification": "review-required",
+      "unique_patches": 16
+    },
+    {
+      "branch": "design/hybrid-orbital-system",
+      "head": "4fc3ca53362a36e3a38a2d51ddda44ac3d976572",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "docs/pulse-beta-device-qa",
+      "head": "6832a0a83991c812bd6d550a32ba4c68dd581a3e",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "feat/account-recovery-profile-security",
+      "head": "9e44a08b577cde27ce15f18db57c1db04c995611",
+      "classification": "review-required",
+      "unique_patches": 4
+    },
+    {
+      "branch": "feat/brand-motion-preflight",
+      "head": "52c2a69ee05d30650b346c27172b7cfb51189d9b",
+      "classification": "review-required",
+      "unique_patches": 6
+    },
+    {
+      "branch": "feat/calendar-disconnect-options",
+      "head": "b723e89cf300ec04139421130dac118057aab835",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "feat/hybrid-background-human-calculator",
+      "head": "87da1f3dd2239fb0a44233e8d7320faf531b17bd",
+      "classification": "review-required",
+      "unique_patches": 9
+    },
+    {
+      "branch": "feat/low-stock-private-alerts",
+      "head": "e8aae1c8eae2494473d829d6550340e1a1208883",
+      "classification": "review-required",
+      "unique_patches": 5
+    },
+    {
+      "branch": "feat/multi-container-reservoir",
+      "head": "2fb520003f4e81f6b3dc85d7a2e7d9a58264651c",
+      "classification": "review-required",
+      "unique_patches": 3
+    },
+    {
+      "branch": "feat/peptide-reconstitution-reference",
+      "head": "d79a19a3ea46d3b272239371f0e0fc494878eaa5",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "feat/protocol-lifecycle-safety",
+      "head": "b7a8791d660e17d910a0f0aad1444bed3713c680",
+      "classification": "review-required",
+      "unique_patches": 2
+    },
+    {
+      "branch": "feat/pulse-2-foundation",
+      "head": "a4385982e7cfe4dcfbd04d036fd59c35fd322980",
+      "classification": "contained",
+      "unique_patches": 0
+    },
+    {
+      "branch": "feat/substance-archive-history-safe",
+      "head": "4e8ba74a5806079c410843c10b745398d62567db",
+      "classification": "review-required",
+      "unique_patches": 4
+    },
+    {
+      "branch": "feat/test-local-notification",
+      "head": "8210f5861ab6ffa8c82d8e7fe2a7f6c98d201208",
+      "classification": "review-required",
+      "unique_patches": 2
+    },
+    {
+      "branch": "feat/trt-peptide-syringe-calculators",
+      "head": "85f79835ed582f9c02070d1bb8f935c3e85be5c8",
+      "classification": "review-required",
+      "unique_patches": 2
+    },
+    {
+      "branch": "fix/calendar-entire-cycle",
+      "head": "640efea9e7a8d7ebbb0dcd4f78c7a56297683c4a",
+      "classification": "review-required",
+      "unique_patches": 3
+    },
+    {
+      "branch": "fix/calendar-schedule-sync",
+      "head": "96d2d61f16550c698f06e7a5f5c87062af1656ac",
+      "classification": "review-required",
+      "unique_patches": 3
+    },
+    {
+      "branch": "fix/calendar-sync-preflight",
+      "head": "c25a1c075641921d0bfadb6b116c0e94c971ac1e",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "fix/explore-dynamic-safe-area",
+      "head": "482de59ba44adf9153d37480e1cda4c28881a4d1",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "fix/explore-menu-single-heading",
+      "head": "c98b49ed9e9408065c40045a86d43629c4615f6f",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "fix/face-id-lifecycle-guard",
+      "head": "b29f073ed71b61c71156d5413a567cc98a631d4c",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "fix/insights-calendar-day-accuracy",
+      "head": "a492cefe43951955f5beb742b9ef80b5426a0f78",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "fix/inventory-container-selection",
+      "head": "286c19c2e5cd7584a4c00112b66243f72c824891",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "fix/inventory-forecast-all-containers",
+      "head": "e3aeaaffb843d23a0ffa12d97cedb09d6a9818a6",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "fix/offline-dose-event-idempotency",
+      "head": "7ce8c382b847175150bbe4aebd846053aba825f1",
+      "classification": "review-required",
+      "unique_patches": 3
+    },
+    {
+      "branch": "fix/opaque-readable-explore",
+      "head": "d3ce1b3be5c4bce8a26fa488d1e3efdf84cf8910",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "fix/protocol-pickers-calendar-stability",
+      "head": "bc8b77ef0bca959c607f728d288a9a57d55f3523",
+      "classification": "review-required",
+      "unique_patches": 8
+    },
+    {
+      "branch": "fix/reminders-permission-denied",
+      "head": "6b99b12764e84d1ad4962d9b6b6609b173172de9",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "fix/require-verified-email-access",
+      "head": "83e1d5d669b76570f93683284812f5b88ae55217",
+      "classification": "review-required",
+      "unique_patches": 4
+    },
+    {
+      "branch": "fix/safe-area-deprecation-pulse",
+      "head": "d3a5c7b9431626a3b870fc1c690e365b3d30563d",
+      "classification": "review-required",
+      "unique_patches": 9
+    },
+    {
+      "branch": "fix/schedule-regex-escaped-digits",
+      "head": "58b3bf4eaeb6da57e3f53bb37156ab0d044b6eb9",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "fix/schedule-temporary-window",
+      "head": "861eb944bd71dde4a8f223f4b5d09d1eee2fb897",
+      "classification": "review-required",
+      "unique_patches": 2
+    },
+    {
+      "branch": "fix/testflight-stability-safeareas",
+      "head": "808be5badbf65fdb244f75d9d1d6abbe25191533",
+      "classification": "review-required",
+      "unique_patches": 11
+    },
+    {
+      "branch": "fix/today-completed-open",
+      "head": "6ffec90f0501593ae1a20208f6d82b1b55df6ece",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "fix/today-dashboard-stray-text",
+      "head": "d28e58f61c8e900b5d6dbe073b1a265f42f15972",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "fix/today-exclusion-diagnostics",
+      "head": "0d9eed4f6a419cd6a1a991025dd0e09e9fbb2a83",
+      "classification": "review-required",
+      "unique_patches": 2
+    },
+    {
+      "branch": "fix/today-notification-scheduling-isolation",
+      "head": "e2bd63064a562d7f480616cdf16190e37b13fd2b",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "fix/trt-frequency-presets-1-2-3-5-7",
+      "head": "c45335c1f45c9f7b8645e4d8baa0f328bfbd54f4",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "integration/forecast-after-insights",
+      "head": "4ca3fff7b801e15853e64093a062ee8640e54034",
+      "classification": "contained",
+      "unique_patches": 0
+    },
+    {
+      "branch": "integration/low-stock-after-reservoir",
+      "head": "92a8ac2e98fd71cb88aff949da9baf5ccbb43a27",
+      "classification": "review-required",
+      "unique_patches": 7
+    },
+    {
+      "branch": "integration/low-stock-final-main",
+      "head": "de33e6fccd18512a0f35dc83b6445c032b4157fe",
+      "classification": "review-required",
+      "unique_patches": 4
+    },
+    {
+      "branch": "integration/stock-reservoir-after-archive",
+      "head": "73a5b9a73c9685a64da7db2de836608c6d286071",
+      "classification": "review-required",
+      "unique_patches": 3
+    },
+    {
+      "branch": "nova/account-profile-editor",
+      "head": "acabcc03d3acbf7677efa43914e38f327c6e4704",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "nova/android-release-prep",
+      "head": "517d722be7e5979d8df4338d7b5359cff8c8e55c",
+      "classification": "review-required",
+      "unique_patches": 9
+    },
+    {
+      "branch": "nova/brand-typography-tools-nav",
+      "head": "1450c75b34468628aeafb9ea95d7b07811ebaf5f",
+      "classification": "review-required",
+      "unique_patches": 8
+    },
+    {
+      "branch": "nova/cycle-aware-timeline",
+      "head": "0c5134e0a59014181033062e198704b448c00f50",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "nova/day-signal-log-status",
+      "head": "64724030bb52e43aab0188ba8a03328e245b4a5c",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "nova/device-alignment-polish",
+      "head": "70331119b36a6d9c3336f476248f316904be425f",
+      "classification": "review-required",
+      "unique_patches": 2
+    },
+    {
+      "branch": "nova/device-flow-hardening",
+      "head": "a08bc55566d4fa7305272c7f087435bf654b2b90",
+      "classification": "review-required",
+      "unique_patches": 2
+    },
+    {
+      "branch": "nova/device-polish-2",
+      "head": "f68916dbed9288efa65f3d6d45f3a62d38798568",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "nova/eas-prebuild-icon-hook-repair",
+      "head": "4016655ca4d35013e71c57793f77f2fd471c27b6",
+      "classification": "review-required",
+      "unique_patches": 4
+    },
+    {
+      "branch": "nova/edit-substance-schedules",
+      "head": "14b36c7b5ed8fd7fcd771a23da125f88a1a0968e",
+      "classification": "review-required",
+      "unique_patches": 3
+    },
+    {
+      "branch": "nova/flat-signal-tab-navigation",
+      "head": "5c4b01918f71a61a6f35bdc5c4a00b663a31ad7c",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "nova/icon-polish",
+      "head": "bf12669b2ff49b1189a3a54cfbc0f14aab45c859",
+      "classification": "review-required",
+      "unique_patches": 5
+    },
+    {
+      "branch": "nova/ios-icon-png-prebuild-fix",
+      "head": "db68cd11261833b5e253515443d8a5fc9a87755b",
+      "classification": "review-required",
+      "unique_patches": 2
+    },
+    {
+      "branch": "nova/iphone-ui-density-audit",
+      "head": "dbfc413297581d75b0734c3b327e220e90e2a081",
+      "classification": "review-required",
+      "unique_patches": 5
+    },
+    {
+      "branch": "nova/log-completion-pulse",
+      "head": "0d744a277a30529a7fe0919981afffb55ca3a7f0",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "nova/multi-protocol-substance-library",
+      "head": "2a988b1fc900ea6b6c27b0c1efc184a603d73cdb",
+      "classification": "review-required",
+      "unique_patches": 4
+    },
+    {
+      "branch": "nova/native-calendar-opt-in",
+      "head": "e2d6523c7f594df19c62939f4768d08e5c989f2b",
+      "classification": "review-required",
+      "unique_patches": 7
+    },
+    {
+      "branch": "nova/navigation-directory",
+      "head": "d68461b89e1a00ef585e538688fec09deed2a869",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "nova/paginated-timeline-history",
+      "head": "c46322079e9369bde07f69a37c08b50a552430b6",
+      "classification": "review-required",
+      "unique_patches": 2
+    },
+    {
+      "branch": "nova/privacy-shield-language",
+      "head": "904262f53d53e85be7e0f7c37d7d8dd2ece00184",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "nova/protocol-details-editor",
+      "head": "1cccd086cd3805bfcd39d33431c52f12b70a2bd7",
+      "classification": "review-required",
+      "unique_patches": 5
+    },
+    {
+      "branch": "nova/protocol-wizard",
+      "head": "927c1cf4ff61e0a7136f503073b950fb2eac6d83",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "nova/pulse-brief-accuracy",
+      "head": "071e3db8871c9eb73a059d6984741e1153886e23",
+      "classification": "review-required",
+      "unique_patches": 2
+    },
+    {
+      "branch": "nova/pulse-brief-next-window",
+      "head": "94c5f714253d54149e4ff12155c341f763cc44fa",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "nova/pulse-design-language-v1",
+      "head": "2768ecee80717e38e9a3bd3f185c2a12c8d647e4",
+      "classification": "review-required",
+      "unique_patches": 3
+    },
+    {
+      "branch": "nova/pulse-experience-phase2",
+      "head": "c088f22c60b9d84de17c9a6039c65c8f74dc3ff5",
+      "classification": "review-required",
+      "unique_patches": 5
+    },
+    {
+      "branch": "nova/pulse-signature-today",
+      "head": "c1293be0aa32f232254ec553835c33d673bf9464",
+      "classification": "review-required",
+      "unique_patches": 4
+    },
+    {
+      "branch": "nova/pulse-ui-2",
+      "head": "0d35fb484fcd22a1003228eab5cef3d20769653c",
+      "classification": "review-required",
+      "unique_patches": 5
+    },
+    {
+      "branch": "nova/repair-broken-ios-icon-asset",
+      "head": "d96e1e97e4cf581cd502323aadb9994422505dce",
+      "classification": "contained",
+      "unique_patches": 0
+    },
+    {
+      "branch": "nova/rhythm-domain-helpers",
+      "head": "00e3f7e8b5cfd895b4062122fe59f2474c687815",
+      "classification": "review-required",
+      "unique_patches": 4
+    },
+    {
+      "branch": "nova/signature-protocol-map",
+      "head": "1725b8e660a5686f0d959ef4657a1cf6fc947a5f",
+      "classification": "review-required",
+      "unique_patches": 3
+    },
+    {
+      "branch": "nova/signature-substance-cards",
+      "head": "7b571400b81a0c74159b543ec3850b73a6419ced",
+      "classification": "review-required",
+      "unique_patches": 2
+    },
+    {
+      "branch": "nova/signature-tab-navigation",
+      "head": "64a0b5964a29967d01f75e5bce7969b4aaa770c8",
+      "classification": "review-required",
+      "unique_patches": 2
+    },
+    {
+      "branch": "nova/sprint-complete",
+      "head": "ddbf187ad043ad32fd52e0f4266b3dda26d283c0",
+      "classification": "review-required",
+      "unique_patches": 8
+    },
+    {
+      "branch": "nova/supply-forecast-clarity",
+      "head": "76fa1288c4f981c994a2e22dd0ffc56f3172254f",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "nova/supply-reservoir",
+      "head": "fd6594f9ac76e6b3e11849f090e33503bfa31773",
+      "classification": "review-required",
+      "unique_patches": 3
+    },
+    {
+      "branch": "nova/timeline-month-calendar",
+      "head": "7eeaa5f7f156b025b3e7df5cb684d94f88fe136f",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "nova/today-reservoir-polish",
+      "head": "e3be3559f7d2ed2fe5d82276b3bbd9c7c98929db",
+      "classification": "review-required",
+      "unique_patches": 3
+    },
+    {
+      "branch": "nova/today-state-language",
+      "head": "c47d3f51cbdccc9d196490d494f0ecd174e5efcf",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "nova/weekly-timeline-grid",
+      "head": "92abd012155a927b968ac0844027ab7f2a43f7a8",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    },
+    {
+      "branch": "nova/yearly-activity-atlas",
+      "head": "98e37f00f382260333ed9eafb241ffaf08fb7f7f",
+      "classification": "patch-equivalent",
+      "unique_patches": 0
+    }
+  ]
+}

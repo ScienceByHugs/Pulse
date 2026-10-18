@@ -1,5 +1,8 @@
 import { FormSheet } from '@/components/FormSheet';
 import { isValidEmail } from '@/domain/validation';
+import { authEmailErrorMessage } from '@/domain/authEmail';
+import { authEmailGate } from '@/lib/authEmail';
+import { useAuthEmailCooldown } from '@/hooks/useAuthEmailCooldown';
 import { OrbitalBackground } from '@/components/OrbitalBackground';
 import { PulseBrand } from '@/components/PulseBrand';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,6 +27,7 @@ const AUTH_REDIRECT_URL = 'pulse://auth/callback';
 
 export default function SignInScreen() {
   const { session } = useAuth();
+  const emailWaitSeconds = useAuthEmailCooldown();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -109,17 +113,16 @@ export default function SignInScreen() {
     }
     setBusy(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(address, {
+      await authEmailGate.run(() => supabase.auth.resetPasswordForEmail(address, {
         redirectTo: 'pulse://auth/reset-password',
-      });
-      if (error) throw error;
+      }));
       setNotice(
         'If an account exists for this address, a reset link will arrive shortly. Open it on this phone.',
       );
     } catch (error) {
       Alert.alert(
         'Could not request reset',
-        error instanceof Error ? error.message : 'Please try again.',
+        authEmailErrorMessage(error),
       );
     } finally {
       setBusy(false);
@@ -137,19 +140,18 @@ export default function SignInScreen() {
     }
     setBusy(true);
     try {
-      const { error } = await supabase.auth.resend({
+      await authEmailGate.run(() => supabase.auth.resend({
         type: 'signup',
         email: address,
         options: { emailRedirectTo: AUTH_REDIRECT_URL },
-      });
-      if (error) throw error;
+      }));
       setNotice(
         'If your address still needs verification, a confirmation email will arrive shortly. Check spam too.',
       );
     } catch (error) {
       Alert.alert(
         'Could not resend email',
-        error instanceof Error ? error.message : 'Please try again later.',
+        authEmailErrorMessage(error),
       );
     } finally {
       setBusy(false);
@@ -177,7 +179,7 @@ export default function SignInScreen() {
       );
     setBusy(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { data } = await authEmailGate.run(() => supabase.auth.signUp({
         email: address,
         password: newPassword,
         options: {
@@ -190,10 +192,9 @@ export default function SignInScreen() {
             },
           },
         },
-      });
-      if (error) throw error;
+      }));
 
-      if (data.session) {
+      if (data?.session) {
         // A session at signup means Supabase is automatically confirming email.
         // Do not silently let the registration flow enter the app.
         await supabase.auth.signOut();
@@ -213,7 +214,7 @@ export default function SignInScreen() {
     } catch (error) {
       Alert.alert(
         'Could not create account',
-        error instanceof Error ? error.message : 'Try again later.',
+        authEmailErrorMessage(error),
       );
     } finally {
       setBusy(false);
@@ -494,13 +495,13 @@ export default function SignInScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityState={{
-                disabled: busy || (sheet === 'signup' && !adultUS),
+                disabled: busy || emailWaitSeconds > 0 || (sheet === 'signup' && !adultUS),
                 busy,
               }}
-              disabled={busy || (sheet === 'signup' && !adultUS)}
+              disabled={busy || emailWaitSeconds > 0 || (sheet === 'signup' && !adultUS)}
               style={[
                 styles.primary,
-                (busy || (sheet === 'signup' && !adultUS)) && styles.disabled,
+                (busy || emailWaitSeconds > 0 || (sheet === 'signup' && !adultUS)) && styles.disabled,
               ]}
               onPress={() =>
                 void (sheet === 'signup'
@@ -513,7 +514,9 @@ export default function SignInScreen() {
               <Text style={styles.primaryText}>
                 {busy
                   ? 'Please wait…'
-                  : sheet === 'signup'
+                  : emailWaitSeconds > 0
+                    ? `Try again in ${emailWaitSeconds}s`
+                    : sheet === 'signup'
                     ? 'Create account'
                     : sheet === 'reset'
                       ? 'Send reset link'
