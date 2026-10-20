@@ -40,3 +40,23 @@ Evidence (offline fixture, not production account screens):
 - [Three-button](android-tab-insets/three-button.png), [keyboard shown](android-tab-insets/three-button-keyboard.png), [restored](android-tab-insets/three-button-restored.png)
 
 Limitations: no authenticated production flow or iOS simulator run was performed. iOS behavior is guarded by regression tests and the Android-only branch; a real tester should confirm final scroll controls and the device-specific appearance before the next Play upload. No AAB was rebuilt for this UI fix.
+
+## Owner-approved internal release — 2026-10-20
+
+After the initial fix PR, the owner explicitly requested sending the update to Google Play. Android versionCode was increased to 2 in app.json and the native Gradle project; versionName remains 2.0.0. iOS build numbers and signing are unchanged.
+
+- Source commit for bundle: `2055e44`.
+- Local `npm run android:aab`: passed in 3m 54s; bundleRelease + lintRelease passed, 0 errors / 36 warnings.
+- AAB generated: `local-builds/android/pulse-2.0.0-2/pulse-2.0.0-2.aab`; 71,161,826 bytes.
+- SHA-256: `22a734383c974da2bfc064a3fcb558fa7e55803af33714f6e1b3e4141436c6f1`.
+- bundletool 1.18.3 validation passed. Package, version code 2, versionName 2.0.0, target 36, non-debuggable manifest and all four ABIs verified.
+- jarsigner reports jar verified, with the same self-signed/no-timestamp/manifest-order warnings documented for version 1. Upload certificate matches the existing protected upload key.
+- Production entry verified in the release source map: real AuthProvider present, no offline nav-qa fixture sources. Embedded JS bundle present.
+- All 52 64-bit native libraries have ELF LOAD alignment >=16 KiB (static check; no 16 KiB runtime claim).
+- AAB, mapping, debug symbols and provenance retained in the ignored versioned archive; prior version 1 archive preserved.
+- Google accepted version 2 with ReTrace mapping and native symbols; release review reported Ready to release and no loss of supported devices.
+- Published only to the existing internal test. Console confirms Active, latest release **2.0.0 (2) — Android navigation fix**, **Available to internal testers**, released Oct 20 at 2:17 AM, Not reviewed.
+- Existing tester access and opt-in link unchanged. Google indicates propagation usually within 1 hour, occasionally longer. No Play-installed runtime check claimed.
+- No production/closed rollout or GitHub merge performed.
+
+[Play Console confirmation](android-tab-insets/play-internal-version-2.png)
