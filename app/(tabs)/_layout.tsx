@@ -82,6 +82,9 @@ export default function TabsLayout() {
   // Our custom height/padding override React Navigation's defaults. Reserve the
   // Android system-bar inset once here; screen SafeAreaViews handle their content.
   const bottomInset = Platform.OS === 'android' ? insets.bottom : 0;
+  // Lower Android tab content slightly without reducing system-bar clearance
+  // or changing the bar's total height and usable content area.
+  const contentOffset = Platform.OS === 'android' ? 6 : 0;
   const { session, loading } = useAuth();
 
   if (loading) {
@@ -136,8 +139,8 @@ export default function TabsLayout() {
           borderTopColor: colors.border,
           borderTopWidth: 1,
           height: 88 + Math.max(0, fontScale - 1) * 24 + bottomInset,
-          paddingTop: 7,
-          paddingBottom: 12 + bottomInset,
+          paddingTop: 7 + contentOffset,
+          paddingBottom: 12 - contentOffset + bottomInset,
         },
       })}
     >

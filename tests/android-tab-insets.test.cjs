@@ -35,7 +35,8 @@ for (const bottom of [0, 24, 48]) {
       const result = options('android', bottom, fontScale);
       const style = result.tabBarStyle;
       assert.equal(style.height, 88 + (fontScale - 1) * 24 + bottom);
-      assert.equal(style.paddingBottom, 12 + bottom);
+      assert.equal(style.paddingTop, 13);
+      assert.equal(style.paddingBottom, 6 + bottom);
       assert.equal(style.height - style.paddingTop - style.paddingBottom, 69 + (fontScale - 1) * 24);
       assert.equal(result.tabBarHideOnKeyboard, true);
     });
@@ -45,6 +46,7 @@ for (const platform of ['ios', 'web']) {
   test(`${platform}: existing layout stays unchanged`, () => {
     const style = options(platform, 34).tabBarStyle;
     assert.equal(style.height, 88);
+    assert.equal(style.paddingTop, 7);
     assert.equal(style.paddingBottom, 12);
   });
 }
