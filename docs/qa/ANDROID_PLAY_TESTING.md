@@ -20,7 +20,7 @@ track. Production release and merge remain unapproved.
 - `jarsigner -verify`: **jar verified**; embedded certificate matches the new
   upload certificate. JDK reports self-signed/untrusted-chain and no-timestamp
   warnings, plus a JarInputStream/manifest-order warning. The artifact is accepted
-  by bundletool; Google Play server acceptance is still unverified. No signing
+  by bundletool and subsequently accepted by Google Play. No signing
   warnings were suppressed and the signed ZIP was not rewritten.
 - All **52 64-bit native libraries** have ELF LOAD alignment >=16 KiB. This is
   static verification, not a 16 KiB-device runtime acceptance test.
@@ -38,18 +38,34 @@ uploads. The public upload certificate SHA-256 is:
 
 ## Play Console state
 
-**Not uploaded. No testing release or tester opt-in link has been created.**
-The in-app browser's Play Console session requires the owner's Google passkey
-sign-in. The work-domain account displayed the new-developer signup flow; the
-personal account is at the passkey challenge. Owner must sign in to the verified
-developer account. No new developer account was created, and no terms accepted.
+**Uploaded and published to internal testing. Track is Active.**
 
-After sign-in: inspect the app and signing state, upload to internal testing,
-verify server acceptance/pre-launch checks, then prepare the required closed test
-and obtain its opt-in link. Collect tester addresses or the owner's tester group
-through Console, without committing their details. The owner confirmed the new
-personal-account testing gate: at least 12 testers continuously opted in for
-14 days, followed by a production-access application. That clock has not started.
+- Console app: `Pulse`; package ID `com.sciencebyhugs.pulse` was confirmed available.
+- Developer identity verification visible in Console; personal account.
+- Owner explicitly approved Play App Signing terms, Developer Program Policy
+  confirmation and US export-compliance certification before app creation.
+- Original verified AAB uploaded and accepted as **1 (2.0.0)**, min API 24,
+  target API 36, four ABIs. Console confirms ReTrace mapping and native symbols.
+- Owner explicitly requested **owner-only access for now**. A one-user email list
+  is saved and selected for the internal track. No tester addresses are in Git.
+- Release name: **2.0.0 (1) — Internal test**.
+- Review validation: **Ready to release** after tester configuration; no remaining
+  validation warning displayed.
+- Save and publish completed; Console displays **Active**, **Available to internal
+  testers**, **Released on Oct 19 10:21 PM**, **Not reviewed**.
+- [Internal testing Console](https://play.google.com/console/u/0/developers/6392503807184130481/app/4972244504934472355/tracks/4701357709668059512?tab=releases)
+- [Owner opt-in link](https://play.google.com/apps/internaltest/4701357709668059512)
+  was opened in the authorized account and visibly shows an invitation to test.
+  The owner still needs to accept the invite and install from Play; that action
+  was left to the owner. No Play-installed runtime test is claimed.
+- Google displays the temporary name **com.sciencebyhugs.pulse (unreviewed)**
+  until app setup/review is complete. This is expected for this first internal test.
+- No closed-test or production rollout and no merge performed.
+
+Next: owner accepts the invitation and verifies Play installation. Add the wider
+pending tester group when ready. Finish app setup/policy/listing requirements and
+create the required closed test. The 12-tester / 14-day production-access clock
+has **not started**: this release is internal testing only.
 
 Physical-device/authenticated-flow QA, 16 KiB runtime testing, policy/listing
 requirements and production approval remain as documented in
