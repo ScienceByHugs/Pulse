@@ -15,3 +15,11 @@ local-builds/
 *.xcarchive/
 *.dSYM/
 *.dSYM.zip
+
+# Android local credentials and artifacts
+*.keystore
+*.jks
+*.apk
+*.aab
+android/keystore.properties
+android/app/src/main/assets/index.android.bundle
