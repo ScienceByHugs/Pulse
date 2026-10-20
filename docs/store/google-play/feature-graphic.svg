@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
+ <rect width="1024" height="500" fill="#070F1E"/>
+ <circle cx="866" cy="100" r="290" fill="#102237"/>
+ <circle cx="880" cy="106" r="220" fill="none" stroke="#62CCFF" stroke-opacity=".15" stroke-width="2"/>
+ <g transform="translate(660 107) scale(.28)">
+  <path d="M330 748V430C330 350 385 300 466 300H487C579 300 637 359 637 449C637 539 579 598 487 598H330" fill="none" stroke="#62CCFF" stroke-width="92" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="728" cy="648" r="48" fill="#62CCFF"/>
+ </g>
+ <text x="76" y="210" font-family="Arial, sans-serif" font-size="90" font-weight="700" fill="#F3F7FF">Pulse</text>
+ <text x="80" y="263" font-family="Arial, sans-serif" font-size="22" fill="#62CCFF" letter-spacing="3">BY SCIENCE BY HUGS</text>
+ <text x="80" y="340" font-family="Arial, sans-serif" font-size="30" fill="#DCE8F7">Your routines. Your record.</text>
+</svg>

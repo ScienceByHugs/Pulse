@@ -26,3 +26,7 @@ Built module SHA-256: `ea24616a41270ddbe35ff8b3ccbf9067e128e5891642f3c02508743ce
 See `../legal/STORE_SUBMISSION.md` for the first-party Apple/Google coverage matrix and remaining store/operational responsibilities. Public adoption does not prove consent implementation, provider-copy deletion, legal certification or store approval. Provider-specific recovery/log retention remains incompletely verified and is disclosed using criteria rather than an invented fixed deadline.
 
 No native APK/AAB/iOS build or upload was performed for this policy change. Existing installed versions retain their old bundled notices until a separately approved updated build. Store privacy/deletion URL fields, Data Safety, App Privacy and health declarations still need completion. No PR merge is authorized by this policy-publication task.
+
+## Later October 20 clarification and Android beta preparation
+
+Provider operational logs can contain IP-derived city/country, API paths, response status and timing. This is now explicit in the public and bundled privacy text. Updated isolated host deployment: `5a9ec68138124c9f991e8ff5dd667102`; live privacy body matched generated source byte-for-byte. TypeScript and all 115 tests passed again. See `../store/google-play/README.md` for Data Safety basis and screenshot provenance. Android versionCode 4 is being prepared to carry the adopted policies; measured build/submission outcome is recorded separately in `GOOGLE_PLAY_CLOSED_BETA.md`.

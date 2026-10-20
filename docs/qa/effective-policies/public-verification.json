@@ -20,7 +20,7 @@
     {
       "page": "privacy.html",
       "status": 200,
-      "sha256": "7beb8e7222545bfe9ee54b185bb22295e9ce194eb954ecb290d63c2632f25df9"
+      "sha256": "710da195d77637531b7a410a415b463430788f616f39c25126f10ab19b38316a"
     },
     {
       "page": "safety.html",
@@ -42,5 +42,7 @@
   "headChecks": true,
   "securityHeaders": true,
   "unknownPaths404": true,
-  "post405": true
+  "post405": true,
+  "clarificationDeployment": "5a9ec68138124c9f991e8ff5dd667102",
+  "clarificationNote": "Provider-log approximate location/API paths/status/timing made explicit. Clarified live privacy body verified byte-for-byte on October 20, 2026; original all-page/header checks retained."
 }
