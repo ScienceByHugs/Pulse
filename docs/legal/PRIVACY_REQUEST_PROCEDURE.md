@@ -1,6 +1,6 @@
 # Pulse privacy-request procedure
 
-Prepared for Anthony Charles Hugershoff, operating under the registered Science By Hugs DBA. Owner adoption and attorney review are pending. This is an operator runbook, not a statement that each step has been exercised in production.
+Prepared for Anthony Charles Hugershoff, operating under the registered Science By Hugs DBA. Adopted by the owner’s October 20, 2026 instruction to make all policies effective. This is the operator’s manual runbook, not a claim that every step has been exercised in production or reviewed by an attorney.
 
 ## Intake and ownership
 
@@ -16,7 +16,7 @@ Do not confirm whether an account exists before ownership is established. Give a
 
 Use a private owner-controlled request register outside the public Git repository. Keep it encrypted/access restricted. Record a random case ID, receipt date, request category, applicable jurisdiction/deadline, verification status, action dates, provider follow-ups and outcome. Keep any account-email mapping separately with restricted access. Do not copy tracking records, passwords, health content or photo exports into the register.
 
-Target acknowledgment within three business days. This is an internal service target, not the deadline for fulfillment. Counsel must supply a jurisdiction/deadline matrix, permissible extensions, appeal deadlines and required notice language before public launch. Receipt dates must be retained even while verification is underway; do not automatically reset the legal clock after verification.
+Target acknowledgment within three business days. This is an internal service target, not the deadline for fulfillment. Determine and record the applicable jurisdiction/deadline, permissible extension, appeal deadline and required notice language for each request; obtain counsel’s advice where needed. Never apply a longer default period in place of an applicable shorter deadline. Receipt dates must be retained even while verification is underway; do not automatically reset the legal clock after verification.
 
 Process verified requests as follows:
 
@@ -36,11 +36,11 @@ Supabase is the reviewed backend provider. Verify actual deletion/retention and 
 
 Exports, screenshots and third-party calendar copies independently created/shared by users may remain outside Pulse. Explain this without using it as a reason to retain active Pulse records. Verify any legally required exceptions before retaining data and document their category, purpose and period.
 
-The attorney must set the minimum necessary retention for request/verification/deletion registers and lawful exceptions. Do not keep identification material or request correspondence indefinitely. A separate incident response plan is needed for suspected health-data breaches; a privacy request must not trigger an uncontrolled disclosure of another person's records.
+Use the minimum necessary retention for request/verification/deletion registers and lawful exceptions, documenting the purpose, legal basis and review/removal date; seek counsel’s advice for disputed exceptions. Do not keep identification material or request correspondence indefinitely. A separate incident response plan is needed for suspected health-data breaches; a privacy request must not trigger an uncontrolled disclosure of another person's records.
 
-## Before using this process publicly
+## Operational verification and continuing responsibilities
 
-Exercise export and deletion on an owner-designated disposable test account, including profile-photo removal and account data isolation. Confirm the public deletion page loads without login and the owner can receive/track its requests. Do not treat prepared email wording, a script or an unpublished page as an operational service. Complete the deadline/verification matrix with counsel and set a real policy effective date only after adoption.
+Exercise export and deletion on an owner-designated disposable test account, including profile-photo removal and account data isolation. Confirm the public deletion page loads without login and the owner can receive/track its requests. Do not treat prepared email wording, a script or an unpublished page as an operational service. The policies are effective October 20, 2026; adoption does not itself execute deletion tests, publish a URL, or create an automated request register. Continue operational verification and seek counsel’s advice for applicable legal duties.
 
 Reviewed references:
 

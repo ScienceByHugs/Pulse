@@ -1,10 +1,10 @@
 # Terms of Use
 
-Draft — not yet effective.
+Effective October 20, 2026 · Version 2026-10-20
 
 ## Agreement and operator
 
-These draft terms govern Pulse by SBH, a personal routine tracker by Science By Hugs. The operator is Anthony Charles Hugershoff, a sole proprietor operating under the registered Science By Hugs DBA/trade name. The effective date will be set on publication. Version: 2026-10-13. Provide meaningful access to these terms before signup and implement versioned acceptance before relying on them as an agreement.
+These Terms of Use describe the Pulse by SBH service offered by Anthony Charles Hugershoff, sole proprietor operating under the registered Science By Hugs DBA/trade name. The effective date/version are shown with these terms. Please read them before creating an account or using the service. We request affirmative acceptance where required and do not treat notice publication alone as proof of a particular user’s agreement or consent to optional health-data processing.
 
 ## What Pulse provides
 
@@ -32,7 +32,7 @@ Beta features can change and may contain errors. Pulse is free at launch, with n
 
 ## App license and platform terms
 
-Subject to applicable terms, you may use the app for personal tracking. App intellectual property remains with its owners; third-party components retain their licenses. Apple/Google platform terms continue to apply. These service terms do not replace the applicable App Store EULA. The owner has selected Apple’s standard EULA for the iOS app license, alongside these service terms. The matching App Store Connect selection must be verified before submission.
+Pulse grants permission to use the app for lawful personal tracking, subject to applicable terms and mandatory rights. App intellectual property remains with its owners; third-party components retain their licenses. Apple and Google platform terms continue to apply. These service terms do not replace the license applicable to an App Store download, including Apple’s standard Licensed Application End User License Agreement when that license governs your download. Apple and Google do not provide Pulse’s tracking service or medical advice.
 
 ## Suspension, termination and changes
 
@@ -40,11 +40,11 @@ You may stop using the service and delete your account. The operator may restric
 
 ## Consumer rights and liability
 
-Mandatory consumer and privacy rights remain unaffected. To the extent permitted by law, availability and accuracy are not guaranteed, and liability for interruptions or inaccurate user-entered records may be limited. These draft terms do not exclude liability that cannot lawfully be excluded. Governing law, dispute procedures and any liability limits require review for the confirmed operator and markets; no mandatory arbitration or class-action waiver is imposed by this draft.
+Mandatory consumer, privacy and other rights remain unaffected. Pulse does not guarantee uninterrupted service or the accuracy of user-entered records, reminders or estimates. These terms do not exclude or limit liability that cannot lawfully be excluded or limited, including any non-waivable rights or remedies. No mandatory arbitration, class-action waiver, fixed liability cap or exclusive court/choice-of-law clause is imposed by these terms. Disputes remain subject to applicable law and available legal remedies. Contact support@sciencebyhugs.com to seek resolution of a service issue.
 
 ## Contact
 
-Operator: Anthony Charles Hugershoff, sole proprietor. Support: support@sciencebyhugs.com. Privacy/legal: legal@sciencebyhugs.com. Counsel should finalize eligibility, enforceable liability provisions, governing law and dispute handling before publication. Business mailing address:\
+Operator: Anthony Charles Hugershoff, sole proprietor operating under the registered Science By Hugs DBA/trade name. Privacy/legal: legal@sciencebyhugs.com. Support: support@sciencebyhugs.com. Business mailing address:\
 Science by hugs\
 PMB 147\
 1527 W Craig Rd\

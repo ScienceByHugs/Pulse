@@ -14,7 +14,8 @@
     "admin:web:build": "node scripts/build-admin-web.cjs",
     "admin:host:build": "node scripts/build-admin-worker.cjs",
     "android:apk": "bash scripts/build-android-local.sh apk",
-    "android:aab": "bash scripts/build-android-local.sh aab"
+    "android:aab": "bash scripts/build-android-local.sh aab",
+    "legal:build": "node scripts/build-legal-worker.cjs"
   },
   "dependencies": {
     "@expo/ui": "~58.0.17",

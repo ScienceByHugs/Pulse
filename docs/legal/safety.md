@@ -1,10 +1,10 @@
 # Health & Safety Notice
 
-Draft — not yet effective.
+Effective October 20, 2026 · Version 2026-10-20
 
 ## Tracking boundaries
 
-Pulse by SBH is a personal record of the routine you enter. It is not a medical device and does not diagnose, treat, cure or prevent disease. This description must be reviewed against actual features and marketing; a disclaimer does not determine regulatory classification.
+Pulse by SBH is a personal record of the routine you enter. Pulse is not a medical device and does not diagnose, treat, cure or prevent any medical condition. It is not a substitute for professional medical advice, diagnosis or treatment. Do not use it as clinical decision support or to decide whether a substance or routine is appropriate for you.
 
 ## Clinical decisions
 
@@ -24,7 +24,7 @@ Reports reproduce selected user-entered information. They may omit unavailable h
 
 ## Contact
 
-Support: support@sciencebyhugs.com. Privacy/legal: legal@sciencebyhugs.com. Business mailing address:\
+Operator: Anthony Charles Hugershoff, sole proprietor operating under the registered Science By Hugs DBA/trade name. Privacy/legal: legal@sciencebyhugs.com. Support: support@sciencebyhugs.com. Business mailing address:\
 Science by hugs\
 PMB 147\
 1527 W Craig Rd\

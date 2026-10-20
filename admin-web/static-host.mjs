@@ -1,4 +1,8 @@
-/** Serve a fixed build artifact only. No proxy, database binding or request body. */
+/**
+ * Serve a fixed build artifact only. No proxy, database binding or request body.
+ * @param {Record<string, {body: string, type: string}>} assets
+ * @param {string} csp
+ */
 export function createStaticHost(assets, csp) {
   const files = Object.freeze({ ...assets });
   return {
