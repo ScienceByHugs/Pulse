@@ -1,0 +1,48 @@
+{
+  "verifiedDate": "2026-10-20",
+  "baseUrl": "https://pulse-sbh-legal.sciencebyhugs-pulse.workers.dev",
+  "pages": [
+    {
+      "page": "delete-account.html",
+      "status": 200,
+      "sha256": "58eb921922173abee330a4fcc4248f5814a28686f2e14d11248fd945ece933b7"
+    },
+    {
+      "page": "health-privacy.html",
+      "status": 200,
+      "sha256": "e680856a652cbabc0103c5f4b1cbabf32771f33a03a64ed23c8763ba80907204"
+    },
+    {
+      "page": "index.html",
+      "status": 200,
+      "sha256": "3392ac6fcf2b2d10cf59d4b05b5210d8accbc4b216ac64e211550568fe9f04c2"
+    },
+    {
+      "page": "privacy.html",
+      "status": 200,
+      "sha256": "710da195d77637531b7a410a415b463430788f616f39c25126f10ab19b38316a"
+    },
+    {
+      "page": "safety.html",
+      "status": 200,
+      "sha256": "a405d1ecec540ed08dfe0cf4e0282e3e82f61e7e1fc52b4e43a1a4d784b6aead"
+    },
+    {
+      "page": "storage.html",
+      "status": 200,
+      "sha256": "c94bfc8bdc7d96e55f56e9232fef9629846ff327cafec8d3ac5f78b9f1359a8e"
+    },
+    {
+      "page": "terms.html",
+      "status": 200,
+      "sha256": "b4133573d12cf845ec5660473e31fb93df110f3ae21fe1205cfdeece03f6dea7"
+    }
+  ],
+  "rootMatchesIndex": true,
+  "headChecks": true,
+  "securityHeaders": true,
+  "unknownPaths404": true,
+  "post405": true,
+  "clarificationDeployment": "5a9ec68138124c9f991e8ff5dd667102",
+  "clarificationNote": "Provider-log approximate location/API paths/status/timing made explicit. Clarified live privacy body verified byte-for-byte on October 20, 2026; original all-page/header checks retained."
+}

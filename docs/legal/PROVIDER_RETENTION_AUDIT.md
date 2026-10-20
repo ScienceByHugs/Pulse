@@ -1,3 +1,5 @@
+> October 20 policy update: Supabase’s current residency/retention FAQ and DPA were reviewed again. Exact retention for every Free-plan backup, storage-recovery copy and internal security log remains unverified. Current effective policies disclose these limits and determining criteria; they do not promise immediate/seven-day erasure or confuse whole-project deletion periods with a Pulse user’s deletion. The historical project inspection below is dated October 12 and has not been represented as a new live inspection.
+
 # Supabase backup and retention audit — October 12, 2026
 
 ## Verified live via connected Supabase account

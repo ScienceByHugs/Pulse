@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import policies from '@/content/legal.json';
+import policyMeta from '@/content/legal-meta.json';
 import { colors, layout, radius, spacing, typography } from '@/theme';
 
 export default function LegalScreen() {
@@ -32,8 +33,7 @@ export default function LegalScreen() {
         </Pressable>
         <Text style={styles.title}>{selected?.title ?? 'Legal & Privacy'}</Text>
         <Text style={styles.notice}>
-          Draft for review. Mailing address, verified retention and attorney
-          review are pending; these documents are not yet effective.
+          Effective {policyMeta.effectiveDateLabel} · Version {policyMeta.version}
         </Text>
         <Pressable
           accessibilityRole="button"
@@ -56,6 +56,21 @@ export default function LegalScreen() {
             automatically.
           </Text>
         </Pressable>
+        {selected && (
+          <Pressable
+            accessibilityRole="link"
+            style={styles.button}
+            onPress={() =>
+              void Linking.openURL(
+                `${policyMeta.publicBaseUrl}/${selected.slug}.html`,
+              ).catch(() =>
+                Alert.alert('Public policy page', 'The policy is also available to read below. Try the public page again when connected.'),
+              )
+            }
+          >
+            <Text style={styles.link}>Open public policy page ↗</Text>
+          </Pressable>
+        )}
         {selected
           ? selected.sections.map((section) => (
               <View key={section.heading} style={styles.section}>

@@ -1,69 +1,60 @@
-# Apple and Google policy release worksheet
+# Apple and Google policy coverage and publication
 
-Updated October 13, 2026. Draft policies reflect reviewed repository behavior, not a completed legal or vendor audit. Do not submit placeholder pages or claim approval/compliance from these documents alone.
+Updated October 20, 2026. The owner adopted all six policies effective October 20, 2026. Policy wording was checked against current first-party Apple and Google sources. This is coverage evidence, not an attorney opinion, store approval, or certification that every operational control has been exercised.
 
-## Documents
+## Shared source and effective copies
 
-- Privacy Policy: mandatory public privacy information, with an in-app link.
-- Consumer Health Data Privacy Policy: separate health-data notice; assess applicable state laws and consent/rights requirements.
-- Terms of Use: recommended service agreement; Apple standard EULA can remain the app license unless a compliant custom EULA is selected.
-- Health & Safety Notice: tracking limitations, clinician advice and emergency boundary; Google health requirements must be reflected in store description too.
-- Device Storage & Cookies Notice: transparency about native/browser storage; no automatic cookie consent banner is added.
-- Account & Data Deletion: public deletion instructions plus an operational route to request deletion without installing the app, required for Google account-creating apps.
+- `src/content/legal.json`: six bundled policy documents.
+- `src/content/legal-meta.json`: one effective date/version and public base URL.
+- `scripts/generate-legal-pages.py`: synchronized Markdown, six HTML pages and the public index; CI checks parity.
+- `app/legal.tsx`: bundled offline text, effective version and a public-page link; accessible from sign-in, signup and You → Account & Privacy.
+- `npm run legal:build`: an isolated static-only public host. No credentials, database binding, account forms, browser scripts, third-party assets or cookies. Its handler does not log requests or read their bodies. Invocation logs/traces are off; provider infrastructure can process connection metadata as disclosed.
+- The native app text changes require a later approved build/upload. Existing 2.0.0 (3) Android and current iOS binaries retain their older bundled notices. No version bump, signing change, backend deployment or native release is included here.
 
-## Required operator decisions before publication
+## Public URLs
 
-1. Confirmed operator: Anthony Charles Hugershoff, sole proprietor operating under the registered Science By Hugs DBA/trade name. Support: support@sciencebyhugs.com; privacy/legal: legal@sciencebyhugs.com. Confirmed UPS business mailing address is shown below, using the owner-provided addressee, PMB wording and line order. Do not publish the residential address.
-2. Confirmed launch intent: United States only, minimum age 18, including beta testers and web users. Normal signup now requires age/residency self-attestation. This is not verified identity or geolocation; configure matching store territories and review any additional consent requirements before release.
-3. Supabase primary database region verified as us-east-2 on 2026-10-12. Confirm configured backup/log retention, email-delivery provider, processor contracts, staff access and any external monitoring. Replace retention draft language with specific verified periods/criteria and justified exceptions.
-4. Owner monitors both confirmed inboxes and handles privacy requests/appeals. Target acknowledgment: three business days. Prepared procedure: PRIVACY_REQUEST_PROCEDURE.md; verify and adopt it with counsel, including ownership verification, legally appropriate deadlines and propagation to processors. Do not require reinstalling for web deletion requests. Avoid collecting health content in the initial request.
-5. Assess Washington/Nevada and other consumer health privacy laws, FTC Health Breach Notification Rule and any international obligations for actual markets. Required consent must be specific, recorded, revocable and implemented before covered collection/sharing. Privacy notices are not consent.
-6. Confirm actual data sale/advertising/AI practices including vendors; ensure future changes cannot silently invalidate policy statements.
-7. Have appropriate counsel review final terms, operator identity, age, regulatory/intended-use claims, health-data notice, liability and dispute provisions. No arbitration, class-action waiver, invented liability cap or assumed governing state is inserted here.
+- Index: https://pulse-sbh-legal.sciencebyhugs-pulse.workers.dev/
+- Privacy: https://pulse-sbh-legal.sciencebyhugs-pulse.workers.dev/privacy.html
+- Consumer health privacy: https://pulse-sbh-legal.sciencebyhugs-pulse.workers.dev/health-privacy.html
+- Account deletion: https://pulse-sbh-legal.sciencebyhugs-pulse.workers.dev/delete-account.html
 
-## Confirmed business mailing address
+Publication/HTTP verification results are recorded separately in `docs/qa/EFFECTIVE_POLICIES.md`. A URL written in source is not proof of deployment.
 
-Science by hugs\
-PMB 147\
-1527 W Craig Rd\
-Ste 1B\
-North Las Vegas, NV\
-89032-0228
+## Coverage against current platform requirements
 
-## Publishing
+| Requirement | Policy coverage | Separate implementation/store responsibility |
+| --- | --- | --- |
+| Apple 5.1.1(i): data collected, methods and all uses | Privacy: information provided/generated, feedback, purposes, permissions | Keep Apple App Privacy and actual SDK behavior consistent; provide the public URL in App Store Connect. |
+| Apple 5.1.1(i): equal third-party protection | Privacy providers/disclosures: purpose limits, confidentiality, same/equal safeguards; health policy recipients | Maintain actual provider contracts and oversight. This wording does not independently audit every subprocessor. |
+| Apple 5.1.1(i): retention, revocation and deletion | Privacy retention/rights; separate deletion page and health-consent withdrawal | Provider copy-specific periods remain unverified; current policies disclose criteria/limits rather than inventing a deadline. |
+| Apple 5.1.1(ii), 5.1.2: choice/permission and purpose limits | Optional permissions do not gate core tracking; no unrelated repurposing; separate consent before any legally required new/optional processing | Policy acceptance is not proof of consent. Signup currently records US/18+ eligibility, not versioned terms or standalone health consent. Assess/apply any required consent UX before covered collection; do not falsely claim it already exists. |
+| Apple 5.1.3: sensitive health data and advertising | No health-data advertising, sale, AI training or eligibility decisions; no HealthKit/Health Connect integration | Maintain those restrictions and assess intended use/claims separately. |
+| Apple account deletion | You → Account & Privacy; confirmed deletion of account/associated data; no support approval for in-app deletion | Source and account tests support flow; fresh end-to-end live deletion/photo/provider checks remain a release QA task. |
+| Google User Data: comprehensive accurate policy, operator/contact | Privacy names Pulse/Science By Hugs/operator, data categories, uses, recipients, security, retention/deletion; owner-confirmed business address/contact | Provide public HTTPS URL in Play Console; no PDF, login or geofence. |
+| Google account deletion: in-app and outside-app request | Dedicated deletion page prominently explains email request without installation, ownership verification, retained categories/criteria | Monitor the confirmed support inbox; exercise outside-app verification/fulfillment and enter deletion URL in Data Safety. |
+| Google Health apps | Separate health-data policy; no medical-device/diagnosis/treatment claim; professional-advice and emergency boundaries | Complete Health apps declaration and use matching store-description language. A disclaimer is not regulatory clearance. |
+| Google Data Safety | Source inventory covers email/user IDs, optional profile/name/phone/photo, health/log/inventory/check-ins, feedback, platform/build and provider metadata; on-device versus synced distinctions | Submit accurate collection/sharing, purposes, optionality, security and deletion answers after owner/provider review. Policy publication does not submit the form. |
+| US consumer health transparency | Separate conspicuous health-policy link, categories/sources/purposes/recipient categories, consent/withdrawal and access/deletion/appeal routes; no health-data sale or healthcare geofencing | Determine applicable state duties, deadlines, authorized-representative verification and processor propagation; implement separately required consent before covered use. |
 
-Edit the shared content in src/content/legal.json and keep docs/legal/*.md and public/legal/*.html synchronized before release. The current documents visibly say draft; remove that status only after all blanks and procedures are resolved. Public HTML has no external assets, cookies or analytics. Choose a real HTTPS host; no hosting/domain URL is assumed or published by this task.
+## Adopted scope and operational limits
 
-Host public/legal as accessible static pages, with no login, geoblocking or broken placeholders. Add a conspicuous separate Consumer Health Privacy link to the public homepage. Verify every policy and deletion URL on a signed-out phone browser. Google requires a publicly accessible non-PDF privacy policy; do not use a shared editable document as the store policy URL. Publish an effective date and version, then implement explicit versioned signup terms acceptance and any separately required health-data consent. Current app links are available from signup, navigation and Account & Privacy but do not impose acceptance of these drafts.
+Operator/contact/address, US/18+ eligibility, free beta, no marketplace/affiliate/sponsored content, and no active promotional email are based on recorded owner decisions and reviewed code. Only requested tracking, sync, reminders, calendars, optional check-ins/photos, feedback and exports are described. Unconfirmed-account cleanup exists as an owner-operated tool but is not activated/scheduled; no automatic 30-day deletion promise is made.
 
-## Apple App Store Connect
+Supabase's current DPA and residency/retention FAQ were reviewed. The last documented live primary-region inspection is October 12, 2026 (us-east-2). Provider backup/storage-recovery/internal-log periods and any external operational arrangements are not fully verified. The adopted policies explicitly explain these limits, retention criteria and recovery/deletion handling; do not turn whole-project deletion guidance into a guarantee about a single user's backups. A support request, consent mechanism or legal review has not occurred merely because a document was adopted.
 
-- Privacy Policy URL: actual hosted privacy.html URL.
-- Support URL: a real support page/channel, not a draft.
-- App Privacy responses: account-linked email, optional name/phone, user ID, photos, health/tracking/check-in content and other user-entered content need accurate category/purpose mapping. Review calendar/event processing and provider logs; do not equate on-device-only data with uploaded data.
-- Current purposes: App Functionality; assess diagnostics/security processing actually retained by providers. No configured ad tracking is identified, but verify vendor SDK behavior before answering No to tracking.
-- Account deletion exists in-app; test the final deployed flow on a disposable account, including photo and associated records.
-- Review intended-use and health claims against guidelines 1.4 and 5.1. Keep unsupported clinical claims/calculators excluded. App label/disclaimer is not a regulatory determination.
-- Owner selected Apple standard EULA plus Pulse service terms. Verify the App Store Connect setting; do not add arbitration/class-action waivers.
+No mandatory arbitration, class-action waiver, fixed liability cap or exclusive jurisdiction clause was invented. Apple’s applicable download license is distinguished from Pulse service terms. Confirm the App Store Connect license selection independently.
 
-## Google Play Console
+## Remaining beta submission work
 
-- Privacy Policy URL: actual hosted privacy.html URL; app/developer identity must match the listing.
-- Account deletion URL: hosted delete-account.html with working verified web request channel. In-app account deletion alone does not complete the web requirement.
-- Data safety: health/fitness information, personal info (email/name/phone/user ID), photos and other user content are collected for account/app features. Distinguish optional fields from mandatory fields. Confirm encryption-in-transit and account deletion assertions against live infrastructure.
-- Google defines collected and shared differently; service-provider transfers may qualify for sharing exceptions. Do not blindly mark all Supabase processing as either shared or not shared without checking current definitions and contracts.
-- Health apps declaration: complete accurately, including testing tracks where required. Describe routine/medication tracking and check-in features; do not claim Health Connect integration.
-- Health policy: include the required clear non-medical-device/no-diagnosis-treatment statement and professional-advice reminder in app and listing where applicable. Verify actual feature/claim classification.
-- No advertising ID, precise-location or Health Connect permission is configured in reviewed source. Audit the built manifest/SDKs and third-party services before final answers.
+Reviewer account/access instructions; store listing/assets/category/contact; ads, content rating, audience, government, financial and health declarations; accurate Data Safety; public policy/deletion URLs in store metadata; live account/export/deletion and consent QA. Then revalidate the prepared closed-track draft and submit to Google review. Existing internal release/tester access remains unchanged.
 
-## Reviewed official sources
+## First-party sources reviewed October 20, 2026
 
-- Apple guidelines: https://developer.apple.com/app-store/review/guidelines/
+- Apple App Review Guidelines 5.1.1–5.1.3: https://developer.apple.com/app-store/review/guidelines/
 - Apple account deletion: https://developer.apple.com/support/offering-account-deletion-in-your-app/
-- Apple privacy details: https://developer.apple.com/app-store/app-privacy-details/
-- Google User Data (privacy and deletion): https://support.google.com/googleplay/android-developer/answer/10144311
+- Google User Data: https://support.google.com/googleplay/android-developer/answer/10144311
+- Google account deletion: https://support.google.com/googleplay/android-developer/answer/13327111
 - Google Health Content and Services: https://support.google.com/googleplay/android-developer/answer/16679511
-- Google health declaration: https://support.google.com/googleplay/android-developer/answer/14738291
-- Washington health privacy: https://www.atg.wa.gov/protecting-washingtonians-personal-health-data-and-privacy
-- FTC health breach guidance: https://www.ftc.gov/business-guidance/resources/complying-ftcs-health-breach-notification-rule-0
-- ICO storage/access guidance: https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guidance-on-the-use-of-storage-and-access-technologies/what-are-storage-and-access-technologies/
+- Supabase DPA: https://supabase.com/legal/customer-resources/data-processing-addendum
+- Supabase residency/retention: https://supabase.com/legal/privacy-resources/data-residency-and-transfers-faq
+- Supabase subprocessors: https://supabase.com/legal/customer-resources/subprocessor-list

@@ -1,3 +1,11 @@
+# Policy adoption — October 20, 2026
+
+The owner explicitly instructed: “Make sure the privacy policy covers apples requirements and Google's requirements. Then make all policies effective.” This supersedes the draft/non-effective status and prior instruction to wait for attorney review before setting a date. The six current policies are adopted effective October 20, 2026. This does not assert attorney review, store approval, verified retention of every provider copy, or deployment of the app update.
+
+The policies use verified behavior and honest retention criteria rather than made-up periods. No automated unconfirmed-account cleanup, promotional-email enrollment, third-party consent flow, or production backend change is activated by publishing notices. The operator remains responsible for complying with the adopted request/security/provider commitments. The dated decisions below are retained as history; current status and store checklist are in STORE_SUBMISSION.md.
+
+---
+
 # Confirmed owner decisions — updated October 13, 2026
 
 - Operator: Anthony Charles Hugershoff, sole proprietor; Science By Hugs is a registered DBA/trade name.

@@ -1,3 +1,5 @@
+> Historical October 13 review brief. The owner adopted updated policies effective October 20, 2026; see OWNER_DECISIONS.md and STORE_SUBMISSION.md. Draft-status statements below describe the earlier package. No attorney review or legal certification is claimed by the later adoption.
+
 # Pulse by SBH — attorney review brief
 
 ## Confirmed business instructions
