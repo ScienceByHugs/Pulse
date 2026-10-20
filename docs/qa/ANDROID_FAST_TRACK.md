@@ -1,5 +1,8 @@
 # Android fast-track verification — 2026-10-19
 
+Follow-up: a signed AAB is now generated; see [Play testing state](ANDROID_PLAY_TESTING.md).
+This file records the initial APK validation.
+
 Base: ScienceByHugs/Pulse main. Isolated checkout; no iOS signing or production
 service mutations. Android source generated with Expo prebuild only for Android.
 
