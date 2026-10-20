@@ -1,8 +1,9 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Host, Icon } from '@expo/ui';
 import { Tabs } from 'expo-router';
 import {
   ActivityIndicator,
+  Platform,
   StyleSheet,
   Text,
   View,
@@ -77,6 +78,10 @@ function TabLabel({
 
 export default function TabsLayout() {
   const { fontScale } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  // Our custom height/padding override React Navigation's defaults. Reserve the
+  // Android system-bar inset once here; screen SafeAreaViews handle their content.
+  const bottomInset = Platform.OS === 'android' ? insets.bottom : 0;
   const { session, loading } = useAuth();
 
   if (loading) {
@@ -130,9 +135,9 @@ export default function TabsLayout() {
           backgroundColor: colors.bgElevated,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 88 + Math.max(0, fontScale - 1) * 24,
+          height: 88 + Math.max(0, fontScale - 1) * 24 + bottomInset,
           paddingTop: 7,
-          paddingBottom: 12,
+          paddingBottom: 12 + bottomInset,
         },
       })}
     >
