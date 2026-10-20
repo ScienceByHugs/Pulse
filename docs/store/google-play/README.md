@@ -37,4 +37,4 @@ Sources reviewed:
 
 ## Android build 4
 
-The next Android bundle includes the adopted policies and public policy links, retaining the merged navigation fix. Only Android versionCode increments to 4; iOS signing/build number, services, credentials and production backend configuration are unchanged. Build, verification and actual Console submission outcome are recorded in `../../qa/GOOGLE_PLAY_CLOSED_BETA.md`; a prepared file alone is not a successful submission.
+The verified Android build 4 bundle includes the adopted policies and public policy links, retaining the merged navigation fix. Only Android versionCode increments to 4; iOS signing/build number, services, credentials and production backend configuration are unchanged. Build, verification and actual Console submission outcome are recorded in `../../qa/GOOGLE_PLAY_CLOSED_BETA.md`; a prepared file alone is not a successful submission.
