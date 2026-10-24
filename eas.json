@@ -28,6 +28,10 @@
       "autoIncrement": false,
       "distribution": "store",
       "environment": "production"
+    },
+    "testflight-ci": {
+      "extends": "testflight",
+      "autoIncrement": true
     }
   },
   "submit": {
