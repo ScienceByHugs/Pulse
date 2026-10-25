@@ -2,7 +2,7 @@ name: Pulse checks
 
 on:
   push:
-    branches: [main, "feat/**", "codex/**"]
+    branches: [main, staging, "feat/**", "codex/**"]
   pull_request:
   workflow_dispatch:
 

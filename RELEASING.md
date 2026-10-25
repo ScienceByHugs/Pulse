@@ -6,13 +6,26 @@ The same rules apply in every Science By Hugs repository: Core, Nexus, Pulse and
 
 | Branch | Means | Who changes it |
 | --- | --- | --- |
-| `main` | The release line: what is in the App Store, Google Play and TestFlight | Pull request only, merged by Anthony |
+| `main` | Releases: what is in the App Store and Google Play | Pull request only, merged by Anthony |
+| `staging` | Where all app development happens; the staging app and TestFlight builds come from here | Pull request only, merged by Anthony |
 | `feat/…`, `fix/…`, `design/…`, `ci/…`, `docs/…` | One piece of work | Anyone; deleted automatically after merge |
 | `archive/2026-10-25` | Old branches kept for reference (see `ARCHIVE.md` on that branch) | Never merged |
 
-- Nobody pushes straight to `main`. Changes go through a pull request with CI passing.
-- Work branches start from `main` and target it.
+- **All app development happens on `staging`.** `main` changes only when a release is ready: one pull request from `staging` to `main`, approved by Anthony.
+- Nobody pushes straight to `main` or `staging`. Changes go through a pull request with CI passing.
+- Work branches start from `staging` and target it.
 - Stacked work (one PR building on another) points each PR at the branch before it, so every PR shows only its own changes. Merge from the bottom up.
+
+## Staging app and production app
+
+| | Built from | Backend | Name on the phone | Bundle id |
+| --- | --- | --- | --- | --- |
+| Staging app | `staging` | Staging (test accounts, sandbox payments) | pulse staging | `com.sciencebyhugs.pulse.staging` |
+| Production app | `main` | Production | Pulse | `com.sciencebyhugs.pulse` |
+
+The two install side by side. The staging app refuses production backends and keys; the production app never points at staging.
+
+Status (Oct 25, 2026): the production app is live. A separate staging app is not set up yet: it needs a staging backend, because Pulse's only Supabase project (`bxgcntumsyxjfnxenmqm`) is production. Until then, TestFlight builds from `staging` use the production backend, so test only with your own account.
 
 ## Versions
 
@@ -32,7 +45,8 @@ Every build that leaves the building gets a git tag and a GitHub Release.
 
 | Kind | Tag | Example |
 | --- | --- | --- |
-| TestFlight / App Store build | `pulse-vX.Y.Z+BUILD` | `pulse-v2.0.0+28` |
+| App Store release | `pulse-vX.Y.Z+BUILD` | `pulse-v2.0.0+28` |
+| Staging / TestFlight build | `pulse-vX.Y.Z+BUILD` | `pulse-v2.0.1+29` (promoted to a release tag once it ships) |
 | Android build | `pulse-vX.Y.Z+android.CODE` | `pulse-v2.0.0+android.3` |
 
 The release notes say what changed, the exact commit, and how it was verified (CI run, device checks). Include the IPA or AAB SHA-256 and keep the build and its crash symbols, as `docs/LOCAL_BUILD_WORKFLOW.md` describes.
