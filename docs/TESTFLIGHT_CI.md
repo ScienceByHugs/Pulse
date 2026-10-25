@@ -19,7 +19,7 @@ The standing rule still applies: a build or upload happens only when Anthony tri
 
 ## One-time setup (Anthony)
 
-1. **Environment:** Settings → Environments → New environment `testflight`. Add yourself under **Required reviewers**, and limit deployment branches to `main`.
+1. **Environment:** Settings → Environments → New environment `testflight`. Add yourself under **Required reviewers**, and limit deployment branches to `staging` and `main`. TestFlight builds come from `staging`; a build is submitted for App Store review only after `staging` is merged to `main`.
 2. **Secrets** (in that environment):
 
    | Secret | Where it comes from |
