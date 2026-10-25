@@ -1,0 +1,171 @@
+name: Pulse TestFlight build
+
+# Builds a signed iOS release on a GitHub-hosted Mac with `eas build --local`
+# (no Expo cloud build) and, only when asked, uploads it to App Store Connect
+# with Apple's own uploader. Manual trigger only; the `testflight` environment
+# should require Anthony's approval before any job starts.
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Upload the verified build to TestFlight (leave off to build and verify only)
+        type: boolean
+        default: false
+      runner:
+        description: macOS runner label (must provide Xcode 27)
+        type: string
+        default: macos-26
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pulse-testflight
+  cancel-in-progress: false
+
+jobs:
+  ios:
+    name: Build, verify and (optionally) upload iOS
+    runs-on: ${{ inputs.runner }}
+    environment: testflight
+    timeout-minutes: 90
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      EAS_CLI_VERSION: 24.11.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required secrets
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+          UPLOAD: ${{ inputs.upload }}
+        run: |
+          missing=()
+          for name in EXPO_TOKEN EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY; do
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+          if [ "$UPLOAD" = "true" ]; then
+            for name in ASC_API_KEY_ID ASC_API_ISSUER_ID ASC_API_KEY_P8; do
+              [ -n "${!name}" ] || missing+=("$name")
+            done
+          fi
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing repository/environment secrets: ${missing[*]}"
+            exit 1
+          fi
+          case "$EXPO_PUBLIC_SUPABASE_URL" in
+            https://*.supabase.co) ;;
+            *) echo "::error::EXPO_PUBLIC_SUPABASE_URL must be the production https://<ref>.supabase.co URL"; exit 1 ;;
+          esac
+
+      - name: Select Xcode 27
+        env:
+          RUNNER_LABEL: ${{ inputs.runner }}
+        run: |
+          xcode=$(ls -d /Applications/Xcode_27*.app 2>/dev/null | sort -V | tail -n 1 || true)
+          if [ -z "$xcode" ]; then
+            echo "::error::No Xcode 27 on runner '$RUNNER_LABEL'. Rerun with a runner label that provides Xcode 27."
+            ls -d /Applications/Xcode*.app || true
+            exit 1
+          fi
+          sudo xcode-select -s "$xcode/Contents/Developer"
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies and build tools
+        run: |
+          npm ci --legacy-peer-deps
+          npm install -g "eas-cli@${EAS_CLI_VERSION}"
+          command -v pod >/dev/null || sudo gem install cocoapods --no-document
+          command -v fastlane >/dev/null || brew install fastlane
+          eas --version; pod --version; fastlane --version | tail -n 1
+
+      - name: Checks before building
+        run: |
+          npm run typecheck
+          npm test
+
+      - name: Build signed IPA locally on this runner (no Expo cloud build)
+        run: |
+          mkdir -p local-builds
+          export EAS_LOCAL_BUILD_WORKINGDIR="$PWD/local-builds/work"
+          eas build --platform ios --profile testflight-ci --local --non-interactive \
+            --output "$PWD/local-builds/pulse-testflight.ipa"
+
+      - name: Verify IPA (versions, widget match, signatures)
+        id: verify
+        run: |
+          set -euo pipefail
+          ipa=local-builds/pulse-testflight.ipa
+          work=$(mktemp -d)
+          unzip -q "$ipa" -d "$work"
+          app=$(ls -d "$work"/Payload/*.app | head -n 1)
+          widget=$(ls -d "$app"/PlugIns/*.appex 2>/dev/null | head -n 1 || true)
+          plist() { /usr/libexec/PlistBuddy -c "Print :$2" "$1/Info.plist"; }
+          bundle=$(plist "$app" CFBundleIdentifier)
+          version=$(plist "$app" CFBundleShortVersionString)
+          build=$(plist "$app" CFBundleVersion)
+          [ "$bundle" = "com.sciencebyhugs.pulse" ] || { echo "::error::Unexpected bundle id $bundle"; exit 1; }
+          if [ -n "$widget" ]; then
+            [ "$(plist "$widget" CFBundleVersion)" = "$build" ] || { echo "::error::Widget build number does not match app build $build"; exit 1; }
+            [ "$(plist "$widget" CFBundleShortVersionString)" = "$version" ] || { echo "::error::Widget version does not match app version $version"; exit 1; }
+          else
+            echo "::error::Widget extension missing from the IPA"; exit 1
+          fi
+          codesign --verify --deep --strict "$app"
+          final="local-builds/pulse-build-${build}.ipa"
+          mv "$ipa" "$final"
+          sha=$(shasum -a 256 "$final" | cut -d' ' -f1)
+          echo "ipa=$final" >> "$GITHUB_OUTPUT"
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Pulse ${version} (${build})"
+            echo "- Source commit: \`${GITHUB_SHA}\`"
+            echo "- IPA SHA-256: \`${sha}\`"
+            echo "- App and widget versions match; signatures verify"
+          } >> "$GITHUB_STEP_SUMMARY"
+          rm -rf "$work"
+
+      - name: Keep IPA and crash symbols
+        uses: actions/upload-artifact@v4
+        with:
+          name: pulse-build-${{ steps.verify.outputs.build }}
+          path: |
+            local-builds/pulse-build-*.ipa
+            local-builds/*.dSYM.zip
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Upload to App Store Connect (TestFlight)
+        if: ${{ inputs.upload }}
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+          IPA: ${{ steps.verify.outputs.ipa }}
+        run: |
+          set -euo pipefail
+          keydir="$HOME/.appstoreconnect/private_keys"
+          mkdir -p "$keydir" && chmod 700 "$keydir"
+          printf '%s\n' "$ASC_API_KEY_P8" > "$keydir/AuthKey_${ASC_API_KEY_ID}.p8"
+          chmod 600 "$keydir/AuthKey_${ASC_API_KEY_ID}.p8"
+          xcrun altool --upload-app -f "$IPA" -t ios \
+            --apiKey "$ASC_API_KEY_ID" --apiIssuer "$ASC_API_ISSUER_ID"
+          echo "- Uploaded to App Store Connect; Apple processing and TestFlight review are separate" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove signing and upload credentials
+        if: ${{ always() }}
+        run: |
+          rm -rf "$HOME/.appstoreconnect/private_keys" local-builds/work
